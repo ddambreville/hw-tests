@@ -2,7 +2,7 @@ import tools
 import subdevice
 import math
 
-def test_joint_enslavement(dcm, mem, zero_pos, test_objects_dico, test_time, test_limit):
+def test_joint_enslavement(dcm, mem, kill_motion, zero_pos, test_objects_dico, test_time, test_limit):
     """Test joint enslavement. Error must be lower than a fixed limit."""
     # Objects creation
     joint_position_actuator = test_objects_dico["jointActuator"]
@@ -37,7 +37,7 @@ def test_joint_enslavement(dcm, mem, zero_pos, test_objects_dico, test_time, tes
 
     assert flag
 
-def test_leg_enslavement(dcm, mem, zero_pos, test_leg_dico, test_time, test_limit):
+def test_leg_enslavement(dcm, mem, kill_motion, zero_pos, test_leg_dico, test_time, test_limit):
     """
     Test joint enslavement for HipPitch and KneePitch.
     Error must be lower than a fixed limit.
@@ -86,7 +86,7 @@ def test_leg_enslavement(dcm, mem, zero_pos, test_leg_dico, test_time, test_limi
 
     assert flag
 
-def test_wheels_enslavement(dcm, mem, zero_pos, test_wheels_dico, stiff_robot_wheels, test_time, test_wheels_limit):
+def test_wheels_enslavement(dcm, mem, kill_motion, zero_pos, test_wheels_dico, stiff_robot_wheels, test_time, test_wheels_limit):
     """
     Test wheels enslavement.
     Error must be lower than a fixed limit (here test_wheels_limit).

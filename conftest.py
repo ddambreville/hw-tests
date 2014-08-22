@@ -42,8 +42,8 @@ def motion(robot_ip, port):
     except RuntimeError:
         return "MotionKilled"
 
-@pytest.fixture(scope="session", autouse=True)
-def kill(motion):
+@pytest.fixture(scope="session", autouse=False)
+def kill_motion(motion):
     """
     Fixture which kills ALMotion module.
     It allows to use DCM module without conflict.
