@@ -207,3 +207,16 @@ def wake_up(request, motion):
         print "robot automatically going to rest position..."
         motion.rest()
     request.addfinalizer(fin)
+
+def remove_safety(motion):
+    """
+    Fixture which remove the robot safety
+    """
+    motion.setExternalCollisionProtectionEnabled("All", 0)
+
+@pytest.fixture(scope="session")
+def remove_diagnosis(motion):
+    """
+    Fixture which remove the robot diagnosis
+    """
+    motion.setDiagnosisEffectEnabled(0)
