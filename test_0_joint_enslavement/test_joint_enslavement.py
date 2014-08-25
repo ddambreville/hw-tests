@@ -30,10 +30,10 @@ class TestJointEnslavement:
             logger.log(
                 ("Time", timer.dcm_time() / 1000.),
                 ("Actuator", math.degrees(joint_position_actuator.value)),
-                ("Position", math.degrees(joint_position_sensor.value)),
+                ("Sensor", math.degrees(joint_position_sensor.value)),
                 ("Error", math.degrees(error)),
-                ("Max", test_limit),
-                ("-Max", test_limit*-1.))
+                ("Eps", test_limit),
+                ("-Eps", test_limit*-1.))
 
             if abs(error) > math.radians(test_limit):
                 flag = False
@@ -67,22 +67,24 @@ class TestJointEnslavement:
 
         # Test loop
         while timer.is_time_not_out():
-            error_hip = hippitch_position_actuator.value - hippitch_position_sensor.value
-            error_knee = kneepitch_position_actuator.value - kneepitch_position_sensor.value
+            error_hip = \
+            hippitch_position_actuator.value - hippitch_position_sensor.value
+            error_knee = \
+            kneepitch_position_actuator.value - kneepitch_position_sensor.value
 
             logger.log(
                 ("Time", timer.dcm_time() / 1000.),
                 ("HipPitchActuator",
                  math.degrees(hippitch_position_actuator.value)),
-                ("HipPitchPosition", math.degrees(hippitch_position_sensor.value)),
+                ("HipPitchSensor", math.degrees(hippitch_position_sensor.value)),
                 ("ErrorHip", math.degrees(error_hip)),
                 ("KneePitchActuator",
                  math.degrees(kneepitch_position_actuator.value)),
-                ("KneePitchPosition",
+                ("KneePitchSensor",
                  math.degrees(kneepitch_position_sensor.value)),
                 ("ErrorKnee", math.degrees(error_knee)),
-                ("Max", test_limit),
-                ("-Max", test_limit*-1.))
+                ("Eps", test_limit),
+                ("-Eps", test_limit*-1.))
 
             if(abs(error_hip)>math.radians(test_limit) or abs(error_knee)>math.radians(test_limit)):
                 flag = False
