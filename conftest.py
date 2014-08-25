@@ -89,7 +89,7 @@ def zero_pos():
     """
     return tools.read_section("../global_test_configuration/juliette_positions.cfg", "zero")
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="session")
 def stiff_robot(request, dcm, mem, rest_pos):
     """
     This method automatically stiffs the robot at the beginning of the
