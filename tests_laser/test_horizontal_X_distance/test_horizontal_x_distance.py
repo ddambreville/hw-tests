@@ -1,15 +1,23 @@
+'''
+Created on August 22, 2014
+
+@author: amartin
+'''
+
 from tools import switch, case
 import threading
 from termcolor import colored
 
 
-def robot_motion(motion, pos_0, side, coord, config_test):
+def robot_motion(motion, pos_0, coord, side, config_test):
     """
     Thread which make the robot move
-    according the side to tested
+    according to the side to tested
     """
-    distance = float(config_test.get('config_test', 'Distance_parcourue'))
+    # On recupere la distance a parcourir dans le fichier de config
+    distance = float(config_test.get('Test_Config', 'Distance_Parcours'))
     while abs(motion.getRobotPosition(True)[coord] - pos_0) < distance:
+        print abs(motion.getRobotPosition(True)[coord] - pos_0)
         while switch(side):
             if case("Front"):
                 motion.move(-0.1, 0, 0)
@@ -24,23 +32,25 @@ def robot_motion(motion, pos_0, side, coord, config_test):
 
 
 def record_horizontaux_data(
-        get_horizontal_x_segments, motion, side, pos_0,
-        thread, coord, config_test):
+        get_horizontal_x_segments, motion, side, pos_0, coord,
+        thread, config_test):
     """
-    function which log the laser distances
+    Function which log the laser distances
     """
     logger = get_horizontal_x_segments["logger"]
-    debut = float(config_test.get('config_test', 'Distance_debut'))
+    debut = float(config_test.get('Test_Config', 'Distance_Debut'))
     dist = abs(motion.getRobotPosition(True)[coord] - pos_0)
+    offset_front = float(config_test.get('Test_Config', 'Offset_Front'))
+    offset_side = float(config_test.get('Test_Config', 'Offset_Side'))
     while dist < debut:
         dist = abs(motion.getRobotPosition(True)[coord] - pos_0)
     while thread.isAlive():
         if side == "Front":
             logger.log(("robot_pos", abs(
-                motion.getRobotPosition(True)[coord] - pos_0) + 0.11))
+                motion.getRobotPosition(True)[coord] - pos_0) + offset_front))
         else:
             logger.log(("robot_pos", abs(
-                motion.getRobotPosition(True)[coord] - pos_0) + 0.16))
+                motion.getRobotPosition(True)[coord] - pos_0) + offset_side))
         for i in range(1, 16):
             logger.log(("seg" + str(i), get_horizontal_x_segments[
                 "seg" + str(i)].value))
@@ -57,7 +67,7 @@ def check_error(logger, config_test):
     function which log the laser distances
     """
     result = []
-    debut = float(config_test.get('config_test', 'Distance_debut'))
+    debut = float(config_test.get('Test_Config', 'Distance_debut'))
     for i in range(1, 16):
         for index, each in enumerate(logger.log_dic["ErreurSeg" + str(i)]):
             tolerance = float(
@@ -78,6 +88,10 @@ def check_error(logger, config_test):
 def test_horizontaux_x(
     dcm, mem, motion, wakeup, side, get_horizontal_x_segments, config_test,
         remove_safety, remove_diagnosis):
+    """
+    Test function which test the X distance
+    of the horizontal lasers
+    """
     print colored(side, "yellow")
     if side == "Front":
         pos_0 = motion.getRobotPosition(True)[0]
@@ -86,10 +100,10 @@ def test_horizontaux_x(
         pos_0 = motion.getRobotPosition(True)[1]
         coord = 1
     motion_thread = threading.Thread(target=robot_motion, args=(
-        motion, pos_0, side, coord, config_test))
+        motion, pos_0, coord, side, config_test))
     motion_thread.start()
     logger = record_horizontaux_data(
-        get_horizontal_x_segments, motion, side, pos_0, motion_thread, coord,
+        get_horizontal_x_segments, motion, side, pos_0, coord, motion_thread,
         config_test)
     result = check_error(logger, config_test)
     assert 'Fail' not in result

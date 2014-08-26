@@ -4,6 +4,7 @@ import time
 import subdevice
 import pytest
 
+
 def pytest_addoption(parser):
     """Configuration of pytest parsing."""
     parser.addoption(
@@ -11,28 +12,32 @@ def pytest_addoption(parser):
         action="store",
         default="127.0.0.1",
         help="Robot IP"
-        )
+    )
     parser.addoption(
         "--port",
         action="store",
         default=9559,
         help="Robot port"
-        )
+    )
+
 
 @pytest.fixture(scope="session")
 def robot_ip(request):
     """Robot IP adress."""
     return request.config.getoption("--ip")
 
+
 @pytest.fixture(scope="session")
 def port(request):
     """Returns port."""
     return request.config.getoption("--port")
 
+
 @pytest.fixture(scope="session")
 def mem(robot_ip, port):
     """Fixture which returns a proxy to ALMemory module."""
     return ALProxy("ALMemory", robot_ip, port)
+
 
 @pytest.fixture(scope="session")
 def motion(robot_ip, port):
@@ -53,20 +58,24 @@ def kill_motion(motion):
     except:
         pass
 
+
 @pytest.fixture(scope="session")
 def dcm(robot_ip, port):
     """Proxy to DCM module."""
     return ALProxy("DCM", robot_ip, port)
+
 
 @pytest.fixture(scope="session")
 def system(robot_ip, port):
     """Proxy to ALSystem module."""
     return ALProxy("ALSystem", robot_ip, port)
 
+
 @pytest.fixture(scope="session")
 def robot(system):
     """Fixture which gives robot name."""
     return system.robotName()
+
 
 @pytest.fixture(scope="session")
 def wake_up_pos():
@@ -75,6 +84,7 @@ def wake_up_pos():
     """
     return tools.read_section("../global_test_configuration/juliette_positions.cfg", "wakeUp")
 
+
 @pytest.fixture(scope="session")
 def rest_pos():
     """
@@ -82,12 +92,14 @@ def rest_pos():
     """
     return tools.read_section("../global_test_configuration/juliette_positions.cfg", "rest")
 
+
 @pytest.fixture(scope="session")
 def zero_pos():
     """
     Fixture which retrieves zero joints position from a configuration file.
     """
     return tools.read_section("../global_test_configuration/juliette_positions.cfg", "zero")
+
 
 @pytest.fixture(scope="session")
 def stiff_robot(request, dcm, mem, rest_pos):
@@ -99,6 +111,7 @@ def stiff_robot(request, dcm, mem, rest_pos):
     list_hardness = mem.getDataList("Hardness/Actuator/Value")
     dcm.createAlias(["Hardness", list_hardness])
     dcm.set(["Hardness", "Merge", [[1.0, dcm.getTime(0)]]])
+
     def fin():
         """Method automatically executed at the end of the test."""
         subdevice.multiple_set(dcm, mem, rest_pos, wait=True)
@@ -106,6 +119,7 @@ def stiff_robot(request, dcm, mem, rest_pos):
         dcm.set(["Hardness", "Merge", [[0., dcm.getTime(1000)]]])
 
     request.addfinalizer(fin)
+
 
 @pytest.fixture(scope="session")
 def stiff_robot_wheels(request, dcm, mem):
@@ -117,12 +131,14 @@ def stiff_robot_wheels(request, dcm, mem):
     list_hardness = mem.getDataList("Stiffness/Actuator/Value")
     dcm.createAlias(["WheelsHardness", list_hardness])
     dcm.set(["WheelsHardness", "Merge", [[1.0, dcm.getTime(0)]]])
+
     def fin():
         """Method automatically executed at the end of the test."""
         dcm.set(["WheelsHardness", "Merge", [[0.1, dcm.getTime(0)]]])
         dcm.set(["WheelsHardness", "Merge", [[0., dcm.getTime(1000)]]])
 
     request.addfinalizer(fin)
+
 
 @pytest.fixture(scope="session")
 def result_base_folder(system, mem):
@@ -148,12 +164,13 @@ def result_base_folder(system, mem):
         Hour=hour,
         Min=minu,
         Sec=sec
-        )
+    )
 
     return tools.read_parameter(
-        "../global_test_configuration/parameters.cfg",
+        "../../global_test_configuration/parameters.cfg",
         "General",
         "ResultsFolder") + "/" + result_folder_name
+
 
 @pytest.fixture(scope="session")
 def disable_push_recovery(request, motion):
@@ -213,6 +230,7 @@ def remove_safety(motion):
     Fixture which remove the robot safety
     """
     motion.setExternalCollisionProtectionEnabled("All", 0)
+
 
 @pytest.fixture(scope="session")
 def remove_diagnosis(motion):

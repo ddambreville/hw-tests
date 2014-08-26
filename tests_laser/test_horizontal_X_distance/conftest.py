@@ -1,3 +1,9 @@
+'''
+Created on August 22, 2014
+
+@author: amartin
+'''
+
 import pytest
 from subdevice import Laser
 import tools
@@ -13,12 +19,14 @@ def config_test():
     cfg.read('TestConfig.cfg')
     return cfg
 
+
 @pytest.fixture(params=tools.use_section("TestConfig.cfg", "Horizontal_Side"))
 def side(request):
     """
     Fixture which return the side to be tested
     """
     return request.param
+
 
 @pytest.fixture(scope="module")
 def get_horizontal_x_segments(request, result_base_folder, dcm, mem, side):
@@ -47,13 +55,18 @@ def get_horizontal_x_segments(request, result_base_folder, dcm, mem, side):
     request.addfinalizer(fin)
     return dico
 
+
 @pytest.fixture(scope="session")
 def wakeup(request, motion):
     """
     Make the robot wakeUp at the beginning
     of the test and go to rest at the end
     """
+    # Remove the rotation due to the Active Diagnosis
+    motion.setMotionConfig([["ENABLE_MOVE_API", False]])
     motion.wakeUp()
+    motion.setMotionConfig([["ENABLE_MOVE_API", True]])
+
     def fin():
         """Method automatically executed at the end of the test"""
         motion.rest()
