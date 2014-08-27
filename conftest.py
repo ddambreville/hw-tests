@@ -47,6 +47,7 @@ def motion(robot_ip, port):
     except RuntimeError:
         return "MotionKilled"
 
+
 @pytest.fixture(scope="session", autouse=False)
 def kill_motion(motion):
     """
@@ -166,10 +167,7 @@ def result_base_folder(system, mem):
         Sec=sec
     )
 
-    return tools.read_parameter(
-        "../../global_test_configuration/parameters.cfg",
-        "General",
-        "ResultsFolder") + "/" + result_folder_name
+    return "Results" + "/" + result_folder_name
 
 
 @pytest.fixture(scope="session")
@@ -180,11 +178,13 @@ def disable_push_recovery(request, motion):
     """
     print "disabling push recovery..."
     motion.setPushRecoveryEnabled(False)
+
     def fin():
         """tear down."""
         print "enabling push recovery..."
         motion.setPushRecoveryEnabled(True)
     request.addfinalizer(fin)
+
 
 @pytest.fixture(scope="session")
 def disable_arms_external_collisions(request, motion):
@@ -195,11 +195,13 @@ def disable_arms_external_collisions(request, motion):
     """
     print "disabling arms external collision..."
     motion.setExternalCollisionProtectionEnabled('Arms', False)
+
     def fin():
         """tear down."""
         print "enabling arms external collision..."
         motion.setExternalCollisionProtectionEnabled('Arms', True)
     request.addfinalizer(fin)
+
 
 @pytest.fixture(scope="session")
 def disable_fall_manager(request, motion):
@@ -209,21 +211,25 @@ def disable_fall_manager(request, motion):
     """
     print "disabling fall manager..."
     motion.setExternalCollisionProtectionEnabled('Arms', False)
+
     def fin():
         """tear down."""
         print "enabling fall manager..."
         motion.setExternalCollisionProtectionEnabled('Arms', True)
     request.addfinalizer(fin)
 
+
 @pytest.fixture(scope="session")
 def wake_up(request, motion):
     print "robot waking up..."
     motion.wakeUp()
+
     def fin():
         """tear down."""
         print "robot automatically going to rest position..."
         motion.rest()
     request.addfinalizer(fin)
+
 
 def remove_safety(motion):
     """
