@@ -47,7 +47,6 @@ def motion(robot_ip, port):
     except RuntimeError:
         return "MotionKilled"
 
-
 @pytest.fixture(scope="session", autouse=False)
 def kill_motion(motion):
     """
@@ -64,6 +63,12 @@ def kill_motion(motion):
 def dcm(robot_ip, port):
     """Proxy to DCM module."""
     return ALProxy("DCM", robot_ip, port)
+
+
+@pytest.fixture(scope="session")
+def behavior_manager(robot_ip, port):
+    """Proxy to ALBehaviorManager module."""
+    return ALProxy("ALBehaviorManager", robot_ip, port)
 
 
 @pytest.fixture(scope="session")
@@ -167,7 +172,10 @@ def result_base_folder(system, mem):
         Sec=sec
     )
 
-    return "Results" + "/" + result_folder_name
+    return tools.read_parameter(
+        "../../global_test_configuration/parameters.cfg",
+        "General",
+        "ResultsFolder") + "/" + result_folder_name
 
 
 @pytest.fixture(scope="session")
@@ -178,13 +186,11 @@ def disable_push_recovery(request, motion):
     """
     print "disabling push recovery..."
     motion.setPushRecoveryEnabled(False)
-
     def fin():
         """tear down."""
         print "enabling push recovery..."
         motion.setPushRecoveryEnabled(True)
     request.addfinalizer(fin)
-
 
 @pytest.fixture(scope="session")
 def disable_arms_external_collisions(request, motion):
@@ -195,13 +201,11 @@ def disable_arms_external_collisions(request, motion):
     """
     print "disabling arms external collision..."
     motion.setExternalCollisionProtectionEnabled('Arms', False)
-
     def fin():
         """tear down."""
         print "enabling arms external collision..."
         motion.setExternalCollisionProtectionEnabled('Arms', True)
     request.addfinalizer(fin)
-
 
 @pytest.fixture(scope="session")
 def disable_fall_manager(request, motion):
@@ -211,36 +215,46 @@ def disable_fall_manager(request, motion):
     """
     print "disabling fall manager..."
     motion.setExternalCollisionProtectionEnabled('Arms', False)
-
     def fin():
         """tear down."""
         print "enabling fall manager..."
         motion.setExternalCollisionProtectionEnabled('Arms', True)
     request.addfinalizer(fin)
 
-
 @pytest.fixture(scope="session")
 def wake_up(request, motion):
+    """
+    Robot wake up
+    """
     print "robot waking up..."
     motion.wakeUp()
-
     def fin():
         """tear down."""
         print "robot automatically going to rest position..."
         motion.rest()
     request.addfinalizer(fin)
 
-
-def remove_safety(motion):
+@pytest.fixture(scope="session")
+def remove_safety(request, motion):
     """
     Fixture which remove the robot safety
     """
     motion.setExternalCollisionProtectionEnabled("All", 0)
+    def fin():
+        """tear down."""
+        motion.setExternalCollisionProtectionEnabled("All", 1)
+    request.addfinalizer(fin)
 
 
 @pytest.fixture(scope="session")
-def remove_diagnosis(motion):
+def remove_diagnosis(request, motion):
     """
     Fixture which remove the robot diagnosis
     """
     motion.setDiagnosisEffectEnabled(0)
+    def fin():
+        """tear down."""
+        motion.setDiagnosisEffectEnabled(1)
+    request.addfinalizer(fin)
+
+
