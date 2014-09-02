@@ -230,7 +230,7 @@ def wake_up(request, motion):
     motion.wakeUp()
     def fin():
         """tear down."""
-        print "robot automatically going to rest position..."
+        print "\nrobot automatically going to rest position..."
         motion.rest()
     request.addfinalizer(fin)
 
@@ -242,7 +242,7 @@ def remove_safety(request, motion):
     motion.setExternalCollisionProtectionEnabled("All", 0)
     def fin():
         """tear down."""
-        motion.setExternalCollisionProtectionEnabled("All", 1)
+        motion.setExternalCollisionProtectionEnabled("All", 0)
     request.addfinalizer(fin)
 
 
@@ -254,7 +254,7 @@ def remove_diagnosis(request, motion):
     motion.setDiagnosisEffectEnabled(0)
     def fin():
         """tear down."""
-        motion.setDiagnosisEffectEnabled(1)
+        motion.setDiagnosisEffectEnabled(0)
     request.addfinalizer(fin)
 
 
