@@ -267,3 +267,13 @@ def remove_diagnosis(request, motion):
         """tear down."""
         motion.setDiagnosisEffectEnabled(0)
     request.addfinalizer(fin)
+
+
+@pytest.fixture(scope="session")
+def active_all_laser(dcm):
+    """
+    Turn on all the lasers
+    """
+    dcm.set(
+        ["Device/SubDeviceList/Platform/LaserSensor/Front/Reg/OperationMode/Actuator/Value",
+         "ClearAll", [[7.0, dcm.getTime(0)]]])

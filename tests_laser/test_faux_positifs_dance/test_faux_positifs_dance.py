@@ -100,8 +100,8 @@ def check_error(logger, config_test):
     return result
 
 
-def test_faux_positifs_dance(mem, remove_diagnosis, wakeup, dance,
-                             remove_safety, behavior_manager,
+def test_faux_positifs_dance(mem, dcm, remove_diagnosis, wakeup, dance,
+                             remove_safety, behavior_manager, active_all_laser,
                              get_lasers_x_segments, config_test):
     """
     Test function
@@ -114,4 +114,5 @@ def test_faux_positifs_dance(mem, remove_diagnosis, wakeup, dance,
     print "Test..."
     logger = record_laser_data(get_lasers_x_segments, dance_thread)
     result = check_error(logger, config_test)
+
     assert 'Fail' not in result
