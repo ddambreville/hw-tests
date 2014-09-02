@@ -7,6 +7,17 @@ Created on August 22, 2014
 import tools
 import pytest
 from subdevice import Laser
+import ConfigParser
+
+
+@pytest.fixture(scope="session")
+def config_test():
+    """
+    Reading test configuration file
+    """
+    cfg = ConfigParser.ConfigParser()
+    cfg.read('TestConfig.cfg')
+    return cfg
 
 
 @pytest.fixture(params=tools.use_section("TestConfig.cfg", "Dance"))
@@ -47,11 +58,11 @@ def get_lasers_x_segments(request, result_base_folder, dcm, mem):
             dico["Horizontal_X_seg" + str(i) + "_" + each] = Laser(
                 dcm, mem, each + "/Horizontal/Seg0" + str(i) + "/X/Sensor")
         for i in range(10, 16):
-            dico["Horizontal_seg" + str(i) + "_" + each] = Laser(
+            dico["Horizontal_X_seg" + str(i) + "_" + each] = Laser(
                 dcm, mem, each + "/Horizontal/Seg" + str(i) + "/X/Sensor")
     for each in v_sides:
         dico["Vertical_X_seg01_" + each] = Laser(
-            dcm, mem, each + "/Vertical/Seg01/X/Sensor")
+            dcm, mem, "Front/Vertical/" + each + "/Seg01/X/Sensor")
     for i in range(1, 4):
         dico["Shovel_X_seg" + str(i)] = Laser(
             dcm, mem, "Front/Shovel/Seg0" + str(i) + "/X/Sensor")
