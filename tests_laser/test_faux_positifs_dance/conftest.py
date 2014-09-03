@@ -67,17 +67,19 @@ def get_lasers_x_segments(request, result_base_folder, dcm, mem):
         dico["Shovel_X_seg" + str(i)] = Laser(
             dcm, mem, "Front/Shovel/Seg0" + str(i) + "/X/Sensor")
 
-    logger = tools.Logger()
-    dico["logger"] = logger
+    logger_dist = tools.Logger()
+    logger_error = tools.Logger()
+    dico["logger_dist"] = logger_dist
+    dico["logger_error"] = logger_error
 
     def fin():
         """Method executed after a joint test."""
-        result_file_path = "/".join(
+        result_file_path1 = "/".join(
             [
                 result_base_folder,
-                "Dance_test"
+                "Dance_test_distances"
             ]) + ".csv"
-        logger.log_file_write(result_file_path)
+        logger_dist.log_file_write(result_file_path1)
 
     request.addfinalizer(fin)
     return dico

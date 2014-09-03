@@ -11,7 +11,7 @@ from termcolor import colored
 
 def dance_motion(dance, behavior_manager):
     """
-    Dance function
+    Dance motion
     """
     apps_list = behavior_manager.getBehaviorNames()
     # print apps_list
@@ -30,9 +30,9 @@ def test_faux_positifs_dance(mem, remove_diagnosis, wakeup, dance,
 
 def record_laser_data(lasers_dico, thread):
     """
-    Record laser function
+    Record laser data
     """
-    logger = lasers_dico["logger"]
+    logger = lasers_dico["logger_dist"]
     h_sides = ["Front", "Left", "Right"]
     v_sides = ["Left", "Right"]
     while thread.isAlive():
@@ -52,11 +52,12 @@ def record_laser_data(lasers_dico, thread):
     return logger
 
 
-def check_error(logger, config_test):
+def check_error(lasers_dico, logger_d, config_test):
     """
-    function which log the laser distances
+    Check the test result
     """
     result = []
+    logger_e = lasers_dico["logger_error"]
     h_sides = ["Front", "Left", "Right"]
     v_sides = ["Left", "Right"]
     h_distance = float(config_test.get('Distance_Max', 'Horizontal'))
@@ -64,40 +65,34 @@ def check_error(logger, config_test):
     s_distance = float(config_test.get('Distance_Max', 'Shovel'))
     for side in h_sides:
         for i in range(1, 16):
-            for each in logger.log_dic["Horizontal_X_seg" + str(i) +
-                                       "_" + side]:
+            for each in logger_d.log_dic["Horizontal_X_seg" + str(i) +
+                                         "_" + side]:
                 if each < h_distance:
                     result.append('Fail')
-                    print "Horizontal_X_seg" + str(i) + "_" + side +\
-                        " : " + colored("Fail", "red")
-                    print "Distance  = " + str(each) + "m\n"
-                    break
+                    logger_e.log(
+                        ("Horizontal_X_seg" + str(i) + "_" + side, each))
                 else:
+
                     pass
 
     for side in v_sides:
-        for each in logger.log_dic["Vertical_X_seg01_" + side]:
+        for each in logger_d.log_dic["Vertical_X_seg01_" + side]:
             if each < v_distance:
                 result.append('Fail')
-                print "Vertical_X_seg01_" + side + ":" +\
-                    colored("Fail", "red")
-                print "Distance  = " + str(each) + "m\n"
-                break
+                logger_e.log(
+                    ("Vertical_X_seg01_" + side, each))
             else:
                 pass
 
     for i in range(1, 4):
-        for each in logger.log_dic["Shovel_X_seg" + str(i)]:
+        for each in logger_d.log_dic["Shovel_X_seg" + str(i)]:
             if each < s_distance:
                 result.append('Fail')
-                print "Shovel_X_seg" + str(i) + ":" +\
-                    colored("Fail", "red")
-                print "Distance  = " + str(each) + "m\n"
-                break
+                logger_e.log(
+                    ("Shovel_X_seg" + str(i), each))
             else:
                 pass
-
-    return result
+    return result, logger_e
 
 
 def test_faux_positifs_dance(mem, dcm, remove_diagnosis, wakeup, dance,
@@ -112,7 +107,11 @@ def test_faux_positifs_dance(mem, dcm, remove_diagnosis, wakeup, dance,
     print "Initialisation..."
     time.sleep(5)
     print "Test..."
-    logger = record_laser_data(get_lasers_x_segments, dance_thread)
-    result = check_error(logger, config_test)
-
+    logger_d = record_laser_data(get_lasers_x_segments, dance_thread)
+    result, logger_e = check_error(
+        get_lasers_x_segments, logger_d, config_test)
+    if 'Fail' in result:
+        print "NUMBER OF POSITIVES FALSE PER SEGMENT"
+        for each in logger_e.log_dic.keys():
+            print each + ":" + str(len(logger_e.log_dic[each]))
     assert 'Fail' not in result
