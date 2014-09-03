@@ -2,6 +2,15 @@
 Created on August 22, 2014
 
 @author: amartin
+
+This script tests the X coordinates of the horizontal lasers.
+Use the configuration file TestConfig.cfg to choose which
+horizontal laser you want to test.
+
+Initial condition : The robot must be in front of a wall
+or a flat object.
+Make a noaqi restart before the test to reset the odometry
+
 '''
 
 from tools import switch, case
@@ -64,7 +73,7 @@ def record_horizontaux_data(
 
 def check_error(logger, config_test):
     """
-    function which log the laser distances
+    Function which check the distance error
     """
     result = []
     debut = float(config_test.get('Test_Config', 'Distance_debut'))
@@ -74,7 +83,6 @@ def check_error(logger, config_test):
                 config_test.get('Horizontal_Tolerance', 'seg' + str(i)))
             if each > tolerance and logger.log_dic["robot_pos"][index] > debut:
                 result.append('Fail')
-                print logger.log_dic["robot_pos"][index]
                 print "Seg" + str(i) + " : " + colored("Fail", "red")
                 print "Position : " + str(logger.log_dic["robot_pos"][index])
                 print "Erreur : " + str(each) + "%"
@@ -92,7 +100,6 @@ def test_horizontaux_x(
     Test function which test the X distance
     of the horizontal lasers
     """
-    print colored(side, "yellow")
     if side == "Front":
         pos_0 = motion.getRobotPosition(True)[0]
         coord = 0

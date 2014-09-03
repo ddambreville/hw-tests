@@ -23,7 +23,7 @@ def config_test():
 @pytest.fixture(params=tools.use_section("TestConfig.cfg", "Horizontal_Side"))
 def side(request):
     """
-    Fixture which return the side to be tested
+    Fixture which return the side(s) to be tested
     """
     return request.param
 
@@ -31,7 +31,8 @@ def side(request):
 @pytest.fixture(scope="module")
 def get_horizontal_x_segments(request, result_base_folder, dcm, mem, side):
     """
-    Put the X coordinates of the horizontal laser in a dictionary
+    Return a dictionary with several objects for
+    each X coordinate of all horizontal segments
     """
     dico = {}
     for i in range(1, 10):
