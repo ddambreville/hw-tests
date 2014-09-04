@@ -48,7 +48,8 @@ def wakeup(request, motion):
 @pytest.fixture(scope="module")
 def get_lasers_x_segments(request, result_base_folder, dcm, mem):
     """
-    Put the X coordinates of each laser in a dictionary
+    Return a dictionary with several objects for
+    each X coordinate of all lasers segments
     """
     h_sides = ["Front", "Left", "Right"]
     v_sides = ["Left", "Right"]

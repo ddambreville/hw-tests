@@ -7,9 +7,10 @@ This script tests the X coordinates of the horizontal lasers.
 Use the configuration file TestConfig.cfg to choose which
 horizontal laser you want to test.
 
-Initial condition : The robot must be in front of a wall
-or a flat object.
-Make a noaqi restart before the test to reset the odometry
+[Initial conditions]
+The robot must be in front of a wall or a flat object.
+Make a noaqi restart before the test to reset the odometry.
+>>>>>>> df9f636... Update of horizontal X test scripts
 
 '''
 
@@ -23,8 +24,7 @@ def robot_motion(motion, pos_0, coord, side, config_test):
     Thread which make the robot move
     according to the side to tested
     """
-    # On recupere la distance a parcourir dans le fichier de config
-    distance = float(config_test.get('Test_Config', 'Distance_Parcours'))
+    distance = float(config_test.get('Test_Config', 'Distance_travel'))
     while abs(motion.getRobotPosition(True)[coord] - pos_0) < distance:
         print abs(motion.getRobotPosition(True)[coord] - pos_0)
         while switch(side):
@@ -44,10 +44,10 @@ def record_horizontaux_data(
         get_horizontal_x_segments, motion, side, pos_0, coord,
         thread, config_test):
     """
-    Function which log the laser distances
+    Function which logs the laser distances
     """
     logger = get_horizontal_x_segments["logger"]
-    debut = float(config_test.get('Test_Config', 'Distance_Debut'))
+    debut = float(config_test.get('Test_Config', 'Distance_begin'))
     dist = abs(motion.getRobotPosition(True)[coord] - pos_0)
     offset_front = float(config_test.get('Test_Config', 'Offset_Front'))
     offset_side = float(config_test.get('Test_Config', 'Offset_Side'))
@@ -67,26 +67,35 @@ def record_horizontaux_data(
         for i in range(0, len(logger.log_dic["robot_pos"])):
             logger.log(("ErreurSeg" + str(seg), (abs(
                 logger.log_dic["robot_pos"][i] - logger.log_dic["seg" + str(
-                    seg)][i]) / logger.log_dic["robot_pos"][i]) * 10))
+                    seg)][i]) / logger.log_dic["robot_pos"][i]) * 100))
     return logger
+
+
+def print_error(logger, index, each, i):
+    """
+    print error message
+    """
+    print "Seg" + str(i) + " : " + colored("Fail", "red")
+    print "Position : " + str(logger.log_dic["robot_pos"][index])
+    print "Erreur : " + str(each) + "%"
 
 
 def check_error(logger, config_test):
     """
-    Function which check the distance error
+    Function which checks the distance error
+    at the end of the test
     """
     result = []
-    debut = float(config_test.get('Test_Config', 'Distance_debut'))
     for i in range(1, 16):
-        for index, each in enumerate(logger.log_dic["ErreurSeg" + str(i)]):
+        for index, each in enumerate(logger.log_dic["seg" + str(i)]):
             tolerance = float(
                 config_test.get('Horizontal_Tolerance', 'seg' + str(i)))
-            if each > tolerance and logger.log_dic["robot_pos"][index] > debut:
+            if each > tolerance and logger.log_dic["robot_pos"][index] < 1:
                 result.append('Fail')
-                print "Seg" + str(i) + " : " + colored("Fail", "red")
-                print "Position : " + str(logger.log_dic["robot_pos"][index])
-                print "Erreur : " + str(each) + "%"
-                break
+                print_error(logger, index, each, i)
+            elif each > tolerance and logger.log_dic["seg" + str(i)][index] < 6:
+                result.append('Fail')
+                print_error(logger, index, each, i)
             elif index == len(logger.log_dic["ErreurSeg" + str(i)]) - 1:
                 result.append('Pass')
                 print "Seg" + str(i) + " : " + colored("Pass", "green")
@@ -97,7 +106,7 @@ def test_horizontaux_x(
     dcm, mem, motion, wakeup, side, get_horizontal_x_segments, config_test,
         remove_safety, remove_diagnosis):
     """
-    Test function which test the X distance
+    Test main function which tests the X distance
     of the horizontal lasers
     """
     if side == "Front":

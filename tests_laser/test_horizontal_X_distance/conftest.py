@@ -23,7 +23,7 @@ def config_test():
 @pytest.fixture(params=tools.use_section("TestConfig.cfg", "Horizontal_Side"))
 def side(request):
     """
-    Fixture which return the side(s) to be tested
+    Fixture which returns the side(s) to be tested
     """
     return request.param
 

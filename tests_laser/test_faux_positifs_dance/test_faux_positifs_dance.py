@@ -2,11 +2,19 @@
 Created on August 22, 2014
 
 @author: amartin
+
+[Description]
+This script tests there aren't positives false on
+the lasers (horizontal, vertical & shovel) during a dance.
+
+[Initial conditions]
+Place the robot in a free area, without anything around him.
+Check that the dance(s) in the config file (TestConfig.cfg)
+is(are) correctly installed.
 '''
 
 import threading
 import time
-from termcolor import colored
 
 
 def dance_motion(dance, behavior_manager):
@@ -60,9 +68,9 @@ def check_error(lasers_dico, logger_d, config_test):
     logger_e = lasers_dico["logger_error"]
     h_sides = ["Front", "Left", "Right"]
     v_sides = ["Left", "Right"]
-    h_distance = float(config_test.get('Distance_Max', 'Horizontal'))
-    v_distance = float(config_test.get('Distance_Max', 'Vertical'))
-    s_distance = float(config_test.get('Distance_Max', 'Shovel'))
+    h_distance = float(config_test.get('Distance_Min', 'Horizontal'))
+    v_distance = float(config_test.get('Distance_Min', 'Vertical'))
+    s_distance = float(config_test.get('Distance_Min', 'Shovel'))
     for side in h_sides:
         for i in range(1, 16):
             for each in logger_d.log_dic["Horizontal_X_seg" + str(i) +
