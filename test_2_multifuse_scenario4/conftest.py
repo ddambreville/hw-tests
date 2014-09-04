@@ -2,32 +2,29 @@ import pytest
 import subdevice
 import tools
 
-@pytest.fixture(params=tools.use_section("multifuse_scenario4.cfg", "Test"))
-def fuse_temperature(request, dcm, mem):
-    """
-    Create an object corresponding to fuse temperature sensor for each fuse.
-    """
-    return subdevice.FuseTemperature(dcm, mem, request.param)
 
 @pytest.fixture(params=tools.use_section("multifuse_scenario4.cfg", "Test"))
-def fuse_current(request, dcm, mem):
-    """Create an object corresponding to fuse current sensor for each fuse."""
-    return subdevice.FuseCurrent(dcm, mem, request.param)
+def fuse(request, dcm, mem):
+    fuse_temperature = subdevice.FuseTemperature(dcm, mem, request.param)
+    fuse_current = subdevice.FuseCurrent(dcm, mem, request.param)
+    fuse_voltage = subdevice.FuseVoltage(dcm, mem, request.param)
+    dico_to_return = {"FuseTemperature": fuse_temperature,
+                      "FuseCurrent": fuse_current,
+                      "FuseVoltage": fuse_voltage}
+    return dico_to_return
 
-@pytest.fixture(params=tools.use_section("multifuse_scenario4.cfg", "Test"))
-def fuse_voltage(request, dcm, mem):
-    """Create an object corresponding to fuse voltage sensor for each fuse."""
-    return subdevice.FuseVoltage(dcm, mem, request.param)
 
 @pytest.fixture(scope="module")
 def multi_fuseboard_ambiant_tmp(dcm, mem):
     """Object creation of ambiant temperature sensor."""
     return subdevice.MultiFuseBoardAmbiantTemperature(dcm, mem)
 
+
 @pytest.fixture(scope="module")
 def multi_fuseboard_total_current(dcm, mem):
     """Object creation of total current sensor."""
     return subdevice.MultiFuseBoardTotalCurrent(dcm, mem)
+
 
 @pytest.fixture(scope="module")
 def test_time():
@@ -36,7 +33,8 @@ def test_time():
         "multifuse_scenario4.cfg",
         "Parameters",
         "TestTime"
-        ))
+    ))
+
 
 @pytest.fixture(scope="module")
 def joint_limit_extension():
@@ -45,6 +43,4 @@ def joint_limit_extension():
         "multifuse_scenario4.cfg",
         "Parameters",
         "jointLimitExtension"
-        ))
-
-
+    ))
