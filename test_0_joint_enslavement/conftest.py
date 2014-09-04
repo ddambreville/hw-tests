@@ -15,6 +15,7 @@ def test_objects_dico(request, result_base_folder, dcm, mem):
     joint_position_sensor = subdevice.JointPositionSensor(
         dcm, mem, request.param)
     logger = tools.Logger()
+
     def fin():
         """Method executed after a joint test."""
         result_file_path = "/".join(
@@ -22,17 +23,18 @@ def test_objects_dico(request, result_base_folder, dcm, mem):
                 result_base_folder,
                 joint_position_actuator.subdevice_type,
                 joint_position_actuator.short_name
-                ]) + ".csv"
+            ]) + ".csv"
         logger.log_file_write(result_file_path)
 
     request.addfinalizer(fin)
     # creating a dictionnary with all the objects
     dico_object = {
-        "jointActuator":joint_position_actuator,
-        "jointSensor":joint_position_sensor,
-        "logger":logger
-        }
+        "jointActuator": joint_position_actuator,
+        "jointSensor": joint_position_sensor,
+        "logger": logger
+    }
     return dico_object
+
 
 @pytest.fixture(scope="module")
 def test_leg_dico(request, result_base_folder, dcm, mem):
@@ -50,6 +52,7 @@ def test_leg_dico(request, result_base_folder, dcm, mem):
     kneepitch_position_sensor = subdevice.JointPositionSensor(
         dcm, mem, "KneePitch")
     logger = tools.Logger()
+
     def fin():
         """Method executed after a joint test."""
         result_file_path = "/".join(
@@ -57,19 +60,20 @@ def test_leg_dico(request, result_base_folder, dcm, mem):
                 result_base_folder,
                 hippitch_position_actuator.subdevice_type,
                 "Leg"
-                ]) + ".csv"
+            ]) + ".csv"
         logger.log_file_write(result_file_path)
 
     request.addfinalizer(fin)
     # creating a dictionnary with all the objects
     dico_object = {
-        "hipActuator":hippitch_position_actuator,
-        "hipSensor":hippitch_position_sensor,
-        "kneeActuator":kneepitch_position_actuator,
-        "kneeSensor":kneepitch_position_sensor,
-        "logger":logger
-        }
+        "hipActuator": hippitch_position_actuator,
+        "hipSensor": hippitch_position_sensor,
+        "kneeActuator": kneepitch_position_actuator,
+        "kneeSensor": kneepitch_position_sensor,
+        "logger": logger
+    }
     return dico_object
+
 
 @pytest.fixture(params=tools.use_section("joint_enslavement.cfg", "JulietteWheels"))
 def test_wheels_dico(request, result_base_folder, dcm, mem):
@@ -83,6 +87,7 @@ def test_wheels_dico(request, result_base_folder, dcm, mem):
     wheel_speed_sensor = subdevice.WheelSpeedSensor(
         dcm, mem, request.param)
     logger = tools.Logger()
+
     def fin():
         """Method executed after a joint test."""
         result_file_path = "/".join(
@@ -90,17 +95,18 @@ def test_wheels_dico(request, result_base_folder, dcm, mem):
                 result_base_folder,
                 wheel_speed_actuator.subdevice_type,
                 wheel_speed_actuator.short_name
-                ]) + ".csv"
+            ]) + ".csv"
         logger.log_file_write(result_file_path)
 
     request.addfinalizer(fin)
     # creating a dictionnary with all the objects
     dico_object = {
-        "wheelActuator":wheel_speed_actuator,
-        "wheelSensor":wheel_speed_sensor,
-        "logger":logger
-        }
+        "wheelActuator": wheel_speed_actuator,
+        "wheelSensor": wheel_speed_sensor,
+        "logger": logger
+    }
     return dico_object
+
 
 @pytest.fixture(scope="module")
 def test_time():
@@ -108,15 +114,16 @@ def test_time():
     return int(tools.read_parameter(
         "joint_enslavement.cfg", "Parameters", "TestTime"))
 
+
 @pytest.fixture(scope="module")
 def test_limit():
     """It returns the limit error in degrees."""
     return float(tools.read_parameter(
         "joint_enslavement.cfg", "Parameters", "TestLimit"))
 
+
 @pytest.fixture(scope="module")
 def test_wheels_limit():
     """It returns the limit error in radians per seconds."""
     return float(tools.read_parameter(
         "joint_enslavement.cfg", "Parameters", "TestWheelsLimit"))
-
