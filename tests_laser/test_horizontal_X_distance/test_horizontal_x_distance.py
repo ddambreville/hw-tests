@@ -87,15 +87,17 @@ def check_error(logger, config_test):
     """
     result = []
     for i in range(1, 16):
-        for index, each in enumerate(logger.log_dic["seg" + str(i)]):
+        for index, each in enumerate(logger.log_dic["ErreurSeg" + str(i)]):
             tolerance = float(
                 config_test.get('Horizontal_Tolerance', 'seg' + str(i)))
             if each > tolerance and logger.log_dic["robot_pos"][index] < 1:
                 result.append('Fail')
                 print_error(logger, index, each, i)
+                break
             elif each > tolerance and logger.log_dic["seg" + str(i)][index] < 6:
                 result.append('Fail')
                 print_error(logger, index, each, i)
+                break
             elif index == len(logger.log_dic["ErreurSeg" + str(i)]) - 1:
                 result.append('Pass')
                 print "Seg" + str(i) + " : " + colored("Pass", "green")
