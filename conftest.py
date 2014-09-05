@@ -47,6 +47,7 @@ def motion(robot_ip, port):
     except RuntimeError:
         return "MotionKilled"
 
+
 @pytest.fixture(scope="session", autouse=False)
 def kill_motion(motion):
     """
@@ -186,11 +187,13 @@ def disable_push_recovery(request, motion):
     """
     print "disabling push recovery..."
     motion.setPushRecoveryEnabled(False)
+
     def fin():
         """tear down."""
         print "enabling push recovery..."
         motion.setPushRecoveryEnabled(True)
     request.addfinalizer(fin)
+
 
 @pytest.fixture(scope="session")
 def disable_arms_external_collisions(request, motion):
@@ -201,11 +204,13 @@ def disable_arms_external_collisions(request, motion):
     """
     print "disabling arms external collision..."
     motion.setExternalCollisionProtectionEnabled('Arms', False)
+
     def fin():
         """tear down."""
         print "enabling arms external collision..."
         motion.setExternalCollisionProtectionEnabled('Arms', True)
     request.addfinalizer(fin)
+
 
 @pytest.fixture(scope="session")
 def disable_fall_manager(request, motion):
@@ -215,11 +220,13 @@ def disable_fall_manager(request, motion):
     """
     print "disabling fall manager..."
     motion.setExternalCollisionProtectionEnabled('Arms', False)
+
     def fin():
         """tear down."""
         print "enabling fall manager..."
         motion.setExternalCollisionProtectionEnabled('Arms', True)
     request.addfinalizer(fin)
+
 
 @pytest.fixture(scope="session")
 def wake_up(request, motion):
@@ -228,11 +235,13 @@ def wake_up(request, motion):
     """
     print "robot waking up..."
     motion.wakeUp()
+
     def fin():
         """tear down."""
         print "\nrobot automatically going to rest position..."
         motion.rest()
     request.addfinalizer(fin)
+
 
 @pytest.fixture(scope="session")
 def remove_safety(request, motion):
@@ -240,6 +249,7 @@ def remove_safety(request, motion):
     Fixture which remove the robot safety
     """
     motion.setExternalCollisionProtectionEnabled("All", 0)
+
     def fin():
         """tear down."""
         motion.setExternalCollisionProtectionEnabled("All", 0)
@@ -252,9 +262,8 @@ def remove_diagnosis(request, motion):
     Fixture which remove the robot diagnosis
     """
     motion.setDiagnosisEffectEnabled(0)
+
     def fin():
         """tear down."""
         motion.setDiagnosisEffectEnabled(0)
     request.addfinalizer(fin)
-
-
