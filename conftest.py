@@ -133,6 +133,7 @@ def stiff_robot(request, dcm, mem, rest_pos):
 
     def fin():
         """Method automatically executed at the end of the test."""
+        dcm.set(["Hardness", "Merge", [[1.0, dcm.getTime(0)]]])
         subdevice.multiple_set(dcm, mem, rest_pos, wait=True)
         dcm.set(["Hardness", "Merge", [[0.1, dcm.getTime(0)]]])
         dcm.set(["Hardness", "Merge", [[0., dcm.getTime(1000)]]])
