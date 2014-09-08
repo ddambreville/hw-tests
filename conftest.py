@@ -173,7 +173,7 @@ def result_base_folder(system, mem):
         Sec=sec
     )
 
-    return return "Results" + "/" + result_folder_name
+    return "Results" + "/" + result_folder_name
 
 
 @pytest.fixture(scope="session")
