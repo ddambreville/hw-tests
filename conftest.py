@@ -173,10 +173,7 @@ def result_base_folder(system, mem):
         Sec=sec
     )
 
-    return tools.read_parameter(
-        "../../global_test_configuration/parameters.cfg",
-        "General",
-        "ResultsFolder") + "/" + result_folder_name
+    return return "Results" + "/" + result_folder_name
 
 
 @pytest.fixture(scope="session")
