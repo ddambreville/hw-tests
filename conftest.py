@@ -19,6 +19,12 @@ def pytest_addoption(parser):
         default=9559,
         help="Robot port"
     )
+    parser.addoption(
+        "--plot",
+        action="store",
+        default=False,
+        help="Choose True if you want real time plot."
+    )
 
 
 @pytest.fixture(scope="session")
@@ -31,6 +37,12 @@ def robot_ip(request):
 def port(request):
     """Returns port."""
     return request.config.getoption("--port")
+
+
+@pytest.fixture(scope="session")
+def plot(request):
+    """Enable real time plot."""
+    return request.config.getoption("--plot")
 
 
 @pytest.fixture(scope="session")
