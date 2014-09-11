@@ -44,15 +44,11 @@ def parameters():
     limit_factor = float(tools.read_parameter(
         "temperature_protection.cfg", "Parameters", "LimitFactor"))
 
-    temperature_coeffs = \
-        [float(x)
-         for x in tools.read_list_file("motorboard_temperature_coeffs.cfg")]
     dico_to_return = {
         "test_time": test_time,
         "test_time_limit": test_time_limit,
         "limit_extension": limit_extension,
         "sa_nb_points": sa_nb_points,
-        "temperature_coeffs": temperature_coeffs,
         "limit_factor": limit_factor
     }
     return dico_to_return

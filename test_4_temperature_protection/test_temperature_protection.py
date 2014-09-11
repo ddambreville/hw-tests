@@ -84,7 +84,7 @@ class TestCurrentLimitation:
         else:
             joint_position_actuator.qvalue = (joint_new_maximum, 1000)
 
-        while flag_loop is True and timer.is_time_not_out():
+        while flag_loop is True:
 
             joint_temperature = joint_temperature_sensor.value
             joint_current = joint_current_sensor.value
@@ -100,16 +100,9 @@ class TestCurrentLimitation:
             if joint_board not in \
                 ("HipBoard", "ThighBoard", "BackPlatformBoard"):
                 if joint_temperature > joint_temperature_min:
-                    overheat = joint_temperature - joint_temperature_min
-
-                    if overheat > delta_temperature:
-                        overheat = delta_temperature
-                    if overheat < 1:
-                        overheat = 1
-
-                    max_allowed_current = \
-                        parameters["temperature_coeffs"][
-                            int(overheat) - 1] * joint_current_max / 1000.
+                    delta_max = joint_temperature_max - joint_temperature
+                    max_allowed_current = (
+                        (delta_max) / (delta_temperature)) * joint_current_max
                 else:
                     max_allowed_current = joint_current_max
             else:
@@ -142,8 +135,13 @@ class TestCurrentLimitation:
             if timer_limit.is_time_out() and not flag_max_current_exceeded:
                 flag_joint = False
 
-            if joint_temperature > joint_temperature_max + 3:
+            if joint_temperature > joint_temperature_max + 2:
                 flag_loop = False
+
+            # if joint temperature higher than a limit value, stiffness must
+            # be set to 0, so that joint current must be null
+            if joint_temperature > joint_temperature_max and \
+                joint_current != 0.0:
                 flag_joint = False
 
             logger.log(
@@ -165,7 +163,7 @@ class TestCurrentLimitation:
             if plot:
                 plot_server.add_point(
                     "Hardness", dcm_time, joint_hardness_value)
-                plot_server.add_point("Current", dcm_time, joint_current)
+                #plot_server.add_point("Current", dcm_time, joint_current)
                 plot_server.add_point("CurrentSA", dcm_time, joint_current_sa)
                 plot_server.add_point(
                     "MaxAllowedCurrent", dcm_time, max_allowed_current)
