@@ -31,11 +31,6 @@ def dance_motion(dance, behavior_manager):
             time.sleep(0.5)
 
 
-def test_faux_positifs_dance(mem, remove_diagnosis, wakeup, dance,
-                             remove_safety, behavior_manager):
-            time.sleep(0.5)
-
-
 def record_laser_data(lasers_dico, thread):
     """
     Record laser data
@@ -103,9 +98,10 @@ def check_error(lasers_dico, logger_d, config_test):
     return result, logger_e
 
 
-def test_faux_positifs_dance(mem, dcm, remove_diagnosis, wakeup, dance,
-                             remove_safety, behavior_manager, active_all_laser,
-                             get_lasers_x_segments, config_test):
+def test_faux_positifs_dance(
+    check_error_laser, mem, dcm, remove_diagnosis, wakeup, dance,
+    remove_safety, behavior_manager, active_all_laser,
+        get_lasers_x_segments, config_test):
     """
     Test function
     """
