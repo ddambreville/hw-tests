@@ -105,8 +105,8 @@ def check_error(logger, config_test):
 
 
 def test_horizontaux_x(
-    dcm, mem, motion, wakeup, side, get_horizontal_x_segments, config_test,
-        remove_safety, remove_diagnosis):
+    check_error_laser, dcm, mem, motion, wakeup, side,
+        get_horizontal_x_segments, config_test, remove_safety, remove_diagnosis):
     """
     Test main function which tests the X distance
     of the horizontal lasers
