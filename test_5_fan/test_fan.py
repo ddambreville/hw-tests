@@ -7,7 +7,7 @@ import socket_connection
 
 
 @pytest.mark.usefixtures("kill_motion", "stop_fans")
-class TestJointEnslavement:
+class TestFan:
 
     def test_fan_01(self, dcm, mem, plot, test_time, cycle_number,
                     result_base_folder, threshold):
