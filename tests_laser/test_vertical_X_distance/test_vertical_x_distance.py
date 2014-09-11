@@ -4,9 +4,7 @@ Created on September 5, 2014
 @author: amartin
 
 [Description]
-This script tests the X coordinates of the horizontal lasers.
-Use the configuration file TestConfig.cfg to choose which
-horizontal laser you want to test.
+This script tests the X coordinates of the vertical lasers.
 
 [Initial conditions]
 The robot must be in front of a wall or a flat object.
@@ -29,7 +27,7 @@ def robot_motion(motion, pos_0, config_test):
     motion.stopMove()
 
 
-def record_horizontaux_data(
+def record_vertical_data(
         get_vertical_x_segments, motion, pos_0,
         thread, config_test):
     """
@@ -93,8 +91,8 @@ def check_error(logger, config_test):
 
 
 def test_verticaux_x(
-    dcm, mem, motion, wakeup, get_vertical_x_segments, config_test,
-        remove_safety, remove_diagnosis):
+    check_error_laser, dcm, mem, motion, wakeup, get_vertical_x_segments,
+        config_test, remove_safety, remove_diagnosis):
     """
     Test main function which tests the X distance
     of the horizontal lasers
@@ -103,7 +101,7 @@ def test_verticaux_x(
     motion_thread = threading.Thread(target=robot_motion, args=(
         motion, pos_0, config_test))
     motion_thread.start()
-    logger = record_horizontaux_data(
+    logger = record_vertical_data(
         get_vertical_x_segments, motion, pos_0, motion_thread,
         config_test)
     result = check_error(logger, config_test)
