@@ -6,7 +6,7 @@ import socket_connection
 
 
 @pytest.mark.usefixtures("kill_motion", "stiff_robot")
-class TestCurrentLimitation:
+class TestTemperatureProtection:
 
     def test_joint_current_limitation(self, dcm, mem, parameters,
                                       test_objects_dico, result_base_folder,
@@ -15,6 +15,7 @@ class TestCurrentLimitation:
         flag_joint = True
         flag_loop = True
         flag_max_current_exceeded = False
+        flag_max_temperature_exceeded = False
 
         # plot_server initialisation
         if plot:
@@ -40,7 +41,7 @@ class TestCurrentLimitation:
         joint_initial_maximum = joint_position_actuator.maximum
         joint_initial_minimum = joint_position_actuator.minimum
 
-        # put joint to its initial maximum in 3 seconds
+        # put joint to its initial mechanical stop in 3 seconds
         if joint_position_actuator.short_name in ("HipPitch", "RShoulderRoll"):
             joint_position_actuator.qvalue = (joint_initial_minimum, 3000)
         else:
@@ -79,12 +80,14 @@ class TestCurrentLimitation:
             timer_limit = tools.Timer(dcm, test_params["test_time_limit"])
 
         # set position actuator out of the joint mechanical stop
-        if joint_position_actuator.short_name in ("HipPitch", "RShoulderRoll"):
+        if joint_position_actuator.short_name in \
+            ("HipPitch", "RShoulderRoll", "HipRoll"):
             joint_position_actuator.qvalue = (joint_new_minimum, 1000)
         else:
             joint_position_actuator.qvalue = (joint_new_maximum, 1000)
 
-        while flag_loop is True:
+        flag_first_iteration = True
+        while flag_loop is True and timer.is_time_not_out():
 
             joint_temperature = joint_temperature_sensor.value
             joint_current = joint_current_sensor.value
@@ -108,41 +111,63 @@ class TestCurrentLimitation:
             else:
                 max_allowed_current = joint_current_max
 
-            # defining current regulation limits
-            current_limit_high = max_allowed_current + \
-                parameters["limit_factor"] * \
-                (max_allowed_current - joint_current_min)
-            current_limit_low = max_allowed_current - \
-                parameters["limit_factor"] * \
-                (max_allowed_current - joint_current_min)
+            # defining old max current as first calculated max current if
+            # it is the first loop iteration
+            if flag_first_iteration is True:
+                old_mac = max_allowed_current
+                flag_first_iteration = False
 
-            # setting flag if max current exceeded
-            if joint_current_sa > max_allowed_current:
+            # defining current regulation limits
+            current_limit_high = max_allowed_current * 1.1
+            current_limit_low = max_allowed_current * 0.85
+
+            # setting flag to True if 95 percent of max current is exceeded
+            if joint_current_sa > 0.95 * max_allowed_current:
                 flag_max_current_exceeded = True
 
+            if max_allowed_current != old_mac:
+                timer_current_decrease = tools.Timer(dcm, 100)
+
             # averaged current has not to exceed limit high
-            if joint_current_sa > current_limit_high:
+            if joint_current_sa > current_limit_high and \
+                timer_current_decrease.is_time_out():
                 flag_joint = False
-                flag_loop = False
+                print "current high limit exceeded"
 
             # once max current is exceeded, current hasn't to be lower than
             # limit low
             if flag_max_current_exceeded and \
                 joint_current_sa < current_limit_low:
                 flag_joint = False
+                print "current has been lower than low limit"
 
             # after time limit, current has to have exceeded max current
             if timer_limit.is_time_out() and not flag_max_current_exceeded:
                 flag_joint = False
+                print "current has not exceeded 95 percent of max allowed"
 
             if joint_temperature > joint_temperature_max + 2:
                 flag_loop = False
+                print "temperature too high (max+2)"
 
             # if joint temperature higher than a limit value, stiffness must
-            # be set to 0, so that joint current must be null
-            if joint_temperature > joint_temperature_max and \
-                joint_current != 0.0:
+            # be set to 0, so that joint current must be null after 100ms.
+            if flag_max_temperature_exceeded is False and \
+                joint_temperature > joint_temperature_max:
+                flag_max_temperature_exceeded = True
+                timer_max = tools.Timer(dcm, 100)
+                print "max temperature exceeded a first time"
+
+            if flag_max_temperature_exceeded and timer_max.is_time_out() and \
+                joint_current != 0:
                 flag_joint = False
+                flag_loop = False  # out of the test loop
+                print "max temperature exceeded and current is not null"
+
+            if flag_max_temperature_exceeded and joint_current == 0:
+                flag_loop = False
+
+            old_mac = max_allowed_current
 
             logger.log(
                 ("Time", dcm_time),
