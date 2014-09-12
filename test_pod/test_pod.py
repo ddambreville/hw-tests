@@ -40,7 +40,7 @@ class PodTest(object):
     def unstiff_parts(self, section):
         joints = tools.use_section("parts.cfg", section)
         for name in joints:
-            #print(name)
+            # print(name)
             joint_hardness = subdevice.JointHardnessActuator(
                 self.dcm, self.mem, name)
             joint_hardness.qqvalue = 0.
@@ -54,12 +54,12 @@ class PodTest(object):
             tools.wait(self.dcm, 20000)
 
     def cycling(self):
-        while self._stop_cycling == False: 
+        while self._stop_cycling == False:
             if self.cyling_flag == 0:
                 print(str(self.cycling_step))
                 if self.kneepitch_temperature.value < 60:
                     print "KneePitch cycling"
-                    cycling_step = 0
+                    self.cycling_step = 0
                     self._set_cycling_stop_flag(False)
                     self.kneepitch_cycling()
                 else:
@@ -69,7 +69,7 @@ class PodTest(object):
                 print(str(self.cycling_step))
                 if self.hippitch_temperature.value < 60:
                     print "HipPitch cycling"
-                    cycling_step = 0
+                    self.cycling_step = 0
                     self._set_cycling_stop_flag(False)
                     self.hippitch_cycling()
                 else:
@@ -79,7 +79,7 @@ class PodTest(object):
                 print(str(self.cycling_step))
                 if self.hiproll_temperature.value < 60:
                     print "HipRoll cycling"
-                    cycling_step = 0
+                    self.cycling_step = 0
                     self._set_cycling_stop_flag(False)
                     self.hiproll_cycling()
                 else:
@@ -93,7 +93,7 @@ class PodTest(object):
         self.hiproll_position_actuator.qvalue = (0., 3000)
         tools.wait(self.dcm, 3100)
         self.hippitch_hardness_actuator.qqvalue = 0.
-        
+
         while self.kneepitch_temperature.value < 60 and\
                 self._stop_cycling == False:
             self.kneepitch_position_actuator.qvalue = (-0.2, 2000)
@@ -102,7 +102,7 @@ class PodTest(object):
             tools.wait(self.dcm, 2100)
             print(str(self.kneepitch_temperature.value))
 
-            if abs(self.hippitch_position_actuator.value -\
+            if abs(self.hippitch_position_actuator.value -
                    self.hippitch_position_sensor.value) > math.radians(5.):
                 print "Error"
                 self.kneepitch_position_actuator.qvalue = (0., 2000)
@@ -111,7 +111,7 @@ class PodTest(object):
                 self.hippitch_position_actuator.qvalue = (0., 1000)
                 tools.wait(self.dcm, 1100)
                 self.hippitch_hardness_actuator.qqvalue = 0.
-                
+
         self.cyling_flag = 1
         self.kneepitch_position_actuator.qvalue = (0., 3000)
         tools.wait(self.dcm, 3100)
@@ -133,8 +133,8 @@ class PodTest(object):
             tools.wait(self.dcm, 1100)
             print(str(self.hippitch_temperature.value))
 
-            if abs(self.kneepitch_position_actuator.value -\
-                self.kneepitch_position_sensor.value) > math.radians(5.):
+            if abs(self.kneepitch_position_actuator.value -
+                   self.kneepitch_position_sensor.value) > math.radians(5.):
                 self.hippitch_position_actuator.qvalue = (0., 2000)
                 tools.wait(self.dcm, 2100)
                 self.kneepitch_hardness_actuator.qqvalue = 1.
@@ -165,9 +165,9 @@ class PodTest(object):
             tools.wait(self.dcm, 1100)
             print(str(self.hiproll_temperature.value))
 
-            if abs(self.hippitch_position_actuator.value -\
+            if abs(self.hippitch_position_actuator.value -
                    self.hippitch_position_sensor.value) > math.radians(5.) or\
-                   (self.kneepitch_position_actuator.value -\
+                  (self.kneepitch_position_actuator.value -
                    self.kneepitch_position_sensor.value) > math.radians(5.):
                 self.hiproll_position_actuator.qvalue = (0., 1000)
                 tools.wait(self.dcm, 1100)
@@ -198,11 +198,12 @@ class PodTest(object):
     def _set_stop_cycling(self, status):
         self._stop_cycling = bool(status)
 
-    cycling_stop_flag = property(_get_cycling_stop_flag, _set_cycling_stop_flag)
+    cycling_stop_flag = property(
+        _get_cycling_stop_flag, _set_cycling_stop_flag)
     stop_cycling = property(_get_stop_cycling, _set_stop_cycling)
 
 
-def test_pod_damage(dcm, mem, wake_up_pos, rest_pos, kill_motion, stiff_robot, test_time):
+def test_pod_damage(dcm, mem, wake_up_pos, kill_motion, stiff_robot, test_time):
     # Objects creation
     robot_on_charging_station = subdevice.ChargingStationSensor(dcm, mem)
     battery_current = subdevice.BatteryCurrentSensor(dcm, mem)
@@ -222,7 +223,7 @@ def test_pod_damage(dcm, mem, wake_up_pos, rest_pos, kill_motion, stiff_robot, t
     my_behavior.start()
 
     # Timer creation just before test loop
-    timer = tools.Timer(dcm, test_time*1000)
+    timer = tools.Timer(dcm, test_time * 1000)
     test_timer = 0.
     time_delete = 0.
     while timer.is_time_not_out():
@@ -238,12 +239,12 @@ def test_pod_damage(dcm, mem, wake_up_pos, rest_pos, kill_motion, stiff_robot, t
 
         # Si arret, non log des donnees
         else:
-            #print "Test en pause"
+            # print "Test en pause"
             time_delete = timer.dcm_time() - test_timer
             #print("Test_delete = " + str(time_delete / 1000))
 
     pod.stop_cycling = True
     print("Robot moved during " + str(test_timer / 1000) + " seconds\n")
     logger.log_file_write("test_pod.csv")
-    
+
     assert flag
