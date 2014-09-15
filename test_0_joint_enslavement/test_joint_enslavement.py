@@ -101,30 +101,36 @@ class TestEnslavement:
 
         # Test loop
         while timer.is_time_not_out():
-            error_hip = \
-                hippitch_position_actuator.value - \
-                hippitch_position_sensor.value
-            error_knee = \
-                kneepitch_position_actuator.value - \
-                kneepitch_position_sensor.value
+            hip_act_rad = hippitch_position_actuator.value
+            hip_act_deg = math.degrees(hip_act_rad)
+            hip_sensor_rad = hippitch_position_sensor.value
+            hip_sensor_deg = math.degrees(hip_sensor_rad)
+
+            knee_act_rad = kneepitch_position_actuator.value
+            knee_act_deg = math.degrees(knee_act_rad)
+            knee_sensor_rad = kneepitch_position_sensor.value
+            knee_sensor_deg = math.degrees(knee_sensor_rad)
+
+            error_hip = hip_act_deg - hip_sensor_deg
+            error_knee = knee_act_deg - knee_sensor_deg
 
             logger.log(
                 ("Time", timer.dcm_time() / 1000.),
-                ("HipPitchActuator",
-                 math.degrees(hippitch_position_actuator.value)),
-                ("HipPitchSensor", math.degrees(
-                    hippitch_position_sensor.value)),
-                ("ErrorHip", math.degrees(error_hip)),
-                ("KneePitchActuator",
-                 math.degrees(kneepitch_position_actuator.value)),
-                ("KneePitchSensor",
-                 math.degrees(kneepitch_position_sensor.value)),
-                ("ErrorKnee", math.degrees(error_knee)),
+                ("HipPitchActuator", hip_act_deg),
+                ("HipPitchSensor", hip_sensor_deg),
+                ("ErrorHip", error_hip),
+                ("KneePitchActuator", knee_act_deg),
+                ("KneePitchSensor", knee_sensor_deg),
+                ("ErrorKnee", error_knee),
                 ("Eps", test_limit),
-                ("-Eps", test_limit * -1.))
+                ("-Eps", test_limit * -1.),
+                ("HipPitchActuator+Eps", hip_act_deg + test_limit),
+                ("HipPitchActuator-Eps", hip_act_deg - test_limit),
+                ("KneePitchActuator+Eps", knee_act_deg + test_limit),
+                ("KneePitchActuator-Eps", knee_act_deg - test_limit)
+            )
 
-            if(abs(error_hip) > math.radians(test_limit) or
-               abs(error_knee) > math.radians(test_limit)):
+            if abs(error_hip) > test_limit or abs(error_knee) > test_limit:
                 logger.flag = False
 
         assert logger.flag
