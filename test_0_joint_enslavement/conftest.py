@@ -3,7 +3,8 @@ import subdevice
 import tools
 
 
-@pytest.fixture(params=tools.use_section("joint_enslavement.cfg", "JulietteJoints"))
+@pytest.fixture(params=tools.use_section("joint_enslavement.cfg",
+                                         "JulietteJoints"))
 def test_objects_dico(request, result_base_folder, dcm, mem):
     """
     Create the appropriate objects for each joint.
@@ -22,7 +23,8 @@ def test_objects_dico(request, result_base_folder, dcm, mem):
             [
                 result_base_folder,
                 joint_position_actuator.subdevice_type,
-                joint_position_actuator.short_name
+                "_".join(
+                    [joint_position_actuator.short_name, str(logger.flag)])
             ]) + ".csv"
         logger.log_file_write(result_file_path)
 
@@ -59,7 +61,7 @@ def test_leg_dico(request, result_base_folder, dcm, mem):
             [
                 result_base_folder,
                 hippitch_position_actuator.subdevice_type,
-                "Leg"
+                "_".join(["Leg", str(logger.flag)])
             ]) + ".csv"
         logger.log_file_write(result_file_path)
 
@@ -94,7 +96,7 @@ def test_wheels_dico(request, result_base_folder, dcm, mem):
             [
                 result_base_folder,
                 wheel_speed_actuator.subdevice_type,
-                wheel_speed_actuator.short_name
+                "_".join([wheel_speed_actuator.short_name, str(logger.flag)])
             ]) + ".csv"
         logger.log_file_write(result_file_path)
 
