@@ -111,6 +111,10 @@ class TestTemperatureProtection:
             else:
                 max_allowed_current = joint_current_max
 
+            # max allowed current can not be lower than 0.
+            if max_allowed_current < 0.0:
+                max_allowed_current = 0.0
+
             # defining old max current as first calculated max current if
             # it is the first loop iteration
             if flag_first_iteration is True:
