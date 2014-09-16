@@ -81,17 +81,18 @@ class TestCurrentLimitation:
             slav.point_add(joint_current)
             joint_current_sa = slav.calc()
 
-            if joint_current_sa > joint_max_current:
-                flag_max_current_exceeded = True
+            if joint_current_sa > current_limit_low:
+                flag_current_limit_low_exceeded = True
 
             if joint_current_sa > current_limit_high:
                 flag_joint = False
 
-            if flag_max_current_exceeded and\
+            if flag_current_limit_low_exceeded and\
                 joint_current_sa < current_limit_low:
                 flag_joint = False
 
-            if timer_limit.is_time_out() and not flag_max_current_exceeded:
+            if timer_limit.is_time_out() and not \
+                flag_current_limit_low_exceeded:
                 flag_joint = False
 
             if joint_temperature >= joint_temperature_min:
@@ -124,4 +125,4 @@ class TestCurrentLimitation:
             [[joint_initial_minimum, dcm.getTime(0)]], "Merge"]
 
         assert flag_joint
-        assert flag_max_current_exceeded
+        assert flag_current_limit_low_exceeded
