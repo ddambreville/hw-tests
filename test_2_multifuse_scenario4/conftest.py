@@ -8,9 +8,12 @@ def fuse(request, dcm, mem):
     fuse_temperature = subdevice.FuseTemperature(dcm, mem, request.param)
     fuse_current = subdevice.FuseCurrent(dcm, mem, request.param)
     fuse_voltage = subdevice.FuseVoltage(dcm, mem, request.param)
+    fuse_resistor = subdevice.FuseResistor(dcm, mem, request.param)
     dico_to_return = {"FuseTemperature": fuse_temperature,
                       "FuseCurrent": fuse_current,
-                      "FuseVoltage": fuse_voltage}
+                      "FuseVoltage": fuse_voltage,
+                      "FuseResistor": fuse_resistor
+                      }
     return dico_to_return
 
 

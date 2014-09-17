@@ -41,6 +41,8 @@ class TestMultifuse:
         fuse_temperature = fuse["FuseTemperature"]
         fuse_current = fuse["FuseCurrent"]
         fuse_voltage = fuse["FuseVoltage"]
+        fuse_resistor = fuse["FuseResistor"]
+        battery = subdevice.BatteryChargeSensor(dcm, mem)
 
         # checking that ALMemory key MinMaxChange Allowed = 1
         if int(mem.getData("RobotConfig/Head/MinMaxChangeAllowed")) != 1:
@@ -97,6 +99,7 @@ class TestMultifuse:
         # test loop
         while flag is True:
             try:
+                loop_time = timer.dcm_time() / 1000.
                 fuse_temperature_status = fuse_temperature.status
                 fuse_temperature_value = fuse_temperature.value
                 multifuseboard_ambiant_tmp = \
@@ -107,18 +110,21 @@ class TestMultifuse:
                     "Device/SubDeviceList/BatteryFuse/StiffnessDecreaseImmediate/Value")
 
                 listeofparams = [
-                    ("Time", timer.dcm_time() / 1000.),
-                    (multi_fuseboard_ambiant_tmp.header_name,
+                    ("Time", loop_time),
+                    ("MultifuseBoardAmbiantTemperature",
                      multifuseboard_ambiant_tmp),
-                    (multi_fuseboard_total_current.header_name,
+                    ("MultifuseBoardTotalCurrent",
                      multi_fuseboard_total_current.value),
-                    (fuse_temperature.header_name, fuse_temperature_value),
-                    (fuse_current.header_name, fuse_current.value),
-                    (fuse_voltage.header_name, fuse_voltage.value),
+                    ("FuseTemperature", fuse_temperature_value),
+                    ("FuseCurrent", fuse_current.value),
+                    ("FuseVoltage", fuse_voltage.value),
+                    ("FuseResistor", fuse_resistor.value),
+                    ("BatteryVoltage", battery.total_voltage),
                     ("Status", fuse_temperature_status),
                     ("StiffnessDecrease", stiffness_decrease),
                     ("StiffnessDecreaseImmediate",
-                     stiffness_decrease_immediate)]
+                     stiffness_decrease_immediate)
+                ]
                 for joint_hardness in joint_hardness_list:
                     new_tuple = \
                         (joint_hardness.header_name, joint_hardness.value)
