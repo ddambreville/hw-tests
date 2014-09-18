@@ -2,6 +2,7 @@ import pytest
 import tools
 import subdevice
 import math
+import easy_plot_connection
 
 
 @pytest.mark.usefixtures("kill_motion")
@@ -21,7 +22,7 @@ class TestMultifuse:
                                    multi_fuseboard_ambiant_tmp,
                                    multi_fuseboard_total_current,
                                    test_time, joint_limit_extension,
-                                   result_base_folder):
+                                   result_base_folder, plot):
         """
         If on a fuse max temperature is reached, HAL is supposed to cut the
         stiffness on all the joints behind the considered fuse.
@@ -30,6 +31,10 @@ class TestMultifuse:
         memoryName="RobotConfig/Head/MinMaxChangeAllowed" description=""
         value="1" type="string" />
         """
+        # plot_server initialisation
+        if plot:
+            plot_server = easy_plot_connection.Server(local_plot=True)
+
         # flag initialization
         flag = True
         flag_key = True
@@ -62,7 +67,6 @@ class TestMultifuse:
                 "multifuse_scenario4.cfg", fuse_temperature.part)
         # creating joint list
         joint_list = state.keys()
-        print joint_list
         tools.stiff_joints(dcm, mem, joint_list)
 
         # defining increment in radians
@@ -72,12 +76,9 @@ class TestMultifuse:
         # it makes current rise a lot
         for joint, value in state.items():
             joint_object = subdevice.JointPositionActuator(dcm, mem, joint)
-            print value[0]
             if value[0] == 'max':
-                print "max"
                 new_maximum_angle = joint_object.maximum + increment
             else:
-                print "min"
                 new_maximum_angle = joint_object.minimum - increment
             joint_object.maximum = [
                 [[new_maximum_angle, dcm.getTime(0)]], "Merge"]
@@ -102,8 +103,16 @@ class TestMultifuse:
                 loop_time = timer.dcm_time() / 1000.
                 fuse_temperature_status = fuse_temperature.status
                 fuse_temperature_value = fuse_temperature.value
+                fuse_current_value = fuse_current.value
+                fuse_voltage_value = fuse_voltage.value
+                fuse_resistor_value = fuse_resistor.value
+                fuse_resistor_calculated = fuse_voltage_value / \
+                    fuse_current_value
+                battery_total_voltage = battery.total_voltage
                 multifuseboard_ambiant_tmp = \
                     multi_fuseboard_ambiant_tmp.value
+                multifuseboard_total_current = \
+                    multi_fuseboard_total_current.value
                 stiffness_decrease = mem.getData(
                     "Device/SubDeviceList/BatteryFuse/StiffnessDecrease/Value")
                 stiffness_decrease_immediate = mem.getData(
@@ -114,12 +123,14 @@ class TestMultifuse:
                     ("MultifuseBoardAmbiantTemperature",
                      multifuseboard_ambiant_tmp),
                     ("MultifuseBoardTotalCurrent",
-                     multi_fuseboard_total_current.value),
+                     multifuseboard_total_current),
                     ("FuseTemperature", fuse_temperature_value),
-                    ("FuseCurrent", fuse_current.value),
-                    ("FuseVoltage", fuse_voltage.value),
-                    ("FuseResistor", fuse_resistor.value),
-                    ("BatteryVoltage", battery.total_voltage),
+                    ("FuseCurrent", fuse_current_value),
+                    ("FuseVoltage", fuse_voltage_value),
+                    ("FuseResistor", fuse_resistor_value),
+                    ("FuseResistorCalculated",
+                     fuse_resistor_calculated),
+                    ("BatteryVoltage", battery_total_voltage),
                     ("Status", fuse_temperature_status),
                     ("StiffnessDecrease", stiffness_decrease),
                     ("StiffnessDecreaseImmediate",
@@ -136,6 +147,42 @@ class TestMultifuse:
 
                 # Logging informations
                 logger.log_from_list(listeofparams)
+
+                # for real time plot
+                if plot:
+                    plot_server.add_point(
+                        "MultifuseBoardAmbiantTemperature",
+                        loop_time, multifuseboard_ambiant_tmp)
+                    plot_server.add_point(
+                        "MultifuseBoardTotalCurrent",
+                        loop_time, multifuseboard_total_current)
+                    plot_server.add_point(
+                        "FuseTemperature",
+                        loop_time, fuse_temperature_value)
+                    plot_server.add_point(
+                        "FuseCurrent",
+                        loop_time, fuse_current_value)
+                    plot_server.add_point(
+                        "FuseVoltage",
+                        loop_time, fuse_voltage_value)
+                    plot_server.add_point(
+                        "FuseResistor",
+                        loop_time, fuse_resistor_value)
+                    plot_server.add_point(
+                        "FuseResistorCalculated",
+                        loop_time, fuse_resistor_calculated)
+                    plot_server.add_point(
+                        "BatteryVoltage",
+                        loop_time, battery_total_voltage)
+                    plot_server.add_point(
+                        "Status",
+                        loop_time, fuse_temperature_status)
+                    plot_server.add_point(
+                        "StiffnessDecrease",
+                        loop_time, stiffness_decrease)
+                    plot_server.add_point(
+                        "StiffnessDecreaseImmediate",
+                        loop_time, stiffness_decrease_immediate)
 
                 # Checking REQ_FUSE_TEMPERATURE_002
                 if fuse_temperature_value <\
