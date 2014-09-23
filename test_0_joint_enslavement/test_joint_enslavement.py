@@ -15,7 +15,7 @@ class TestEnslavement:
     """
 
     def test_joint_enslavement(self, dcm, mem, zero_pos, test_objects_dico,
-                               test_time, test_limit):
+                               test_time):
         """
         Test joint enslavement.
         Error must be lower than a fixed limit.
@@ -30,13 +30,12 @@ class TestEnslavement:
         @param joint      : string describing the current joint.
         @type test_time   : integer
         @param test_time  : time to wait to test a joint enslavement [ms].
-        @type test_limit  : float
-        @param test_limit : limit value of error [rad]
         """
         # Objects creation
         joint_position_actuator = test_objects_dico["jointActuator"]
         joint_position_sensor = test_objects_dico["jointSensor"]
         logger = test_objects_dico["logger"]
+        test_limit = test_objects_dico["joint_test_limit"]
 
         # Flag initialization
         logger.flag = True

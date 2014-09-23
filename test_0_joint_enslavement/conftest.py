@@ -15,6 +15,8 @@ def test_objects_dico(request, result_base_folder, dcm, mem):
         dcm, mem, request.param)
     joint_position_sensor = subdevice.JointPositionSensor(
         dcm, mem, request.param)
+    joint_test_limit = tools.read_parameter(
+        "joint_enslavement.cfg", "JointsLimits", request.param)
     logger = tools.Logger()
 
     def fin():
@@ -33,7 +35,8 @@ def test_objects_dico(request, result_base_folder, dcm, mem):
     dico_object = {
         "jointActuator": joint_position_actuator,
         "jointSensor": joint_position_sensor,
-        "logger": logger
+        "logger": logger,
+        "joint_test_limit": float(joint_test_limit)
     }
     return dico_object
 
@@ -121,7 +124,7 @@ def test_time():
 def test_limit():
     """It returns the limit error in degrees."""
     return float(tools.read_parameter(
-        "joint_enslavement.cfg", "Parameters", "TestLimit"))
+        "joint_enslavement.cfg", "Parameters", "TestLegLimit"))
 
 
 @pytest.fixture(scope="module")
