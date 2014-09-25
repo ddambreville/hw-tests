@@ -6,8 +6,15 @@ import easy_plot_connection
 import time
 
 
-def plot(dcm, mem, robot_on_charging_station, back_bumper_sensor):
+END_PLOT = False
+
+
+def plot(dcm, mem, file_name):
+    robot_on_charging_station = subdevice.ChargingStationSensor(dcm, mem)
     battery_current = subdevice.BatteryCurrentSensor(dcm, mem)
+
+    back_bumper_sensor = subdevice.Bumper(dcm, mem, "Back")
+
     wheelfr_speed_actuator = subdevice.WheelSpeedActuator(
         dcm, mem, "WheelFR")
     wheelfl_speed_actuator = subdevice.WheelSpeedActuator(
@@ -21,7 +28,7 @@ def plot(dcm, mem, robot_on_charging_station, back_bumper_sensor):
     wheelfl_current_sensor = subdevice.WheelCurrentSensor(
         dcm, mem, "WheelFL")
 
-    log_file = open("test_pod_real_time.csv", 'w')
+    log_file = open(file_name, 'w')
     log_file.write(
         "Time,Detection,Current,BackBumper,WheelFRSpeedActuator," +
         "WheelFRSpeedSensor,WheelFRCurrent,WheelFLSpeedActuator," +
@@ -31,7 +38,7 @@ def plot(dcm, mem, robot_on_charging_station, back_bumper_sensor):
     plot_server = easy_plot_connection.Server()
 
     time_init = time.time()
-    while True:
+    while not END_PLOT:
         elapsed_time = time.time() - time_init
 
         plot_server.add_point(
@@ -40,9 +47,12 @@ def plot(dcm, mem, robot_on_charging_station, back_bumper_sensor):
         plot_server.add_point(
             "BackBumper", elapsed_time, back_bumper_sensor.value)
         plot_server.add_point(
-            "WheelFRSpeedActuator", elapsed_time, wheelfr_speed_actuator.value)
+            "WheelFRSpeedActuator", elapsed_time,
+            wheelfr_speed_actuator.value)
         plot_server.add_point(
             "WheelFRSpeedSensor", elapsed_time, wheelfr_speed_sensor.value)
+
+        # elif test_name == "test_dynamic":
 
         line_to_write = str(elapsed_time) + "," +\
             str(robot_on_charging_station.value) + "," +\
@@ -57,10 +67,12 @@ def plot(dcm, mem, robot_on_charging_station, back_bumper_sensor):
         log_file.write(line_to_write)
         log_file.flush()
 
-        time.sleep(0.1)
+        time.sleep(0.2)
 
 
-def test_usure(dcm, mem, rest_pos, kill_motion, stiff_robot, nb_cycles, file_name):
+def test_usure(dcm, mem, rest_pos, kill_motion, stiff_robot, unstiff_parts):
+    global END_PLOT
+
     # Objects creation
     motion = subdevice.WheelsMotion(dcm, mem, 0.15)
 
@@ -71,6 +83,10 @@ def test_usure(dcm, mem, rest_pos, kill_motion, stiff_robot, nb_cycles, file_nam
         dcm, mem, "WheelFL")
     back_bumper_sensor = subdevice.Bumper(dcm, mem, "Back")
 
+    # Test parameters
+    parameters = tools.read_section("test_pod.cfg", "DockCyclingParameters")
+
+    # Internal flags
     cycles_done = 0
     cycles_with_bumper_ok = 0
     list_bumper_nok = []
@@ -88,17 +104,18 @@ def test_usure(dcm, mem, rest_pos, kill_motion, stiff_robot, nb_cycles, file_nam
     # Going to initial position
     subdevice.multiple_set(dcm, mem, rest_pos, wait=True)
     timer = tools.Timer(dcm, 10)
-    log_file = open(file_name, 'w')
+    log_file = open(parameters["cycling_cvs_name"][0], 'w')
     log_file.write(
         "CyclesDone,CyclesDoneWithBumperOk," +
-        "Detection,LooseConnexion,UnlockBumperStatus,LockBumperStatus\n"
+        "Detection,LooseConnection,UnlockBumperStatus,LockBumperStatus\n"
     )
 
     plot_log = threading.Thread(
         target=plot,
-        args=(dcm, mem, robot_on_charging_station, back_bumper_sensor)
+        args=(dcm, mem, parameters["easy_plot_csv_name"][0])
     )
     plot_log.start()
+
     # Cyclage
     # If the robot is not on the pod or bumper not activated, test don't start
     if robot_on_charging_station.value == 0:
@@ -122,6 +139,10 @@ def test_usure(dcm, mem, rest_pos, kill_motion, stiff_robot, nb_cycles, file_nam
 
         # Robot moves back
         motion.move_x(-0.25)
+        motion.stiff_wheels(
+            ["WheelFR", "WheelFL", "WheelB"],
+            int(parameters["stiffness_wheels_value"][0])
+        )
         tools.wait(dcm, 500)
         # Verification of connexion
         t_init = timer.dcm_time()
@@ -159,13 +180,15 @@ def test_usure(dcm, mem, rest_pos, kill_motion, stiff_robot, nb_cycles, file_nam
             tools.wait(dcm, 2000)
 
         # End if nb_cycles is reached
-        if cycles_done == nb_cycles:
+        if cycles_done == int(parameters["nb_cycles"][0]):
             stop_cycling_flag = True
+            plot.END_PLOT = True
 
-    if len(list_bumper_nok) > nb_cycles / 100:
+    if len(list_bumper_nok) > cycles_done / 100:
         flag_bumper = False
 
     log_file.close()
+    END_PLOT = True
     print("Cycles done = " + str(cycles_done))
     print("Cycles done with bumper ok = " + str(cycles_with_bumper_ok))
 
