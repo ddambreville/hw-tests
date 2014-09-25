@@ -272,6 +272,24 @@ def wake_up(request, motion):
 
 
 @pytest.fixture(scope="session")
+def wakeup_no_rotation(request, motion):
+    """
+    Make the robot wakeUp at the beginning
+    of the test (without rotation due to the Active Diagnosis)
+    and go to rest at the end
+    """
+    # Remove the rotation due to the Active Diagnosis
+    motion.setMotionConfig([["ENABLE_MOVE_API", False]])
+    motion.wakeUp()
+    motion.setMotionConfig([["ENABLE_MOVE_API", True]])
+
+    def fin():
+        """Method automatically executed at the end of the test"""
+        motion.rest()
+    request.addfinalizer(fin)
+
+
+@pytest.fixture(scope="session")
 def remove_safety(request, motion):
     """
     Fixture which remove the robot safety
