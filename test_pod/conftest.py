@@ -17,6 +17,12 @@ def pytest_addoption(parser):
         default=5000,
         help="Cycles number"
     )
+    parser.addoption(
+        "--fileName",
+        action="store",
+        default="test_usure_pod.csv",
+        help="Output file name"
+    )
 
 
 @pytest.fixture(scope="session")
@@ -29,3 +35,8 @@ def test_time(request):
 def nb_cycles(request):
     """Cycles number"""
     return request.config.getoption("--nbCycles")
+
+@pytest.fixture(scope="session")
+def file_name(request):
+    """Output file name"""
+    return request.config.getoption("--fileName")

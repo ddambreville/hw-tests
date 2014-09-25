@@ -2,9 +2,65 @@ import pytest
 import tools
 import subdevice
 import threading
+import easy_plot_connection
+import time
 
 
-def test_usure(dcm, mem, rest_pos, kill_motion, stiff_robot, nb_cycles):
+def plot(dcm, mem, robot_on_charging_station, back_bumper_sensor):
+    battery_current = subdevice.BatteryCurrentSensor(dcm, mem)
+    wheelfr_speed_actuator = subdevice.WheelSpeedActuator(
+        dcm, mem, "WheelFR")
+    wheelfl_speed_actuator = subdevice.WheelSpeedActuator(
+        dcm, mem, "WheelFL")
+    wheelfr_speed_sensor = subdevice.WheelSpeedSensor(
+        dcm, mem, "WheelFR")
+    wheelfl_speed_sensor = subdevice.WheelSpeedSensor(
+        dcm, mem, "WheelFL")
+    wheelfr_current_sensor = subdevice.WheelCurrentSensor(
+        dcm, mem, "WheelFR")
+    wheelfl_current_sensor = subdevice.WheelCurrentSensor(
+        dcm, mem, "WheelFL")
+
+    log_file = open("test_pod_real_time.csv", 'w')
+    log_file.write(
+        "Time,Detection,Current,BackBumper,WheelFRSpeedActuator," +
+        "WheelFRSpeedSensor,WheelFRCurrent,WheelFLSpeedActuator," +
+        "WheelFLSpeedSensor,WheelFLCurrent\n"
+    )
+
+    plot_server = easy_plot_connection.Server()
+
+    time_init = time.time()
+    while True:
+        elapsed_time = time.time() - time_init
+
+        plot_server.add_point(
+            "Detection", elapsed_time, robot_on_charging_station.value)
+        plot_server.add_point("Current", elapsed_time, battery_current.value)
+        plot_server.add_point(
+            "BackBumper", elapsed_time, back_bumper_sensor.value)
+        plot_server.add_point(
+            "WheelFRSpeedActuator", elapsed_time, wheelfr_speed_actuator.value)
+        plot_server.add_point(
+            "WheelFRSpeedSensor", elapsed_time, wheelfr_speed_sensor.value)
+
+        line_to_write = str(elapsed_time) + "," +\
+            str(robot_on_charging_station.value) + "," +\
+            str(battery_current.value) + "," +\
+            str(back_bumper_sensor.value) + "," +\
+            str(wheelfr_speed_actuator.value) + "," +\
+            str(wheelfr_speed_sensor.value) + "," +\
+            str(wheelfr_current_sensor.value) + "," +\
+            str(wheelfl_speed_actuator.value) + "," +\
+            str(wheelfl_speed_sensor.value) + "," +\
+            str(wheelfl_current_sensor.value) + "\n"
+        log_file.write(line_to_write)
+        log_file.flush()
+
+        time.sleep(0.1)
+
+
+def test_usure(dcm, mem, rest_pos, kill_motion, stiff_robot, nb_cycles, file_name):
     # Objects creation
     motion = subdevice.WheelsMotion(dcm, mem, 0.15)
 
@@ -32,16 +88,21 @@ def test_usure(dcm, mem, rest_pos, kill_motion, stiff_robot, nb_cycles):
     # Going to initial position
     subdevice.multiple_set(dcm, mem, rest_pos, wait=True)
     timer = tools.Timer(dcm, 10)
-    data = open("test_usure_pod_bumper.csv", 'w')
-    data.write(
+    log_file = open(file_name, 'w')
+    log_file.write(
         "CyclesDone,CyclesDoneWithBumperOk," +
         "Detection,LooseConnexion,UnlockBumperStatus,LockBumperStatus\n"
     )
 
+    plot_log = threading.Thread(
+        target=plot,
+        args=(dcm, mem, robot_on_charging_station, back_bumper_sensor)
+    )
+    plot_log.start()
     # Cyclage
     # If the robot is not on the pod or bumper not activated, test don't start
-    if back_bumper_sensor.value == 0 or robot_on_charging_station.value == 0:
-        print "Put the robot on the pod\nVerify back bumper\n"
+    if robot_on_charging_station.value == 0:
+        print "Put the robot on the pod\n"
         stop_cycling_flag = True
         flag_detection = False
         flag_bumper = False
@@ -89,7 +150,8 @@ def test_usure(dcm, mem, rest_pos, kill_motion, stiff_robot, nb_cycles):
             str(loose_connexion_flag) + "," +\
             str(unlock_bumper_status) + "," +\
             str(back_bumper_sensor.value) + "\n"
-        data.write(line_to_write)
+        log_file.write(line_to_write)
+        log_file.flush()
 
         # Wait if temperature of wheels too hot
         while wheelfr_temperature_sensor.value > 60 or\
@@ -103,7 +165,7 @@ def test_usure(dcm, mem, rest_pos, kill_motion, stiff_robot, nb_cycles):
     if len(list_bumper_nok) > nb_cycles / 100:
         flag_bumper = False
 
-    data.close()
+    log_file.close()
     print("Cycles done = " + str(cycles_done))
     print("Cycles done with bumper ok = " + str(cycles_with_bumper_ok))
 
