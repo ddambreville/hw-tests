@@ -2,7 +2,7 @@ import pytest
 import tools
 import subdevice
 import math
-import socket_connection
+import easy_plot_connection
 
 
 @pytest.mark.usefixtures("kill_motion", "stiff_robot")
@@ -19,7 +19,7 @@ class TestTemperatureProtection:
 
         # plot_server initialisation
         if plot:
-            plot_server = socket_connection.Server()
+            plot_server = easy_plot_connection.Server(local_plot=True)
 
         # Objects creation
         test_params = parameters
@@ -50,7 +50,6 @@ class TestTemperatureProtection:
 
         # setting current limitations
         joint_current_max = joint_current_sensor.maximum
-        joint_current_min = joint_current_sensor.minimum
 
         # setting temperature limitatons
         joint_temperature_min = joint_temperature_sensor.minimum
