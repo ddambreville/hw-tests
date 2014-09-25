@@ -18,6 +18,7 @@ def test_usure(dcm, mem, rest_pos, kill_motion, stiff_robot, nb_cycles):
     cycles_done = 0
     cycles_with_bumper_ok = 0
     list_bumper_nok = []
+    unlock_bumper_status = 0
     bumper_blocked_flag = False
     detection = 1
     loose_connexion_flag = 0
@@ -34,20 +35,24 @@ def test_usure(dcm, mem, rest_pos, kill_motion, stiff_robot, nb_cycles):
     data = open("test_usure_pod_bumper.csv", 'w')
     data.write(
         "CyclesDone,CyclesDoneWithBumperOk," +
-        "Detection,PerteConnexion,BumperStatus\n"
+        "Detection,LooseConnexion,UnlockBumperStatus,LockBumperStatus\n"
     )
 
     # Cyclage
-    # If the robot is not on the pod, or bumper not activated, test don't start
+    # If the robot is not on the pod or bumper not activated, test don't start
     if back_bumper_sensor.value == 0 or robot_on_charging_station.value == 0:
         print "Put the robot on the pod\nVerify back bumper\n"
         stop_cycling_flag = True
+        flag_detection = False
+        flag_bumper = False
+        flag_keep_connexion = False
 
     while stop_cycling_flag == False:
         # Robot moves front
         cycles_done += 1
         motion.move_x(0.2)
-        tools.wait(dcm, 7000)
+        tools.wait(dcm, 5000)
+        unlock_bumper_status = back_bumper_sensor.value
         # Verification of bumper
         if back_bumper_sensor.value == 1:
             bumper_blocked_flag = True
@@ -56,22 +61,21 @@ def test_usure(dcm, mem, rest_pos, kill_motion, stiff_robot, nb_cycles):
 
         # Robot moves back
         motion.move_x(-0.25)
-        tools.wait(dcm, 2000)
-        if robot_on_charging_station.value == 1:
-            detection = 1
-        else:
-            detection = 0
-            flag_detection = False
+        tools.wait(dcm, 500)
         # Verification of connexion
         t_init = timer.dcm_time()
-        test_time = t_init
+        test_time = 0
         while robot_on_charging_station.value == 1 and test_time < 5000:
+            detection = 1
             loose_connexion_flag = 0
             test_time = timer.dcm_time() - t_init
+        # If no detection
+        if test_time == 0:
+            detection = 0
         # If connexion is lost
-        if test_time < 5000:
-            flag_keep_connexion = False
+        elif test_time < 5000:
             loose_connexion_flag = 1
+            flag_keep_connexion = False
         # Verification of bumper
         if back_bumper_sensor.value == 1 and bumper_blocked_flag == False:
             cycles_with_bumper_ok += 1
@@ -83,6 +87,7 @@ def test_usure(dcm, mem, rest_pos, kill_motion, stiff_robot, nb_cycles):
             str(cycles_with_bumper_ok) + "," +\
             str(detection) + "," +\
             str(loose_connexion_flag) + "," +\
+            str(unlock_bumper_status) + "," +\
             str(back_bumper_sensor.value) + "\n"
         data.write(line_to_write)
 

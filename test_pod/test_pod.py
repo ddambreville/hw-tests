@@ -230,7 +230,6 @@ def test_pod_damage(dcm, mem, wake_up_pos, kill_motion, stiff_robot, test_time):
         # Si cyclage, log des donnees
         if pod.cycling_stop_flag == False:
             test_timer = timer.dcm_time() - time_delete
-            #print("Test_timer = " + str(test_timer / 1000))
             logger.log(
                 ("Time", test_timer / 1000.),
                 ("RobotOnChargingStation", robot_on_charging_station.value),
