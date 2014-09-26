@@ -97,6 +97,18 @@ def dcm(robot_ip, port):
 
 
 @pytest.fixture(scope="session")
+def leds(robot_ip, port):
+    """Fixture which returns a proxy to ALLeds module."""
+    return ALProxy("ALLeds", robot_ip, port)
+
+
+@pytest.fixture(scope="session")
+def autonomous_life(robot_ip, port):
+    """Fixture which returns a proxy to ALAutonomousLife module."""
+    return ALProxy("ALAutonomousLife", robot_ip, port)
+
+
+@pytest.fixture(scope="session")
 def behavior_manager(robot_ip, port):
     """Proxy to ALBehaviorManager module."""
     return ALProxy("ALBehaviorManager", robot_ip, port)
@@ -257,7 +269,7 @@ def disable_fall_manager(request, motion):
 
 
 @pytest.fixture(scope="session")
-def wake_up(request, motion):
+def wake_up_rest(request, motion):
     """
     Robot wake up
     """
