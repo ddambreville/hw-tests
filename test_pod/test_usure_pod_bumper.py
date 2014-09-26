@@ -52,18 +52,18 @@ def plot(dcm, mem, file_name):
         plot_server.add_point(
             "WheelFRSpeedSensor", elapsed_time, wheelfr_speed_sensor.value)
 
-        # elif test_name == "test_dynamic":
-
-        line_to_write = str(elapsed_time) + "," +\
-            str(robot_on_charging_station.value) + "," +\
-            str(battery_current.value) + "," +\
-            str(back_bumper_sensor.value) + "," +\
-            str(wheelfr_speed_actuator.value) + "," +\
-            str(wheelfr_speed_sensor.value) + "," +\
-            str(wheelfr_current_sensor.value) + "," +\
-            str(wheelfl_speed_actuator.value) + "," +\
-            str(wheelfl_speed_sensor.value) + "," +\
-            str(wheelfl_current_sensor.value) + "\n"
+        line_to_write = ",".join([
+            str(robot_on_charging_station.value),
+            str(battery_current.value),
+            str(back_bumper_sensor.value),
+            str(wheelfr_speed_actuator.value),
+            str(wheelfr_speed_sensor.value),
+            str(wheelfr_current_sensor.value),
+            str(wheelfl_speed_actuator.value),
+            str(wheelfl_speed_sensor.value),
+            str(wheelfl_current_sensor.value)
+        ])
+        line_to_write += "\n"
         log_file.write(line_to_write)
         log_file.flush()
 
@@ -72,9 +72,11 @@ def plot(dcm, mem, file_name):
 
 def test_usure(dcm, mem, rest_pos, kill_motion, stiff_robot, unstiff_parts):
     global END_PLOT
+    # Test parameters
+    parameters = tools.read_section("test_pod.cfg", "DockCyclingParameters")
 
     # Objects creation
-    motion = subdevice.WheelsMotion(dcm, mem, 0.15)
+    motion = subdevice.WheelsMotion(dcm, mem, parameters["speed"][0])
 
     robot_on_charging_station = subdevice.ChargingStationSensor(dcm, mem)
     wheelfr_temperature_sensor = subdevice.WheelTemperatureSensor(
@@ -82,9 +84,6 @@ def test_usure(dcm, mem, rest_pos, kill_motion, stiff_robot, unstiff_parts):
     wheelfl_temperature_sensor = subdevice.WheelTemperatureSensor(
         dcm, mem, "WheelFL")
     back_bumper_sensor = subdevice.Bumper(dcm, mem, "Back")
-
-    # Test parameters
-    parameters = tools.read_section("test_pod.cfg", "DockCyclingParameters")
 
     # Internal flags
     cycles_done = 0
@@ -128,8 +127,8 @@ def test_usure(dcm, mem, rest_pos, kill_motion, stiff_robot, unstiff_parts):
     while stop_cycling_flag == False:
         # Robot moves front
         cycles_done += 1
-        motion.move_x(0.2)
-        tools.wait(dcm, 5000)
+        motion.move_x(parameters["distance_front"][0])
+        tools.wait(dcm, parameters["time_wait_out_the_pod"][0] * 1000)
         unlock_bumper_status = back_bumper_sensor.value
         # Verification of bumper
         if back_bumper_sensor.value == 1:
@@ -138,7 +137,7 @@ def test_usure(dcm, mem, rest_pos, kill_motion, stiff_robot, unstiff_parts):
             bumper_blocked_flag = False
 
         # Robot moves back
-        motion.move_x(-0.25)
+        motion.move_x(parameters["distance_back"][0])
         motion.stiff_wheels(
             ["WheelFR", "WheelFL", "WheelB"],
             int(parameters["stiffness_wheels_value"][0])
@@ -147,7 +146,8 @@ def test_usure(dcm, mem, rest_pos, kill_motion, stiff_robot, unstiff_parts):
         # Verification of connexion
         t_init = timer.dcm_time()
         test_time = 0
-        while robot_on_charging_station.value == 1 and test_time < 5000:
+        while robot_on_charging_station.value == 1 and\
+                test_time < parameters["time_wait_in_the_pod"][0] * 1000:
             detection = 1
             loose_connexion_flag = 0
             test_time = timer.dcm_time() - t_init
@@ -155,7 +155,7 @@ def test_usure(dcm, mem, rest_pos, kill_motion, stiff_robot, unstiff_parts):
         if test_time == 0:
             detection = 0
         # If connexion is lost
-        elif test_time < 5000:
+        elif test_time < parameters["time_wait_in_the_pod"][0] * 1000:
             loose_connexion_flag = 1
             flag_keep_connexion = False
         # Verification of bumper
@@ -165,12 +165,15 @@ def test_usure(dcm, mem, rest_pos, kill_motion, stiff_robot, unstiff_parts):
             list_bumper_nok.append(cycles_done)
 
         # Log data
-        line_to_write = str(cycles_done) + "," +\
-            str(cycles_with_bumper_ok) + "," +\
-            str(detection) + "," +\
-            str(loose_connexion_flag) + "," +\
-            str(unlock_bumper_status) + "," +\
-            str(back_bumper_sensor.value) + "\n"
+        line_to_write = ",".join([
+            str(cycles_done),
+            str(cycles_with_bumper_ok),
+            str(detection),
+            str(loose_connexion_flag),
+            str(unlock_bumper_status),
+            str(back_bumper_sensor.value)
+        ])
+
         log_file.write(line_to_write)
         log_file.flush()
 
