@@ -9,6 +9,7 @@ Created on September 11, 2014
 
 from termcolor import colored
 import ConfigParser
+import CameraViewer
 
 
 def laser_error_code():
@@ -96,3 +97,15 @@ def minimal_horizontal_x_distance(get_horizontal_x_segments):
             dist_min = get_horizontal_x_segments["seg" + str(i)].value
             seg = i
     return dist_min, seg
+
+
+def save_laser_image(cam, path, thread):
+    """
+    Save laser images with cameraviewer
+    """
+    print "hihi"
+    i = 0
+    while thread.isAlive():
+        CameraViewer.save_image(cam, path, str(i))
+        print "haha"
+        i = i + 1
