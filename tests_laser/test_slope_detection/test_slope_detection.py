@@ -9,6 +9,8 @@ Angle de la pente fixe - Distantes differentes
 import threading
 from termcolor import colored
 import time
+import CameraViewer
+import os
 
 
 def robot_motion(motion, pos_0, config_test):
@@ -18,6 +20,7 @@ def robot_motion(motion, pos_0, config_test):
     # On recupere la distance a parcourir dans le fichier de config
     distance = float(config_test.get('Test_Config', 'Distance_travel'))
     while abs(motion.getRobotPosition(True)[0] - pos_0) < distance:
+        print abs(motion.getRobotPosition(True)[0] - pos_0)
         motion.move(-0.1, 0, 0)
 
 
@@ -31,7 +34,6 @@ def record_slope_data(
     angle = float(config_test.get('Test_Config', 'Angle'))
     offset_front = float(config_test.get('Test_Config', 'Offset_Front'))
     while thread.isAlive():
-
         logger.log(("robot_pos", abs(
             motion.getRobotPosition(True)[0] - pos_0) + offset_front))
         logger.log(("Left_Inclinaison", get_slope_segments[
@@ -42,6 +44,7 @@ def record_slope_data(
             "Right_Inclinaison"].value))
         logger.log(("Right_Distance", get_slope_segments[
             "Right_Distance"].value))
+        time.sleep(0.01)
     for i in range(0, len(logger.log_dic["robot_pos"])):
         logger.log(("Erreur_Distance_Left", (abs(
             logger.log_dic["robot_pos"][i] - logger.log_dic[
@@ -53,7 +56,6 @@ def record_slope_data(
             angle - logger.log_dic["Left_Inclinaison"][i]) / angle) * 100))
         logger.log(("Erreur_Inclinaison_Right", (abs(
             angle - logger.log_dic["Right_Inclinaison"][i]) / angle) * 100))
-    time.sleep(0.01)
     return logger
 
 
@@ -102,18 +104,37 @@ def check_error(logger, config_test):
     return result
 
 
+def save_laser_image(cam, path, thread):
+    """
+    Save laser images with cameraviewer
+    """
+    print "hihi"
+    i = 0
+    while thread.isAlive():
+        CameraViewer.save_image(cam, path, str(i))
+        print "haha"
+        i = i + 1
+
+
 def test_slope(
-    check_error_laser, dcm, mem, motion, wakeup,
+    check_error_laser, dcm, mem, motion, wakeup, result_base_folder,
         get_slope_segments, config_test, remove_safety, remove_diagnosis):
     """
     Test function which test the X distance
     of the horizontal lasers
     """
+    path = os.path.abspath("./") + "/" + result_base_folder
+    #cam = CameraViewer.camera_connect()
+    print path
     pos_0 = motion.getRobotPosition(True)[0]
     motion_thread = threading.Thread(target=robot_motion, args=(
         motion, pos_0, config_test))
+    # image_thread = threading.Thread(target=save_laser_image, args=(
+      #  cam, path, motion_thread))
     motion_thread.start()
+    # image_thread.start()
     logger = record_slope_data(
         get_slope_segments, motion, pos_0, motion_thread, config_test)
     result = check_error(logger, config_test)
+    # CameraViewer.camera_disconnect(cam)
     assert 'Fail' not in result
