@@ -124,3 +124,20 @@ def cycle_brakes(motion):
     # reset minimum stiffness parameter to default value
     motion.setMotionConfig(
         [['SMART_STIFFNESS_MINIMUM_LEG_STIFFNESS', minimum_leg_stiffness]])
+
+
+def check_nacks(dcm, mem, boards):
+    """
+    Find all the joints boards and check if it does not nack.
+    """
+    print "checking nacks..."
+    flag = True
+    for board in boards:
+        board_obj = subdevice.Device(dcm, mem, board)
+        acks = board_obj.ack
+        nacks = board_obj.nack
+        ratio = float(acks) / float(nacks)
+        if ratio >= 0.01:
+            flag = False
+            break
+    return flag

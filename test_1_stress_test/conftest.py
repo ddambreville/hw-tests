@@ -10,7 +10,22 @@ CONFIG_FILE = "stress_test.cfg"
 
 @pytest.fixture(scope="session")
 def joint_list(motion):
+    """Returns the robot's joint list once per test session."""
     return motion.getBodyNames("Body")
+
+
+@pytest.fixture(scope="session")
+def sa_objects():
+    """
+    Returns a dictionnary of sliding average objects with the correct number
+    of points for each joint.
+    It reads the test configuration file.
+    """
+    sa_nb_points = tools.read_section(CONFIG_FILE, "SlidingAverageNbPoints")
+    dico_object = dict()
+    for joint, nb_points in sa_nb_points.items():
+        dico_object[joint] = tools.SlidingAverage(int(nb_points[0]))
+    return dico_object
 
 
 @pytest.fixture(scope="session")
@@ -27,7 +42,8 @@ def joint_temperature_object(motion, dcm, mem, joint_list):
 
 
 @pytest.fixture(scope="class")
-def temperature_logger(request, joint_temperature_object, result_base_folder, ):
+def temperature_logger(request, joint_temperature_object, result_base_folder,
+                       sa_objects):
     """
     Automatically launch logger at the beggining of the test class.
     """
@@ -36,14 +52,23 @@ def temperature_logger(request, joint_temperature_object, result_base_folder, ):
     thread_flag = threading.Event()
 
     def logging(thread_flag):
-        """To be commented."""
+        """Logging temperatures while the test class is not finished."""
         while not thread_flag.is_set():
             listeofparams = list()
             for joint_temperature in joint_temperature_object.values():
-                new_tuple = \
-                    (joint_temperature.header_name,
-                     joint_temperature.value)
+                measured_temperature = joint_temperature.value
+                sa_object = sa_objects[joint_temperature.short_name]
+                temperature_header = joint_temperature.header_name
+                temperature_sa_header = temperature_header + "_sa"
+
+                sa_object.point_add(measured_temperature)
+                sa_temperature = sa_object.calc()
+
+                new_tuple = (temperature_header, measured_temperature)
+                sa_tuple = (temperature_sa_header, sa_temperature)
+
                 listeofparams.append(new_tuple)
+                listeofparams.append(sa_tuple)
             logger.log_from_list(listeofparams)
             time.sleep(5.0)
 
@@ -51,7 +76,10 @@ def temperature_logger(request, joint_temperature_object, result_base_folder, ):
     my_logger.start()
 
     def fin():
-        """Class teardown."""
+        """
+        Class teardown. Executed at the end of test class.
+        The logger is stopped and data is saved into a file.
+        """
         # stop logger thread
         thread_flag.set()
         print "logger stoped, saving file..."
@@ -140,3 +168,15 @@ def kill_autonomouslife(autonomous_life):
         autonomous_life.exit()
     except:
         print "ALAutonomousLife already killed"
+
+
+@pytest.fixture(scope="session")
+def boards(dcm, mem, joint_list):
+    """Fixture which returns all joints boards."""
+    boards = list()
+    for joint in joint_list:
+        joint_current_sensor = subdevice.JointCurrentSensor(dcm, mem, joint)
+        joint_board = joint_current_sensor.device
+        if joint_board not in boards:
+            boards.append(joint_board)
+    return boards
