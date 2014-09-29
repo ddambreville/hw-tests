@@ -103,9 +103,7 @@ def save_laser_image(cam, path, thread):
     """
     Save laser images with cameraviewer
     """
-    print "hihi"
     i = 0
     while thread.isAlive():
         CameraViewer.save_image(cam, path, str(i))
-        print "haha"
         i = i + 1

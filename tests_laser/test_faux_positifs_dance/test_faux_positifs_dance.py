@@ -16,6 +16,10 @@ is(are) correctly installed.
 import threading
 import time
 
+H_SIDES = ["Front", "Left", "Right"]
+V_SIDES = ["Left", "Right"]
+S_SIDES = ["Front", "Back"]
+
 
 def dance_motion(dance, behavior_manager):
     """
@@ -27,31 +31,34 @@ def dance_motion(dance, behavior_manager):
     if dance in apps_list:
         behavior_manager.startBehavior(dance)
         while behavior_manager.isBehaviorRunning(dance):
-            print "hihi"
             time.sleep(0.5)
 
 
-def record_laser_data(lasers_dico, thread):
+def record_sensor_data(lasers_dico, thread):
     """
     Record laser data
     """
     logger = lasers_dico["logger_dist"]
-    h_sides = ["Front", "Left", "Right"]
-    v_sides = ["Left", "Right"]
+    time_debut = time.time()
     while thread.isAlive():
-        for each in h_sides:
+        for each in H_SIDES:
             for i in range(1, 16):
                 logger.log(("Horizontal_X_seg" + str(i) + "_" +
                             each, lasers_dico["Horizontal_X_seg" + str(i) +
                                               "_" + each].value))
-        for each in v_sides:
+        for each in V_SIDES:
             logger.log(
                 ("Vertical_X_seg01_" + each, lasers_dico["Vertical_X_seg01_" +
                                                          each].value))
+        for each in S_SIDES:
+            logger.log(
+                ("Sonar_" + each, lasers_dico["Sonar_" +
+                                              each].value))
         for i in range(1, 4):
             logger.log(
                 ("Shovel_X_seg" + str(i), lasers_dico["Shovel_X_seg" +
                                                       str(i)].value))
+        logger.log(("Time", time.time() - time_debut))
     return logger
 
 
@@ -61,12 +68,12 @@ def check_error(lasers_dico, logger_d, config_test):
     """
     result = []
     logger_e = lasers_dico["logger_error"]
-    h_sides = ["Front", "Left", "Right"]
-    v_sides = ["Left", "Right"]
+
     h_distance = float(config_test.get('Distance_Min', 'Horizontal'))
     v_distance = float(config_test.get('Distance_Min', 'Vertical'))
     s_distance = float(config_test.get('Distance_Min', 'Shovel'))
-    for side in h_sides:
+    so_distance = float(config_test.get('Distance_Min', 'Sonar'))
+    for side in H_SIDES:
         for i in range(1, 16):
             for each in logger_d.log_dic["Horizontal_X_seg" + str(i) +
                                          "_" + side]:
@@ -78,12 +85,18 @@ def check_error(lasers_dico, logger_d, config_test):
 
                     pass
 
-    for side in v_sides:
+    for side in V_SIDES:
         for each in logger_d.log_dic["Vertical_X_seg01_" + side]:
             if each < v_distance:
                 result.append('Fail')
                 logger_e.log(
                     ("Vertical_X_seg01_" + side, each))
+    for side in S_SIDES:
+        for each in logger_d.log_dic["Sonar_" + side]:
+            if each < so_distance:
+                result.append('Fail')
+                logger_e.log(
+                    ("Sonar_" + side, each))
             else:
                 pass
 
@@ -101,7 +114,7 @@ def check_error(lasers_dico, logger_d, config_test):
 def test_faux_positifs_dance(
     check_error_laser, mem, dcm, remove_diagnosis, wakeup, dance,
     remove_safety, behavior_manager, active_all_laser,
-        get_lasers_x_segments, config_test):
+        get_sensor_objects, config_test):
     """
     Test function
     """
@@ -111,9 +124,9 @@ def test_faux_positifs_dance(
     print "Initialisation..."
     time.sleep(5)
     print "Test..."
-    logger_d = record_laser_data(get_lasers_x_segments, dance_thread)
+    logger_d = record_sensor_data(get_sensor_objects, dance_thread)
     result, logger_e = check_error(
-        get_lasers_x_segments, logger_d, config_test)
+        get_sensor_objects, logger_d, config_test)
     if 'Fail' in result:
         print "NUMBER OF POSITIVES FALSE PER SEGMENT"
         for each in logger_e.log_dic.keys():

@@ -8,7 +8,7 @@ Created on September 11, 2014
 
 
 import pytest
-from subdevice import Laser
+from subdevice import Laser, Sonar
 import tools
 import laser_utils
 
@@ -85,13 +85,14 @@ def get_horizontal_x_segments(request, result_base_folder, dcm, mem, side):
 
 
 @pytest.fixture(scope="module")
-def get_lasers_x_segments(request, result_base_folder, dcm, mem):
+def get_sensor_objects(request, result_base_folder, dcm, mem):
     """
     Return a dictionary with several objects for
     each X coordinate of all lasers segments
     """
     h_sides = ["Front", "Left", "Right"]
     v_sides = ["Left", "Right"]
+    s_sides = ["Front", "Back"]
     dico = {}
     for each in h_sides:
         for i in range(1, 10):
@@ -103,6 +104,9 @@ def get_lasers_x_segments(request, result_base_folder, dcm, mem):
     for each in v_sides:
         dico["Vertical_X_seg01_" + each] = Laser(
             dcm, mem, "Front/Vertical/" + each + "/Seg01/X/Sensor")
+    for each in s_sides:
+        dico["Sonar_" + each] = Sonar(
+            dcm, mem, each)
     for i in range(1, 4):
         dico["Shovel_X_seg" + str(i)] = Laser(
             dcm, mem, "Front/Shovel/Seg0" + str(i) + "/X/Sensor")
