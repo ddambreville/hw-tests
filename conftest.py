@@ -4,7 +4,9 @@ import time
 import subdevice
 import pytest
 import threading
+import os
 
+PATH = os.path.dirname(os.path.abspath(__file__))
 
 def pytest_addoption(parser):
     """Configuration of pytest parsing."""
@@ -138,7 +140,8 @@ def wake_up_pos():
     """
     Fixture which retrieves wakeUp joints position from a configuration file.
     """
-    return tools.read_section("../global_test_configuration/juliette_positions.cfg", "wakeUp")
+    return tools.read_section(PATH + "/global_test_configuration/"
+                              "juliette_positions.cfg", "wakeUp")
 
 
 @pytest.fixture(scope="session")
@@ -146,7 +149,8 @@ def rest_pos():
     """
     Fixture which retrieves rest joints position from a configuration file.
     """
-    return tools.read_section("../global_test_configuration/juliette_positions.cfg", "rest")
+    return tools.read_section(PATH + "/global_test_configuration/"
+                              "juliette_positions.cfg", "rest")
 
 
 @pytest.fixture(scope="session")
@@ -154,7 +158,8 @@ def zero_pos():
     """
     Fixture which retrieves zero joints position from a configuration file.
     """
-    return tools.read_section("../global_test_configuration/juliette_positions.cfg", "zero")
+    return tools.read_section(PATH + "/global_test_configuration/"
+                              "juliette_positions.cfg", "zero")
 
 
 @pytest.fixture(scope="session")
@@ -340,7 +345,8 @@ def active_all_laser(dcm):
     Turn on all the lasers
     """
     dcm.set(
-        ["Device/SubDeviceList/Platform/LaserSensor/Front/Reg/OperationMode/Actuator/Value",
+        ["Device/SubDeviceList/Platform/LaserSensor/"
+         "Front/Reg/OperationMode/Actuator/Value",
          "ClearAll", [[7.0, dcm.getTime(0)]]])
 
 
