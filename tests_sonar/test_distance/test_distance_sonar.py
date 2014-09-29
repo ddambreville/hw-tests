@@ -13,6 +13,7 @@ Make a noaqi restart before the test to reset the odometry.
 '''
 import threading
 from termcolor import colored
+import time
 
 
 def robot_motion(motion, pos_0, config_test):
@@ -44,14 +45,18 @@ def record_sonar_data(
     logger = get_sonar_objects["logger"]
     debut = float(config_test.get('Test_Config', 'Distance_begin'))
     dist = abs(motion.getRobotPosition(True)[0] - pos_0)
-    offset_front = float(config_test.get('Test_Config', 'Offset_Front'))
+    if sonar == "Front":
+        offset = float(config_test.get('Test_Config', 'Offset_Front'))
+    elif sonar == "Back":
+        offset = float(config_test.get('Test_Config', 'Offset_Back'))
     while dist < debut:
         dist = abs(motion.getRobotPosition(True)[0] - pos_0)
     while thread.isAlive():
         logger.log(("robot_pos", abs(
-            motion.getRobotPosition(True)[0] - pos_0) + offset_front))
+            motion.getRobotPosition(True)[0] - pos_0) + offset))
         logger.log((sonar + "_Sonar", get_sonar_objects[
             sonar + "_Sonar"].value))
+        time.sleep(0.04)
     for i in range(0, len(logger.log_dic["robot_pos"])):
         logger.log(("Erreur_" + sonar + "_Sonar", (abs(
             logger.log_dic["robot_pos"][i] - logger.log_dic[
@@ -89,7 +94,7 @@ def check_error(logger, config_test):
     return result
 
 
-def test_verticaux_x(
+def test_sonar_distance(
     dcm, mem, motion, wakeup_no_rotation, get_sonar_objects,
         config_test, remove_safety, remove_diagnosis):
     """
