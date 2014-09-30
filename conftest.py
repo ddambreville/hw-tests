@@ -78,6 +78,12 @@ def motion(robot_ip, port):
         return "MotionKilled"
 
 
+@pytest.fixture(scope="session")
+def robot_posture(robot_ip, port):
+    """Fixture which returns a proxy to ALRobotPosture module."""
+    return ALProxy("ALRobotPosture", robot_ip, port)
+
+
 @pytest.fixture(scope="session", autouse=False)
 def kill_motion(motion):
     """
