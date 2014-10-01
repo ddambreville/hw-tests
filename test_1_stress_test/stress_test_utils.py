@@ -126,7 +126,7 @@ def cycle_brakes(motion):
         [['SMART_STIFFNESS_MINIMUM_LEG_STIFFNESS', minimum_leg_stiffness]])
 
 
-def check_nacks(dcm, mem, boards):
+def check_nacks(dcm, mem, boards, accepted_ratio):
     """
     Find all the joints boards and check if it does not nack.
     """
@@ -136,8 +136,44 @@ def check_nacks(dcm, mem, boards):
         board_obj = subdevice.Device(dcm, mem, board)
         acks = board_obj.ack
         nacks = board_obj.nack
-        ratio = float(acks) / float(nacks)
-        if ratio >= 0.01:
+        ratio = float(nacks) / float(acks)
+        if ratio >= float(accepted_ratio):
+            flag = False
+            print "ratio = " + str(ratio) + "for " + str(board)
+            break
+    return flag
+
+
+def no_overheat(body_initial_temperatures, get_joints_temperature,
+                allowed_temperature_emergencies):
+    """
+    Return False if one of the joints is too hot conpared to allowed
+    temperature emergencies availables in configuration file.
+    Return True if no overheat.
+    """
+    flag = True
+    for joint in body_initial_temperatures.keys():
+        joint_ini_tmp = body_initial_temperatures[joint]
+        allowed_tmp_emergency = float(
+            allowed_temperature_emergencies[joint][0])
+        joint_tmp = get_joints_temperature[joint]
+        if joint_tmp >= joint_ini_tmp + allowed_tmp_emergency:
             flag = False
             break
     return flag
+
+
+def get_joints_temperature(joint_temperature_object):
+    """Returns a dictionnary containing each joint temperature."""
+    dico_temperature = dict()
+    for joint, joint_tmp_object in joint_temperature_object.items():
+        dico_temperature[joint] = float(joint_tmp_object.value)
+    return dico_temperature
+
+
+def go_to_stand_pos(robot_posture_proxy, speed_fraction):
+    """
+    Robot goes to standInit posture at speed fraction percent of max speed.
+    """
+    print "going to stand init posture..."
+    robot_posture_proxy.goToPosture("StandInit", speed_fraction)

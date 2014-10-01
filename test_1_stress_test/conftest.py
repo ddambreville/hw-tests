@@ -4,8 +4,16 @@ from math import radians
 import threading
 import time
 import subdevice
+import easy_plot_connection
 
 CONFIG_FILE = "stress_test.cfg"
+
+
+@pytest.fixture(scope="session")
+def plot_server():
+    """Return object corresponding to easy plot connection server."""
+    print "plot_server object initialization..."
+    return easy_plot_connection.Server(local_plot=True)
 
 
 @pytest.fixture(scope="session")
@@ -41,20 +49,50 @@ def joint_temperature_object(motion, dcm, mem, joint_list):
     return dico_object
 
 
+@pytest.fixture(scope="session")
+def body_initial_temperatures(dcm, mem, joint_list):
+    """Return a dictionnary corresponding to initial body temperatures."""
+    print "reading body initial temperatures..."
+    dico_initial_temperatures = {}
+    for joint in joint_list:
+        joint_temperature = subdevice.JointTemperature(dcm, mem, joint)
+        dico_initial_temperatures[joint] = joint_temperature.value
+
+    return dico_initial_temperatures
+
+
 @pytest.fixture(scope="class")
-def temperature_logger(request, joint_temperature_object, result_base_folder,
-                       sa_objects):
+def temperature_logger(
+        request, dcm, joint_temperature_object, result_base_folder, sa_objects,
+        plot_server, plot):
     """
-    Automatically launch logger at the beggining of the test class.
+    @param dcm : proxy to DCM
+    @type dcm : object
+    @param joint_temperature_object : dictionary of jointTemperature objects
+    @type joint_temperature_object : dictionary
+    @param result_base_folder : path where logged data are saved
+    @type result_base_folder : string
+    @param sa_objects : dictionary of sliding average objects with the adapted
+                        coefficient pour each joint
+    @type sa_objects : dictionary
+    @param plot_server : plot server object
+    @type plot_server : object
+    @param plot : if True, allow real time plot
+    @type plot : Booleen
+
+    @returns : Nothing. Automatically launch logger at the beggining of the
+    test class and stops it at the end.
     """
     print "activating temperature logger..."
     logger = tools.Logger()
     thread_flag = threading.Event()
 
-    def logging(thread_flag):
+    def logging(thread_flag, plot, plot_server):
         """Logging temperatures while the test class is not finished."""
+        timer = tools.Timer(dcm, 1000)
         while not thread_flag.is_set():
-            listeofparams = list()
+            loop_time = timer.dcm_time() / 1000.
+            list_of_param = [("Time", loop_time)]
             for joint_temperature in joint_temperature_object.values():
                 measured_temperature = joint_temperature.value
                 sa_object = sa_objects[joint_temperature.short_name]
@@ -67,12 +105,20 @@ def temperature_logger(request, joint_temperature_object, result_base_folder,
                 new_tuple = (temperature_header, measured_temperature)
                 sa_tuple = (temperature_sa_header, sa_temperature)
 
-                listeofparams.append(new_tuple)
-                listeofparams.append(sa_tuple)
-            logger.log_from_list(listeofparams)
+                list_of_param.append(new_tuple)
+                list_of_param.append(sa_tuple)
+
+                # real time plot
+                if plot:
+                    plot_server.add_point(
+                        temperature_sa_header, loop_time, sa_temperature)
+
+            logger.log_from_list(list_of_param)
+
             time.sleep(5.0)
 
-    my_logger = threading.Thread(target=logging, args=(thread_flag,))
+    my_logger = threading.Thread(
+        target=logging, args=(thread_flag, plot, plot_server))
     my_logger.start()
 
     def fin():
@@ -101,46 +147,81 @@ def allowed_temperature_emergencies():
 
 
 @pytest.fixture(scope="session")
-def body_initial_temperatures(motion, dcm, mem, joint_list):
-    """Return a dictionnary corresponding to initial body temperatures."""
-    print "reading body initial temperatures..."
-    dico_initial_temperatures = {}
-    for joint in joint_list:
-        joint_temperature = subdevice.JointTemperature(dcm, mem, joint)
-        dico_initial_temperatures[joint] = joint_temperature.value
-
-    return dico_initial_temperatures
-
-
-@pytest.fixture(scope="session")
 def offset_protection():
     """
-    Offset to protect the robot from its mechanical stops if the calibration
-    is not perfect.
+    @returns : Offset to protect the robot from its mechanical stops if the
+               calibration is not perfect.
+    @rtype : float
+
     """
     return radians(float(tools.read_parameter(CONFIG_FILE,
                                               "GeneralParameters", "Offset")))
 
 
+@pytest.fixture(scope="session")
+def ack_nack_ratio():
+    """
+    @returns : Max nack/ack ratio accepted for the robot board.
+    @rtype : float
+    """
+    return float(tools.read_parameter(CONFIG_FILE, "GeneralParameters",
+                                      "AckNackRatio"))
+
+
+@pytest.fixture(scope="session")
+def obstacle_distance():
+    """
+    @returns : Distance in meters.
+    @rtype : float
+
+    If the robot detects an obstacle closer than this distance, it does not
+    rotate around itself.
+    """
+    return (float(tools.read_parameter(CONFIG_FILE,
+                                       "GeneralParameters",
+                                       "ObstacleDistance")))
+
+
 @pytest.fixture(params=tools.use_section("stress_test.cfg", "Tests"))
 def test_parameters_dico(request, motion, offset_protection):
-    """Parametered behavior."""
-    dico = tools.read_section("stress_test.cfg", request.param)
+    """
+    @returns : Dictionary of motion parameters
+    @rtype : dictionary
+
+    It returns as many dictionaries as arguments in params [len(params)]
+    """
+    dico = tools.read_section(CONFIG_FILE, request.param)
     return dico
 
 
 @pytest.fixture(scope="session")
 def battery_charge(dcm, mem):
-    """Returns battery charge object."""
+    """
+    @returns : BatteryCharge object
+    @rtype : object
+    """
     print "creating battery charge object..."
     return subdevice.BatteryChargeSensor(dcm, mem)
 
 
 @pytest.fixture(scope="session")
 def limit_battery_charge():
-    """To commit"""
+    """
+    @returns : Battery minimum state of charde allowed to pass the test.
+    @rtype : float
+    """
     return float(tools.read_parameter(CONFIG_FILE, "GeneralParameters",
                                       "LimitBatteryCharge"))
+
+
+@pytest.fixture(scope="session")
+def posture_speed_fraction():
+    """
+    @returns : Speed fraction in order to go to postures.
+    @rtype : float
+    """
+    return float(tools.read_parameter(CONFIG_FILE, "GeneralParameters",
+                                      "InitPostureSpeedFraction"))
 
 
 @pytest.fixture(scope="session")
@@ -172,7 +253,19 @@ def kill_autonomouslife(autonomous_life):
 
 @pytest.fixture(scope="session")
 def boards(dcm, mem, joint_list):
-    """Fixture which returns all joints boards."""
+    """
+    @param dcm : proxy to dcm
+    @type  dcm : object
+    @param mem : proxy to ALMemory
+    @type mem : object
+    @param joint_list : list of all robot joints.
+    @type joint_list : list
+
+    @returns : List of all the boards liked to the robot joints.
+    @rtype : list of strings
+
+    Invoked once per test session.
+    """
     boards = list()
     for joint in joint_list:
         joint_current_sensor = subdevice.JointCurrentSensor(dcm, mem, joint)
