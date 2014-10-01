@@ -4,19 +4,19 @@ import time
 
 
 END = False
+MAXIMUM = 0.15
+MINIMUM = -0.15
 
 
-def pdc(dcm, mem):
+def cables_routing(dcm, mem):
     gyro_x = subdevice.InertialSensorBase(dcm, mem, "GyroscopeX")
     gyro_y = subdevice.InertialSensorBase(dcm, mem, "GyroscopeY")
 
     passage_de_cables = 0
-    minimum = -0.15
-    maximum = 0.15
 
     while not END:
-        if gyro_x.value < minimum or gyro_x.value > maximum or\
-                gyro_y.value < minimum or gyro_y.value > maximum:
+        if gyro_x.value < MINIMUM or gyro_x.value > MAXIMUM or\
+                gyro_y.value < MINIMUM or gyro_y.value > MAXIMUM:
             passage_de_cables += 1
             print("pdc = " + str(passage_de_cables))
             time.sleep(2)
