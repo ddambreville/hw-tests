@@ -64,7 +64,7 @@ def body_initial_temperatures(dcm, mem, joint_list):
 @pytest.fixture(scope="class")
 def temperature_logger(
         request, dcm, joint_temperature_object, result_base_folder, sa_objects,
-        plot_server, plot):
+        plot_server, plot, max_allowed_temperatures):
     """
     @param dcm : proxy to DCM
     @type dcm : object
@@ -87,7 +87,7 @@ def temperature_logger(
     logger = tools.Logger()
     thread_flag = threading.Event()
 
-    def logging(thread_flag, plot, plot_server):
+    def logging(thread_flag, plot, plot_server, max_allowed_temperatures):
         """Logging temperatures while the test class is not finished."""
         timer = tools.Timer(dcm, 1000)
         while not thread_flag.is_set():
@@ -98,27 +98,34 @@ def temperature_logger(
                 sa_object = sa_objects[joint_temperature.short_name]
                 temperature_header = joint_temperature.header_name
                 temperature_sa_header = temperature_header + "_sa"
+                temperature_max_header = temperature_header + "_max"
+                temperature_max = max_allowed_temperatures[
+                    joint_temperature.short_name]
 
                 sa_object.point_add(measured_temperature)
                 sa_temperature = sa_object.calc()
 
                 new_tuple = (temperature_header, measured_temperature)
                 sa_tuple = (temperature_sa_header, sa_temperature)
+                max_tmp_tuple = (temperature_max_header, temperature_max)
 
                 list_of_param.append(new_tuple)
                 list_of_param.append(sa_tuple)
+                list_of_param.append(max_tmp_tuple)
 
                 # real time plot
                 if plot:
                     plot_server.add_point(
                         temperature_sa_header, loop_time, sa_temperature)
+                    plot_server.add_point(
+                        temperature_max_header, loop_time, temperature_max)
 
             logger.log_from_list(list_of_param)
 
             time.sleep(5.0)
 
     my_logger = threading.Thread(
-        target=logging, args=(thread_flag, plot, plot_server))
+        target=logging, args=(thread_flag, plot, plot_server, max_allowed_temperatures))
     my_logger.start()
 
     def fin():
@@ -144,6 +151,28 @@ def allowed_temperature_emergencies():
     """
     print "reading allowed temperature emergencies..."
     return tools.read_section(CONFIG_FILE, "AllowedTemperatureEmergencies")
+
+
+@pytest.fixture(scope="session")
+def max_allowed_temperatures(joint_list, body_initial_temperatures,
+                             allowed_temperature_emergencies):
+    """
+    @param joint_list : list of all the robot joints
+    @type  joint_list : list
+    @param body_initial_temperatures : dictionary containing robot body initial
+    temperatures at the beggining of test session
+    @type body_initial_temperatures : dict
+    @param allowed_temperature_emergencies : dictionary containing robot body
+    temperatures allowed emergencies from configuration file
+    """
+    max_allowed_tmp_dico = dict()
+    for joint in joint_list:
+        joint_initial_tmp = body_initial_temperatures[joint]
+        joint_allowed_emergency = float(
+            allowed_temperature_emergencies[joint][0])
+        joint_max_tmp = joint_initial_tmp + joint_allowed_emergency
+        max_allowed_tmp_dico[joint] = joint_max_tmp
+    return max_allowed_tmp_dico
 
 
 @pytest.fixture(scope="session")
