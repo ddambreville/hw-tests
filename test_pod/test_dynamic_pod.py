@@ -10,6 +10,10 @@ import time
 CYCLING_STOP_FLAG = False
 FLAG_TEST = True
 
+AMPLITUDE_KNEEPITCH = 0.2
+AMPLITUDE_HIPPITCH = 0.3
+AMPLITUDE_HIPROLL = 0.5
+
 
 def plot(dcm, mem, file_name):
     robot_on_charging_station = subdevice.ChargingStationSensor(dcm, mem)
@@ -115,9 +119,9 @@ def kneepitch_cycling(dcm, mem):
     hippitch_hardness_actuator.qqvalue = 0.
 
     while kneepitch_temperature.value < 60:
-        kneepitch_position_actuator.qvalue = (-0.2, 2000)
+        kneepitch_position_actuator.qvalue = (-AMPLITUDE_KNEEPITCH, 2000)
         tools.wait(dcm, 2100)
-        kneepitch_position_actuator.qvalue = (0.2, 2000)
+        kneepitch_position_actuator.qvalue = (AMPLITUDE_KNEEPITCH, 2000)
         tools.wait(dcm, 2100)
         print(str(kneepitch_temperature.value))
 
@@ -157,9 +161,9 @@ def hippitch_cycling(dcm, mem):
     kneepitch_hardness_actuator.qqvalue = 0.
 
     while hippitch_temperature.value < 60:
-        hippitch_position_actuator.qvalue = (0.3, 2000)
+        hippitch_position_actuator.qvalue = (AMPLITUDE_HIPPITCH, 2000)
         tools.wait(dcm, 2100)
-        hippitch_position_actuator.qvalue = (-0.3, 1000)
+        hippitch_position_actuator.qvalue = (-AMPLITUDE_HIPPITCH, 1000)
         tools.wait(dcm, 1100)
         print(str(hippitch_temperature.value))
 
@@ -205,9 +209,9 @@ def hiproll_cycling(dcm, mem):
     hippitch_hardness_actuator.qqvalue = 0.
 
     while hiproll_temperature.value < 60:
-        hiproll_position_actuator.qvalue = (0.5, 1000)
+        hiproll_position_actuator.qvalue = (AMPLITUDE_HIPROLL, 1000)
         tools.wait(dcm, 1100)
-        hiproll_position_actuator.qvalue = (-0.5, 1000)
+        hiproll_position_actuator.qvalue = (-AMPLITUDE_HIPROLL, 1000)
         tools.wait(dcm, 1100)
         print(str(hiproll_temperature.value))
 
