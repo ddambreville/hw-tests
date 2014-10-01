@@ -53,6 +53,7 @@ def plot(dcm, mem, file_name):
             "WheelFRSpeedSensor", elapsed_time, wheelfr_speed_sensor.value)
 
         line_to_write = ",".join([
+            str(elapsed_time),
             str(robot_on_charging_station.value),
             str(battery_current.value),
             str(back_bumper_sensor.value),
