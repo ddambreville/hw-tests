@@ -71,7 +71,7 @@ def plot(dcm, mem, file_name):
         time.sleep(0.1)
 
 
-def test_usure(dcm, mem, wake_up_pos, kill_motion, stiff_robot, unstiff_parts):
+def test_usure(dcm, mem, wake_up_pos_brakes_closed, unstiff_parts):
     global END_PLOT
     # Test parameters
     parameters = tools.read_section("test_pod.cfg", "DockCyclingParameters")
@@ -85,19 +85,6 @@ def test_usure(dcm, mem, wake_up_pos, kill_motion, stiff_robot, unstiff_parts):
     wheelfl_temperature_sensor = subdevice.WheelTemperatureSensor(
         dcm, mem, "WheelFL")
     back_bumper_sensor = subdevice.Bumper(dcm, mem, "Back")
-
-    kneepitch_position_actuator = subdevice.JointPositionActuator(
-        dcm, mem, "KneePitch")
-    kneepitch_position_sensor = subdevice.JointPositionSensor(
-        dcm, mem, "KneePitch")
-    kneepitch_hardness_actuator = subdevice.JointHardnessActuator(
-        dcm, mem, "KneePitch")
-    hippitch_position_actuator = subdevice.JointPositionActuator(
-        dcm, mem, "HipPitch")
-    hippitch_position_sensor = subdevice.JointPositionSensor(
-        dcm, mem, "HipPitch")
-    hippitch_hardness_actuator = subdevice.JointHardnessActuator(
-        dcm, mem, "HipPitch")
 
     # Internal flags
     cycles_done = 0
@@ -114,11 +101,6 @@ def test_usure(dcm, mem, wake_up_pos, kill_motion, stiff_robot, unstiff_parts):
     flag_bumper = True
     flag_keep_connexion = True
 
-    # Going to initial position
-    subdevice.multiple_set(dcm, mem, wake_up_pos, wait=True)
-    hippitch_hardness_actuator.qqvalue = 0.
-    kneepitch_hardness_actuator.qqvalue = 0.
-
     timer = tools.Timer(dcm, 10)
     log_file = open(parameters["cycling_cvs_name"][0], 'w')
     log_file.write(
@@ -134,7 +116,7 @@ def test_usure(dcm, mem, wake_up_pos, kill_motion, stiff_robot, unstiff_parts):
 
     # Cyclage
     # If the robot is not on the pod or bumper not activated, test don't start
-    if robot_on_charging_station.value == 0:
+    if robot_on_charging_station.value == 1:
         print "Put the robot on the pod\n"
         stop_cycling_flag = True
         flag_detection = False
@@ -193,15 +175,6 @@ def test_usure(dcm, mem, wake_up_pos, kill_motion, stiff_robot, unstiff_parts):
         line_to_write += "\n"
         log_file.write(line_to_write)
         log_file.flush()
-
-        if abs(hippitch_position_sensor.value) > 0.1 or\
-            abs(kneepitch_position_sensor.value) > 0.1:
-            hippitch_hardness_actuator.qqvalue = 1.
-            hippitch_position_actuator.qvalue = (0., 1000)
-            hippitch_hardness_actuator.qqvalue = 0.
-            kneepitch_hardness_actuator.qqvalue = 1.
-            kneepitch_position_actuator.qvalue = (0., 1000)
-            kneepitch_hardness_actuator.qqvalue = 0.
 
         # Wait if temperature of wheels too hot
         while wheelfr_temperature_sensor.value > 60 or\
