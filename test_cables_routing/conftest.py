@@ -24,8 +24,7 @@ def cables_routing(request, dcm, mem):
         data.write("CablesRouting,Time\n")
 
         time_init = time.time()
-        while not thread_flag.is_set() and \
-                passage_de_cables < int(parameters["Nb_cables_routing"][0]):
+        while not thread_flag.is_set():
             if gyro_x.value < float(parameters["Minimum"][0]) or \
                     gyro_x.value > float(parameters["Maximum"][0]) or\
                     gyro_y.value < float(parameters["Minimum"][0]) or \
