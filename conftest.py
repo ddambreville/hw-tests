@@ -3,6 +3,7 @@ import tools
 import time
 import subdevice
 import pytest
+import threading
 
 
 def pytest_addoption(parser):
@@ -341,3 +342,58 @@ def active_all_laser(dcm):
     dcm.set(
         ["Device/SubDeviceList/Platform/LaserSensor/Front/Reg/OperationMode/Actuator/Value",
          "ClearAll", [[7.0, dcm.getTime(0)]]])
+
+
+@pytest.fixture(scope="session")
+def wake_up_pos_brakes_closed(request, dcm, mem, wake_up_pos,rest_pos,
+                              kill_motion, stiff_robot):
+    """
+    Fixture which make the robot wakeUp, close brakes.
+    Control if brakes slip.
+    """
+
+    subdevice.multiple_set(dcm, mem, wake_up_pos, wait=True)
+    thread_flag = threading.Event()
+
+    def control():
+        """ Control if brakes slip"""
+        kneepitch_position_actuator = subdevice.JointPositionActuator(
+            dcm, mem, "KneePitch")
+        kneepitch_position_sensor = subdevice.JointPositionSensor(
+            dcm, mem, "KneePitch")
+        kneepitch_hardness_actuator = subdevice.JointHardnessActuator(
+            dcm, mem, "KneePitch")
+        hippitch_position_actuator = subdevice.JointPositionActuator(
+            dcm, mem, "HipPitch")
+        hippitch_position_sensor = subdevice.JointPositionSensor(
+            dcm, mem, "HipPitch")
+        hippitch_hardness_actuator = subdevice.JointHardnessActuator(
+            dcm, mem, "HipPitch")
+
+        hippitch_hardness_actuator.qqvalue = 0.
+        kneepitch_hardness_actuator.qqvalue = 0.
+
+        while not thread_flag.is_set():
+            if abs(hippitch_position_sensor.value) > 0.1 or\
+                    abs(kneepitch_position_sensor.value) > 0.1:
+                print "Slip"
+                hippitch_hardness_actuator.qqvalue = 1.
+                kneepitch_hardness_actuator.qqvalue = 1.
+                hippitch_position_actuator.qvalue = (0., 1000)
+                kneepitch_position_actuator.qvalue = (0., 1000)
+                tools.wait(dcm, 2100)
+                hippitch_hardness_actuator.qqvalue = 0.
+                kneepitch_hardness_actuator.qqvalue = 0.
+
+
+    my_thread = threading.Thread(target=control)
+    my_thread.start()
+
+    def fin():
+        """
+        Stop control and put the robot in rest position at the end of session"
+        """
+        thread_flag.set()
+        subdevice.multiple_set(dcm, mem, rest_pos, wait=True)
+
+    request.addfinalizer(fin)
