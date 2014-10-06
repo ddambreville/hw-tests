@@ -58,10 +58,14 @@ class CablesCrossing(threading.Thread):
         time_init = time.time()
         # While non cable crossing for the first time, wait to create file
         while self._cables_crossing == 0 and not self._end_cables_crossing:
-            if gyro_x.value < float(parameters["Minimum"][0]) or \
-                    gyro_x.value > float(parameters["Maximum"][0]) or\
-                    gyro_y.value < float(parameters["Minimum"][0]) or \
-                    gyro_y.value > float(parameters["Maximum"][0]):
+            if gyro_x.value < \
+                    float(parameters["Minimum_CableDetection"][0]) or \
+                    gyro_x.value > \
+                    float(parameters["Maximum_CableDetection"][0]) or\
+                    gyro_y.value < \
+                    float(parameters["Minimum_CableDetection"][0]) or \
+                    gyro_y.value > \
+                    float(parameters["Maximum_CableDetection"][0]):
                 self._cables_crossing = 1
                 data = open(parameters["Log_file_name"][0], 'w')
                 data.write("CablesCrossing,Time\n")
@@ -71,10 +75,14 @@ class CablesCrossing(threading.Thread):
                 time.sleep(2)
 
         while not self._end_cables_crossing:
-            if gyro_x.value < float(parameters["Minimum"][0]) or \
-                    gyro_x.value > float(parameters["Maximum"][0]) or\
-                    gyro_y.value < float(parameters["Minimum"][0]) or \
-                    gyro_y.value > float(parameters["Maximum"][0]):
+            if gyro_x.value < \
+                    float(parameters["Minimum_CableDetection"][0]) or \
+                    gyro_x.value > \
+                    float(parameters["Maximum_CableDetection"][0]) or\
+                    gyro_y.value < \
+                    float(parameters["Minimum_CableDetection"][0]) or \
+                    gyro_y.value > \
+                    float(parameters["Maximum_CableDetection"][0]):
                 self._cables_crossing += 1
                 data.write(str(self._cables_crossing) + "," +\
                         str(time.time() - time_init + previous_time) + "\n")

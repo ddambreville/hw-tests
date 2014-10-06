@@ -4,6 +4,7 @@ import subdevice
 import threading
 import math
 import random
+import mobile_base_utils
 
 def is_bumper_pressed(dcm, mem, test_time):
     """
@@ -30,7 +31,7 @@ def is_bumper_pressed(dcm, mem, test_time):
 
 
 def move_random(dcm, mem):
-    """ 
+    """
     Makes the robot move randomly
     """
     wheelfr_speed_actuator = subdevice.WheelSpeedActuator(dcm, mem, "WheelFR")
@@ -81,9 +82,9 @@ def move_random(dcm, mem):
         return liste
 
 
-def test_move_random(dcm, mem, wake_up_pos_brakes_closed, stiff_robot_wheels, 
-                      test_time, stop_robot, unstiff_joints, log_wheels_speed, 
-                     log_bumper_pressions, cables_routing):
+def test_move_random(dcm, mem, wake_up_pos_brakes_closed, stiff_robot_wheels,
+                      test_time, stop_robot, unstiff_joints, log_wheels_speed,
+                     log_bumper_pressions):
     '''
     The robot moves randomly
     '''
@@ -96,6 +97,12 @@ def test_move_random(dcm, mem, wake_up_pos_brakes_closed, stiff_robot_wheels,
     bumper_left  = subdevice.Bumper(dcm, mem, "FrontLeft")
     bumper_back  = subdevice.Bumper(dcm, mem, "Back")
 
+    # Cables crossing detection
+    parameters = tools.read_section(
+        "config_pod.cfg", "CablesRoutingParameters")
+    cable_detection = mobile_base_utils.CablesCrossing(dcm, mem)
+    cable_detection.start()
+
     flag_stop = False
     timer = tools.Timer(dcm, test_time)
 
@@ -103,7 +110,9 @@ def test_move_random(dcm, mem, wake_up_pos_brakes_closed, stiff_robot_wheels,
     liste_commands = move_random(dcm, mem)
 
     # Loop
-    while timer.is_time_not_out() and flag_stop == False:
+    while timer.is_time_not_out() and flag_stop == False and\
+            cable_detection.cables_crossing < \
+            parameters["Nb_cables_crossing"][0]:
         if is_bumper_pressed(dcm, mem, test_time) == True:
             print("Bumper pressed - robot stopped")
             wheelfr_speed_actuator.qvalue = (0.0, 0)
@@ -135,5 +144,7 @@ def test_move_random(dcm, mem, wake_up_pos_brakes_closed, stiff_robot_wheels,
                 flag_stop = True
 
     print("Robot goes to rest")
+
+    cable_detection.stop()
 
 
