@@ -8,7 +8,7 @@ import csv
 
 
 @pytest.fixture(scope="session")
-def cables_routing(request, dcm, mem, rest_pos):
+def cables_crossing(request, dcm, mem, rest_pos):
     """
     Fixture which log number of cables routing
     """
@@ -42,13 +42,26 @@ def cables_routing(request, dcm, mem, rest_pos):
             data.close()
             data = open(parameters["Log_file_name"][0], 'a')
 
+        # Else initialize to 0
         else:
-            data = open(parameters["Log_file_name"][0], 'w')
-            data.write("CablesRouting,Time\n")
             passage_de_cables = 0
             precedent_time = 0.
 
         time_init = time.time()
+        # While non cable crossing for the first time, wait to create file
+        while passage_de_cables == 0 and not thread_flag.is_set():
+            if gyro_x.value < float(parameters["Minimum"][0]) or \
+                    gyro_x.value > float(parameters["Maximum"][0]) or\
+                    gyro_y.value < float(parameters["Minimum"][0]) or \
+                    gyro_y.value > float(parameters["Maximum"][0]):
+                passage_de_cables = 1
+                data = open(parameters["Log_file_name"][0], 'w')
+                data.write("CablesCrossing,Time\n")
+                data.write(str(passage_de_cables) + "," +\
+                        str(time.time() - time_init + precedent_time) + "\n")
+                data.flush()
+                time.sleep(2)
+
         while not thread_flag.is_set():
             if gyro_x.value < float(parameters["Minimum"][0]) or \
                     gyro_x.value > float(parameters["Maximum"][0]) or\
@@ -70,3 +83,27 @@ def cables_routing(request, dcm, mem, rest_pos):
         thread_flag.set()
 
     request.addfinalizer(fin)
+
+
+# @pytest.fixture(scope="session")
+# def essai():
+#     thread_flag = threading.Event()
+
+#     def log():
+#         ttt = 0
+
+#         while not thread_flag.is_set() or ttt < 2:
+#             ttt += 1
+#             print "ttt +"
+#             time.sleep(3)
+
+#         print "Fin run"
+
+#     my_thread = threading.Thread(target=log)
+#     my_thread.start()
+
+#     def fin():
+#         print "End"
+#         thread_flag.set()
+
+#     request.addfinalizer(fin)
