@@ -10,10 +10,6 @@ import time
 CYCLING_STOP_FLAG = False
 FLAG_TEST = True
 
-AMPLITUDE_KNEEPITCH = 0.2
-AMPLITUDE_HIPPITCH = 0.3
-AMPLITUDE_HIPROLL = 0.5
-
 
 def plot(dcm, mem, file_name):
     robot_on_charging_station = subdevice.ChargingStationSensor(dcm, mem)
@@ -96,7 +92,7 @@ def plot(dcm, mem, file_name):
         time.sleep(0.1)
 
 
-def kneepitch_cycling(dcm, mem):
+def kneepitch_cycling(dcm, mem, amplitude_kneepitch):
     """ KneePitch cycling"""
     # Objects creation
     kneepitch_position_actuator = subdevice.JointPositionActuator(
@@ -119,9 +115,9 @@ def kneepitch_cycling(dcm, mem):
     hippitch_hardness_actuator.qqvalue = 0.
 
     while kneepitch_temperature.value < 60:
-        kneepitch_position_actuator.qvalue = (-AMPLITUDE_KNEEPITCH, 2000)
+        kneepitch_position_actuator.qvalue = (-amplitude_kneepitch, 2000)
         tools.wait(dcm, 2100)
-        kneepitch_position_actuator.qvalue = (AMPLITUDE_KNEEPITCH, 2000)
+        kneepitch_position_actuator.qvalue = (amplitude_kneepitch, 2000)
         tools.wait(dcm, 2100)
         print(str(kneepitch_temperature.value))
 
@@ -138,7 +134,7 @@ def kneepitch_cycling(dcm, mem):
     hippitch_hardness_actuator.qqvalue = 1.
 
 
-def hippitch_cycling(dcm, mem):
+def hippitch_cycling(dcm, mem, amplitude_hippitch):
     """ HipPitch cycling"""
     # Objects creation
     kneepitch_position_actuator = subdevice.JointPositionActuator(
@@ -161,9 +157,9 @@ def hippitch_cycling(dcm, mem):
     kneepitch_hardness_actuator.qqvalue = 0.
 
     while hippitch_temperature.value < 60:
-        hippitch_position_actuator.qvalue = (AMPLITUDE_HIPPITCH, 2000)
+        hippitch_position_actuator.qvalue = (amplitude_hippitch, 2000)
         tools.wait(dcm, 2100)
-        hippitch_position_actuator.qvalue = (-AMPLITUDE_HIPPITCH, 1000)
+        hippitch_position_actuator.qvalue = (-amplitude_hippitch, 1000)
         tools.wait(dcm, 1100)
         print(str(hippitch_temperature.value))
 
@@ -180,7 +176,7 @@ def hippitch_cycling(dcm, mem):
     kneepitch_hardness_actuator.qqvalue = 1.
 
 
-def hiproll_cycling(dcm, mem):
+def hiproll_cycling(dcm, mem, amplitude_hiproll):
     """HipRoll cycling"""
     # Objects creation
     kneepitch_position_actuator = subdevice.JointPositionActuator(
@@ -209,9 +205,9 @@ def hiproll_cycling(dcm, mem):
     hippitch_hardness_actuator.qqvalue = 0.
 
     while hiproll_temperature.value < 60:
-        hiproll_position_actuator.qvalue = (AMPLITUDE_HIPROLL, 1000)
+        hiproll_position_actuator.qvalue = (amplitude_hiproll, 1000)
         tools.wait(dcm, 1100)
-        hiproll_position_actuator.qvalue = (-AMPLITUDE_HIPROLL, 1000)
+        hiproll_position_actuator.qvalue = (-amplitude_hiproll, 1000)
         tools.wait(dcm, 1100)
         print(str(hiproll_temperature.value))
 
@@ -236,6 +232,9 @@ def hiproll_cycling(dcm, mem):
 
 def log_detection_during_movement(dcm, mem, timer, log_file_name,
                                   log_detection_file_name):
+    """
+    Log only when robot moves
+    """
     # Objects creation
     robot_on_charging_station = subdevice.ChargingStationSensor(dcm, mem)
     battery_current = subdevice.BatteryCurrentSensor(dcm, mem)
@@ -346,7 +345,8 @@ def test_pod_damage(dcm, mem, wake_up_pos, kill_motion, stiff_robot, unstiff_par
                 print "KneePitch cycling"
                 cycling_step = 0
                 CYCLING_STOP_FLAG = False
-                kneepitch_cycling(dcm, mem)
+                kneepitch_cycling(dcm, mem,
+                                float(parameters["amplitude_kneepitch"][0]))
             else:
                 cycling_step += 1
             cycling_flag = 1
@@ -356,7 +356,8 @@ def test_pod_damage(dcm, mem, wake_up_pos, kill_motion, stiff_robot, unstiff_par
                 print "HipPitch cycling"
                 cycling_step = 0
                 CYCLING_STOP_FLAG = False
-                hippitch_cycling(dcm, mem)
+                hippitch_cycling(dcm, mem,
+                                float(parameters["amplitude_hippitch"][0]))
             else:
                 cycling_step += 1
             cycling_flag = 2
@@ -365,7 +366,8 @@ def test_pod_damage(dcm, mem, wake_up_pos, kill_motion, stiff_robot, unstiff_par
                 print "HipRoll cycling"
                 cycling_step = 0
                 CYCLING_STOP_FLAG = False
-                hiproll_cycling(dcm, mem)
+                hiproll_cycling(dcm, mem,
+                                float(parameters["amplitude_hiproll"][0]))
             else:
                 cycling_step += 1
             cycling_flag = 0
