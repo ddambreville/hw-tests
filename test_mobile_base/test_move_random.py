@@ -6,10 +6,10 @@ import math
 import random
 import mobile_base_utils
 
-def is_bumper_pressed(dcm, mem, test_time):
+
+def is_bumper_pressed(dcm, mem, test_time, wait_time_bumpers):
     """
-    If one or more bumpers are pressed,
-    it returns True and saves wheels' speeds (rad/s)
+    Returns True if one or more bumpers are pressed
     """
 
     bumper_right = subdevice.Bumper(dcm, mem, "FrontRight")
@@ -27,10 +27,10 @@ def is_bumper_pressed(dcm, mem, test_time):
                 flag += 1
         if flag > 0:
             return True
-        tools.wait(dcm, 100)
+        tools.wait(dcm, wait_time_bumpers)
 
 
-def move_random(dcm, mem):
+def move_random(dcm, mem, wait_time, min_speed, max_speed):
     """
     Makes the robot move randomly
     """
@@ -39,30 +39,29 @@ def move_random(dcm, mem):
     wheelb_speed_actuator  = subdevice.WheelSpeedActuator(dcm, mem, "WheelB")
 
     # random fractions for wheels' speeds
-    fraction_wheelFR = float(format(random.uniform(0.1, 0.3), '.2f'))
-    fraction_wheelFL = float(format(random.uniform(0.1, 0.3), '.2f'))
-    fraction_wheelB  = float(format(random.uniform(0.1, 0.2), '.2f'))
+    fraction_wheel_fr = float(format(random.uniform(min_speed, max_speed), '.2f'))
+    fraction_wheel_fl = float(format(random.uniform(min_speed, max_speed), '.2f'))
+    fraction_wheel_b  = float(format(random.uniform(min_speed, max_speed), '.2f'))
 
     # set vwheels' speeds [rad/s]
-    speed_FR = fraction_wheelFR * wheelfr_speed_actuator.maximum
-    speed_FL = fraction_wheelFL * wheelfl_speed_actuator.maximum
-    speed_B  = fraction_wheelB  * wheelb_speed_actuator.maximum
+    speed_fr = fraction_wheel_fr * wheelfr_speed_actuator.maximum
+    speed_fl = fraction_wheel_fl * wheelfl_speed_actuator.maximum
+    speed_b  = fraction_wheel_b  * wheelb_speed_actuator.maximum
 
-    t = 2000
-    alea1 = int(random.uniform(0,10))
-    alea2 = int(random.uniform(0,10))
+    alea1 = int(random.uniform(0, max_random))
+    alea2 = int(random.uniform(0, max_random))
 
     if alea1 <= 5:
-        timed_commands_wheelfr = [(-speed_FR, t)]
-        timed_commands_wheelfl = [(speed_FL, t)]
-        timed_commands_wheelb  = [(speed_B, t)]
+        timed_commands_wheelfr = [(-speed_fr, wait_time)]
+        timed_commands_wheelfl = [(speed_fl, wait_time)]
+        timed_commands_wheelb  = [(speed_b, wait_time)]
     else:
-        timed_commands_wheelfr = [(speed_FR, t)]
-        timed_commands_wheelfl = [(-speed_FL, t)]
-        timed_commands_wheelb  = [(speed_B, t)]
+        timed_commands_wheelfr = [(speed_fr, wait_time)]
+        timed_commands_wheelfl = [(-speed_fl, wait_time)]
+        timed_commands_wheelb  = [(speed_b, wait_time)]
 
     if alea2 <= 5:
-        timed_commands_wheelb  = [(0.0, t)]
+        timed_commands_wheelb  = [(0.0, wait_time)]
 
         wheelfr_speed_actuator.mqvalue = timed_commands_wheelfr
         wheelfl_speed_actuator.mqvalue = timed_commands_wheelfl
@@ -71,8 +70,8 @@ def move_random(dcm, mem):
         liste = [timed_commands_wheelfr, timed_commands_wheelfl, timed_commands_wheelb]
         return liste
     else:
-        timed_commands_wheelfr = [(0.5*speed_FR, t)]
-        timed_commands_wheelfl = [(-0.5*speed_FL, t)]
+        timed_commands_wheelfr = [(0.5*speed_fr, wait_time)]
+        timed_commands_wheelfl = [(-0.5*speed_fl, wait_time)]
 
         wheelfr_speed_actuator.mqvalue = timed_commands_wheelfr
         wheelfl_speed_actuator.mqvalue = timed_commands_wheelfl
@@ -82,9 +81,10 @@ def move_random(dcm, mem):
         return liste
 
 
-def test_move_random(dcm, mem, wake_up_pos_brakes_closed, stiff_robot_wheels,
-                      test_time, stop_robot, unstiff_joints, log_wheels_speed,
-                     log_bumper_pressions):
+def test_move_random(dcm, mem, wait_time, test_time, max_random, stop_robot,
+                     wake_up_pos_brakes_closed, stiff_robot_wheels,
+                     unstiff_joints, log_wheels_speed,
+                     log_bumper_pressions, cables_routing):
     '''
     The robot moves randomly
     '''
@@ -114,25 +114,25 @@ def test_move_random(dcm, mem, wake_up_pos_brakes_closed, stiff_robot_wheels,
             cable_detection.cables_crossing < \
             parameters["Nb_cables_crossing"][0]:
         if is_bumper_pressed(dcm, mem, test_time) == True:
-            print("Bumper pressed - robot stopped")
+            print("A Bumper has been pressed")
             wheelfr_speed_actuator.qvalue = (0.0, 0)
-            wheelfr_speed_actuator.qvalue = (0.0, 0)
-            wheelfr_speed_actuator.qvalue = (0.0, 0)
-            tools.wait(dcm, 2000)
+            wheelfl_speed_actuator.qvalue = (0.0, 0)
+            wheelb_speed_actuator.qvalue = (0.0, 0)
+            tools.wait(dcm, wait_time)
 
             print("Robot going back")
-            timed_commands_wheelfr = [( (-1) * liste_commands[0][0][0], 2000)]
-            timed_commands_wheelfl = [( (-1) * liste_commands[1][0][0], 2000)]
-            timed_commands_wheelb  = [( (-1) * liste_commands[2][0][0], 2000)]
+            timed_commands_wheelfr = [( (-1) * liste_commands[0][0][0], wait_time)]
+            timed_commands_wheelfl = [( (-1) * liste_commands[1][0][0], wait_time)]
+            timed_commands_wheelb  = [( (-1) * liste_commands[2][0][0], wait_time)]
             wheelfr_speed_actuator.mqvalue = timed_commands_wheelfr
             wheelfl_speed_actuator.mqvalue = timed_commands_wheelfl
             wheelb_speed_actuator.mqvalue  = timed_commands_wheelb
-            tools.wait(dcm, 2000)
+            tools.wait(dcm, wait_time)
 
             while bumper_right.value == 1 or \
                   bumper_left.value  == 1 or \
                   bumper_back.value == 1:
-                print "bumper is blocked"
+                print "A bumper is blocked"
 
             print("Start random again\n")
             liste_commands = move_random(dcm, mem)
@@ -142,9 +142,3 @@ def test_move_random(dcm, mem, wake_up_pos_brakes_closed, stiff_robot_wheels,
             except KeyboardInterrupt:
                 print("Key board interrupt")
                 flag_stop = True
-
-    print("Robot goes to rest")
-
-    cable_detection.stop()
-
-
