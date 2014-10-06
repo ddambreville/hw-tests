@@ -71,7 +71,7 @@ def plot(dcm, mem, file_name):
         time.sleep(0.1)
 
 
-def test_usure(dcm, mem, wake_up_pos_brakes_closed, unstiff_parts):
+def test_damage(dcm, mem, wake_up_pos_brakes_closed, unstiff_parts):
     global END_PLOT
     # Test parameters
     parameters = tools.read_section("test_pod.cfg", "DockCyclingParameters")
@@ -141,7 +141,10 @@ def test_usure(dcm, mem, wake_up_pos_brakes_closed, unstiff_parts):
             ["WheelFR", "WheelFL", "WheelB"],
             float(parameters["stiffness_wheels_value"][0])
         )
-        tools.wait(dcm, 500)
+        tools.wait(
+            dcm,
+            float(parameters["time_wait_before_verify_detection"][0] * 1000)
+        )
         # Verification of connexion
         t_init = timer.dcm_time()
         test_time = 0
@@ -177,9 +180,11 @@ def test_usure(dcm, mem, wake_up_pos_brakes_closed, unstiff_parts):
         log_file.flush()
 
         # Wait if temperature of wheels too hot
-        while wheelfr_temperature_sensor.value > 60 or\
-                wheelfl_temperature_sensor.value > 60:
-            tools.wait(dcm, 2000)
+        while wheelfr_temperature_sensor.value > \
+                int(parameters["wheels_temperature_limit"][0]) or\
+                wheelfl_temperature_sensor.value > \
+                int(parameters["wheels_temperature_limit"][0]):
+            tools.wait(dcm, int(parameters["time_wait_wheels cooled"][0]))
 
         # End if nb_cycles is reached
         if cycles_done == int(parameters["nb_cycles"][0]):
