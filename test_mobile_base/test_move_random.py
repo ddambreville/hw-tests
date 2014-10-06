@@ -38,9 +38,9 @@ def move_random(dcm, mem):
     wheelb_speed_actuator  = subdevice.WheelSpeedActuator(dcm, mem, "WheelB")
 
     # random fractions for wheels' speeds
-    fraction_wheelFR = float(format(random.uniform(0.1, 0.15), '.2f'))
-    fraction_wheelFL = float(format(random.uniform(0.1, 0.15), '.2f'))
-    fraction_wheelB  = float(format(random.uniform(0.1, 0.15), '.2f'))
+    fraction_wheelFR = float(format(random.uniform(0.1, 0.3), '.2f'))
+    fraction_wheelFL = float(format(random.uniform(0.1, 0.3), '.2f'))
+    fraction_wheelB  = float(format(random.uniform(0.1, 0.2), '.2f'))
 
     # set vwheels' speeds [rad/s]
     speed_FR = fraction_wheelFR * wheelfr_speed_actuator.maximum
@@ -81,10 +81,9 @@ def move_random(dcm, mem):
         return liste
 
 
-def test_move_random(dcm, mem, rest_pos, wake_up_pos, kill_motion, 
-                     stiff_robot, stiff_robot_wheels, test_time, 
-                     stop_robot, wakeUp, unstiff_joints, log_wheels_speed, 
-                     log_bumper_pressions):
+def test_move_random(dcm, mem, wake_up_pos_brakes_closed, stiff_robot_wheels, 
+                      test_time, stop_robot, unstiff_joints, log_wheels_speed, 
+                     log_bumper_pressions, cables_routing):
     '''
     The robot moves randomly
     '''
@@ -113,10 +112,9 @@ def test_move_random(dcm, mem, rest_pos, wake_up_pos, kill_motion,
             tools.wait(dcm, 2000)
 
             print("Robot going back")
-            t = 2000
-            timed_commands_wheelfr = [( (-1) * liste_commands[0][0][0], t)]
-            timed_commands_wheelfl = [( (-1) * liste_commands[1][0][0], t)]
-            timed_commands_wheelb  = [( (-1) * liste_commands[2][0][0], t)]
+            timed_commands_wheelfr = [( (-1) * liste_commands[0][0][0], 2000)]
+            timed_commands_wheelfl = [( (-1) * liste_commands[1][0][0], 2000)]
+            timed_commands_wheelb  = [( (-1) * liste_commands[2][0][0], 2000)]
             wheelfr_speed_actuator.mqvalue = timed_commands_wheelfr
             wheelfl_speed_actuator.mqvalue = timed_commands_wheelfl
             wheelb_speed_actuator.mqvalue  = timed_commands_wheelb
