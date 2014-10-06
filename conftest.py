@@ -351,7 +351,7 @@ def active_all_laser(dcm):
 
 
 @pytest.fixture(scope="session")
-def wake_up_pos_brakes_closed(request, dcm, mem, wake_up_pos,rest_pos,
+def wake_up_pos_brakes_closed(request, dcm, mem, wake_up_pos, rest_pos,
                               kill_motion, stiff_robot):
     """
     Fixture which make the robot wakeUp, close brakes.
@@ -382,7 +382,6 @@ def wake_up_pos_brakes_closed(request, dcm, mem, wake_up_pos,rest_pos,
         while not thread_flag.is_set():
             if abs(hippitch_position_sensor.value) > 0.1 or\
                     abs(kneepitch_position_sensor.value) > 0.1:
-                print "Slip"
                 hippitch_hardness_actuator.qqvalue = 1.
                 kneepitch_hardness_actuator.qqvalue = 1.
                 hippitch_position_actuator.qvalue = (0., 1000)
