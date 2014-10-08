@@ -427,7 +427,7 @@ def test_pod_damage(dcm, mem, wake_up_pos, kill_motion, stiff_robot,
     )
     log_during_movement.start()
 
-    if robot_on_charging_station.value == 1:
+    if robot_on_charging_station.value == 0:
         print "Put the robot on the robot.\nVerify detection.\n"
         flag = False
 
