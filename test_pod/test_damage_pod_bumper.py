@@ -6,73 +6,90 @@ import easy_plot_connection
 import time
 
 
-END_PLOT = False
+class Plot(threading.Thread):
+    """
+    Class to log during test.
+    """
+    def __init__(self, dcm, mem, file_name):
+        threading.Thread.__init__(self)
+        self.dcm = dcm
+        self.mem = mem
+        self.file_name = file_name
+        self._end_plot = False
 
+    def run(self):
+        """ Log """
+        robot_on_charging_station = subdevice.ChargingStationSensor(
+            self.dcm, self.mem)
+        battery_current = subdevice.BatteryCurrentSensor(self.dcm, self.mem)
 
-def plot(dcm, mem, file_name):
-    robot_on_charging_station = subdevice.ChargingStationSensor(dcm, mem)
-    battery_current = subdevice.BatteryCurrentSensor(dcm, mem)
+        back_bumper_sensor = subdevice.Bumper(self.dcm, self.mem, "Back")
 
-    back_bumper_sensor = subdevice.Bumper(dcm, mem, "Back")
+        wheelfr_speed_actuator = subdevice.WheelSpeedActuator(
+            self.dcm, self.mem, "WheelFR")
+        wheelfl_speed_actuator = subdevice.WheelSpeedActuator(
+            self.dcm, self.mem, "WheelFL")
+        wheelfr_speed_sensor = subdevice.WheelSpeedSensor(
+            self.dcm, self.mem, "WheelFR")
+        wheelfl_speed_sensor = subdevice.WheelSpeedSensor(
+            self.dcm, self.mem, "WheelFL")
+        wheelfr_current_sensor = subdevice.WheelCurrentSensor(
+            self.dcm, self.mem, "WheelFR")
+        wheelfl_current_sensor = subdevice.WheelCurrentSensor(
+            self.dcm, self.mem, "WheelFL")
 
-    wheelfr_speed_actuator = subdevice.WheelSpeedActuator(
-        dcm, mem, "WheelFR")
-    wheelfl_speed_actuator = subdevice.WheelSpeedActuator(
-        dcm, mem, "WheelFL")
-    wheelfr_speed_sensor = subdevice.WheelSpeedSensor(
-        dcm, mem, "WheelFR")
-    wheelfl_speed_sensor = subdevice.WheelSpeedSensor(
-        dcm, mem, "WheelFL")
-    wheelfr_current_sensor = subdevice.WheelCurrentSensor(
-        dcm, mem, "WheelFR")
-    wheelfl_current_sensor = subdevice.WheelCurrentSensor(
-        dcm, mem, "WheelFL")
+        log_file = open(self.file_name, 'w')
+        log_file.write(
+            "Time,Detection,Current,BackBumper,WheelFRSpeedActuator," +
+            "WheelFRSpeedSensor,WheelFRCurrent,WheelFLSpeedActuator," +
+            "WheelFLSpeedSensor,WheelFLCurrent\n"
+        )
 
-    log_file = open(file_name, 'w')
-    log_file.write(
-        "Time,Detection,Current,BackBumper,WheelFRSpeedActuator," +
-        "WheelFRSpeedSensor,WheelFRCurrent,WheelFLSpeedActuator," +
-        "WheelFLSpeedSensor,WheelFLCurrent\n"
-    )
+        plot_server = easy_plot_connection.Server()
 
-    plot_server = easy_plot_connection.Server()
+        time_init = time.time()
+        while not self._end_plot:
+            elapsed_time = time.time() - time_init
 
-    time_init = time.time()
-    while not END_PLOT:
-        elapsed_time = time.time() - time_init
+            plot_server.add_point(
+                "Detection", elapsed_time, robot_on_charging_station.value)
+            plot_server.add_point(
+                "Current", elapsed_time, battery_current.value)
+            plot_server.add_point(
+                "BackBumper", elapsed_time, back_bumper_sensor.value)
+            plot_server.add_point(
+                "WheelFRSpeedActuator", elapsed_time,
+                wheelfr_speed_actuator.value)
+            plot_server.add_point(
+                "WheelFRSpeedSensor", elapsed_time, wheelfr_speed_sensor.value)
 
-        plot_server.add_point(
-            "Detection", elapsed_time, robot_on_charging_station.value)
-        plot_server.add_point("Current", elapsed_time, battery_current.value)
-        plot_server.add_point(
-            "BackBumper", elapsed_time, back_bumper_sensor.value)
-        plot_server.add_point(
-            "WheelFRSpeedActuator", elapsed_time,
-            wheelfr_speed_actuator.value)
-        plot_server.add_point(
-            "WheelFRSpeedSensor", elapsed_time, wheelfr_speed_sensor.value)
+            line_to_write = ",".join([
+                str(elapsed_time),
+                str(robot_on_charging_station.value),
+                str(battery_current.value),
+                str(back_bumper_sensor.value),
+                str(wheelfr_speed_actuator.value),
+                str(wheelfr_speed_sensor.value),
+                str(wheelfr_current_sensor.value),
+                str(wheelfl_speed_actuator.value),
+                str(wheelfl_speed_sensor.value),
+                str(wheelfl_current_sensor.value)
+            ])
+            line_to_write += "\n"
+            log_file.write(line_to_write)
+            log_file.flush()
 
-        line_to_write = ",".join([
-            str(elapsed_time),
-            str(robot_on_charging_station.value),
-            str(battery_current.value),
-            str(back_bumper_sensor.value),
-            str(wheelfr_speed_actuator.value),
-            str(wheelfr_speed_sensor.value),
-            str(wheelfr_current_sensor.value),
-            str(wheelfl_speed_actuator.value),
-            str(wheelfl_speed_sensor.value),
-            str(wheelfl_current_sensor.value)
-        ])
-        line_to_write += "\n"
-        log_file.write(line_to_write)
-        log_file.flush()
+            time.sleep(0.1)
 
-        time.sleep(0.1)
+    def stop(self):
+        """ To stop logging """
+        self._end_plot = True
 
 
 def test_damage(dcm, mem, wake_up_pos_brakes_closed, unstiff_parts):
-    global END_PLOT
+    """
+    Test robot docking/undocking to check damages
+    """
     # Test parameters
     parameters = tools.read_section("test_pod.cfg", "DockCyclingParameters")
 
@@ -108,15 +125,12 @@ def test_damage(dcm, mem, wake_up_pos_brakes_closed, unstiff_parts):
         "Detection,LooseConnection,UnlockBumperStatus,LockBumperStatus\n"
     )
 
-    plot_log = threading.Thread(
-        target=plot,
-        args=(dcm, mem, parameters["easy_plot_csv_name"][0])
-    )
+    plot_log = Plot(dcm, mem, parameters["easy_plot_csv_name"][0])
     plot_log.start()
 
     # Cyclage
     # If the robot is not on the pod or bumper not activated, test don't start
-    if robot_on_charging_station.value == 1:
+    if robot_on_charging_station.value == 0:
         print "Put the robot on the pod\n"
         stop_cycling_flag = True
         flag_detection = False
@@ -143,7 +157,7 @@ def test_damage(dcm, mem, wake_up_pos_brakes_closed, unstiff_parts):
         )
         tools.wait(
             dcm,
-            float(parameters["time_wait_before_verify_detection"][0] * 1000)
+            float(parameters["time_wait_before_verify_detection"][0]) * 1000
         )
         # Verification of connexion
         t_init = timer.dcm_time()
@@ -189,13 +203,12 @@ def test_damage(dcm, mem, wake_up_pos_brakes_closed, unstiff_parts):
         # End if nb_cycles is reached
         if cycles_done == int(parameters["nb_cycles"][0]):
             stop_cycling_flag = True
-            plot.END_PLOT = True
 
     if len(list_bumper_nok) > cycles_done / 100:
         flag_bumper = False
 
     log_file.close()
-    END_PLOT = True
+    plot_log.stop()
     print("Cycles done = " + str(cycles_done))
     print("Cycles done with bumper ok = " + str(cycles_with_bumper_ok))
 
