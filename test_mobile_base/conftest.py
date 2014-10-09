@@ -1,18 +1,10 @@
 import pytest
 import tools
 import subdevice
-import time
 import threading
+import time
 import os
 import csv
-
-
-@pytest.fixture(scope="session")
-def test_time():
-    """
-    Returns the test time [ms]
-    """
-    return int(tools.read_parameter("config.cfg", "Parameters", "testTime"))
 
 
 @pytest.fixture(scope="session")
@@ -20,7 +12,8 @@ def wait_time():
     """
     Returns a wait time [ms]
     """
-    return int(tools.read_parameter("config.cfg", "Parameters", "waitTime"))
+    return int(tools.read_parameter("config.cfg", "MobileBaseParameters",
+                                    "wait_time"))
 
 
 @pytest.fixture(scope="session")
@@ -28,7 +21,8 @@ def wait_time_bumpers():
     """
     Returns the wait time before checking again bumpers [ms]
     """
-    return int(tools.read_parameter("config.cfg", "Parameters", "waitTimeBumpers"))
+    return int(tools.read_parameter("config.cfg", "MobileBaseParameters",
+                                    "wait_time_bumpers"))
 
 
 @pytest.fixture(scope="session")
@@ -36,31 +30,26 @@ def log_period():
     """
     Returns the log period [s]
     """
-    return int(tools.read_parameter("config.cfg", "Parameters", "logPeriod"))
+    return float(tools.read_parameter("config.cfg", "MobileBaseParameters",
+                                      "log_period"))
 
 
 @pytest.fixture(scope="session")
-def min_speed():
+def min_fraction():
     """
-    Returns the minimum speed for a wheel [rad/s]
+    Returns the minimum fraction speed for a wheel
     """
-    return int(tools.read_parameter("config.cfg", "Parameters", "minSpeed"))
+    return float(tools.read_parameter("config.cfg", "MobileBaseParameters",
+                                      "min_fraction"))
 
 
 @pytest.fixture(scope="session")
-def max_speed():
+def max_fraction():
     """
-    Returns the maximum speed for a wheel [rad/s]
+    Returns the maximum fraction speed for a wheel
     """
-    return int(tools.read_parameter("config.cfg", "Parameters", "maxSpeed"))
-
-
-@pytest.fixture(scope="session")
-def min_random():
-    """
-    Returns the minimum value for rand funtion
-    """
-    return int(tools.read_parameter("config.cfg", "Parameters", "minRandom"))
+    return float(tools.read_parameter("config.cfg", "MobileBaseParameters",
+                                      "max_fraction"))
 
 
 @pytest.fixture(scope="session")
@@ -68,7 +57,16 @@ def max_random():
     """
     Returns the maximum value for rand funtion
     """
-    return int(tools.read_parameter("config.cfg", "Parameters", "maxRandom"))
+    return int(tools.read_parameter("config.cfg", "MobileBaseParameters",
+                                    "max_random"))
+
+@pytest.fixture(scope="session")
+def nb_cables_crossing():
+    """
+    Returns wanted number of cables crossing 
+    """
+    return int(tools.read_parameter("config.cfg", "CablesRoutingParameters",
+                                    "Nb_cables_crossing"))
 
 
 @pytest.fixture(scope="session")
@@ -77,16 +75,18 @@ def stop_robot(request, dcm, mem, wait_time):
     Stops the robot at the end of the test
     """
     def fin():
-        print "Robot stopped"
         wheel_fr_speed_actuator = subdevice.WheelSpeedActuator(
-            dcm, mem,"wheelFR")
+            dcm, mem,"WheelFR")
         wheel_fl_speed_actuator = subdevice.WheelSpeedActuator(
-            dcm, mem,"wheelFL")
+            dcm, mem,"WheelFL")
         wheel_b_speed_actuator  = subdevice.WheelSpeedActuator(
             dcm, mem,"WheelB")
+
         wheel_fr_speed_actuator.qvalue = (0.0, 0)
         wheel_fl_speed_actuator.qvalue = (0.0, 0)
         wheel_b_speed_actuator.qvalue  = (0.0, 0)
+        print "Robot stopped"
+
         tools.wait(dcm, wait_time)
 
     request.addfinalizer(fin)
@@ -109,16 +109,19 @@ def log_wheels_speed(request, dcm, mem, log_period):
     """
     Log wheels' speeds [rad/s] every 0.5s
     """
-    wheel_fr = subdevice.WheelSpeedSensor(dcm, mem,"wheelFR")
-    wheel_fl = subdevice.WheelSpeedSensor(dcm, mem,"wheelFL")
-    wheel_b  = subdevice.WheelSpeedSensor(dcm, mem,"WheelB")
+    wheel_fr_speed_sensor = subdevice.WheelSpeedSensor(
+        dcm, mem, "WheelFR")
+    wheel_fl_speed_sensor = subdevice.WheelSpeedSensor(
+        dcm, mem, "WheelFL")
+    wheel_b_speed_sensor  = subdevice.WheelSpeedSensor(
+        dcm, mem, "WheelB")
 
     log_file = open("wheels_speeds.csv", 'w')
     log_file.write(
             "Time (s)" + "," +
-            "wheelFR speed (rad/s)" + "," +
-            "wheelFL speed (rad/s)" + "," +
-            "WheelB speed (rad/s)" + "\n"
+            "wheel FR speed [rad/s]" + "," +
+            "wheel FL speed [rad/s]" + "," +
+            "Wheel B speed [rad/s]" + "\n"
     )
 
     threading_flag = threading.Event()
@@ -128,17 +131,20 @@ def log_wheels_speed(request, dcm, mem, log_period):
         time_init = time.time()
         while not threading_flag.is_set():
             line = ""
-            if float(format((time.time() - time_init), '.1f')) == (cpt * log_period):
+            if float(format((time.time() - time_init),
+                     '.1f')) == (cpt * log_period):
                 cpt += 1
                 line += str(float(format((time.time() - time_init),
                          '.1f'))) + "," + \
-                        str(wheel_fr.value) + "," + \
-                        str(wheel_fl.value) + "," + \
-                        str(wheel_b.value) + "\n"
+                        str(wheel_fr_speed_sensor.value) + "," + \
+                        str(wheel_fl_speed_sensor.value) + "," + \
+                        str(wheel_b_speed_sensor.value) + "\n"
                 log_file.write(line)
 
     log_thread = threading.Thread(target=log, args=(threading_flag,))
     log_thread.start()
+
+    print("log_wheels_speeds started !\n")
 
     def fin():
         threading_flag.set()
@@ -149,14 +155,14 @@ def log_wheels_speed(request, dcm, mem, log_period):
 @pytest.fixture(scope="session")
 def log_bumper_pressions(request, dcm, mem, wait_time_bumpers):
     """
-    If one or more bumpers are pressed,
-    it saves wheels' speeds (rad/s)
+       If one or more bumpers are pressed,
+       it saves wheels' speeds [rad/s]
     """
-    wheel_fr = subdevice.WheelSpeedSensor(
-        dcm, mem,"wheelFR")
-    wheel_fl = subdevice.WheelSpeedSensor(
-        dcm, mem,"wheelFL")
-    wheel_b  = subdevice.WheelSpeedSensor(
+    wheel_fr_speed_sensor = subdevice.WheelSpeedSensor(
+        dcm, mem,"WheelFR")
+    wheel_fl_speed_sensor = subdevice.WheelSpeedSensor(
+        dcm, mem,"WheelFL")
+    wheel_b_speed_sensor  = subdevice.WheelSpeedSensor(
         dcm, mem,"WheelB")
 
     bumper_right = subdevice.Bumper(dcm, mem, "FrontRight")
@@ -165,13 +171,13 @@ def log_bumper_pressions(request, dcm, mem, wait_time_bumpers):
 
     list_bumpers = [bumper_right, bumper_left, bumper_back]
 
-    data = open("test_bumper.csv", 'w')
-    data.write("BumperFR" + "," +
-               "BumperFL" + "," +
-               "BumperB" + "," +
-               "wheelFR speed (rad/s)" + "," +
-               "wheelFL speed (rad/s)" + "," +
-               "WheelB speed (rad/s)" + "\n")
+    data = open("bumper_pressions.csv", 'w')
+    data.write("Bumper FR" + "," +
+               "Bumper FL" + "," +
+               "Bumper B" + "," +
+               "wheel FR speed [rad/s]" + "," +
+               "wheel FL speed [rad/s]" + "," +
+               "Wheel B speed [rad/s]" + "\n")
 
     threading_flag = threading.Event()
 
@@ -179,9 +185,9 @@ def log_bumper_pressions(request, dcm, mem, wait_time_bumpers):
         while not threading_flag.is_set():
             line = ""
             flag = 0
-            speed_fr = wheel_fr.value
-            speed_fl = wheel_fl.value
-            speed_b  = wheel_b.value
+            speed_fr = wheel_fr_speed_sensor.value
+            speed_fl = wheel_fl_speed_sensor.value
+            speed_b  = wheel_b_speed_sensor.value
             for bumper in list_bumpers:
                 if bumper.value == 1:
                     flag += 1
@@ -197,6 +203,8 @@ def log_bumper_pressions(request, dcm, mem, wait_time_bumpers):
 
     log_thread = threading.Thread(target=log, args=(threading_flag,))
     log_thread.start()
+
+    print("log_bumper_pressions started !\n")
 
     def fin():
         threading_flag.set()
