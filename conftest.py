@@ -80,6 +80,11 @@ def motion(robot_ip, port):
     except RuntimeError:
         return "MotionKilled"
 
+@pytest.fixture(scope="session")
+def alrecharge(robot_ip, port):
+    """ Fixture chich returns a proxy to ALRecharge module. """
+    return ALProxy("ALRecharge", robot_ip, port)
+
 
 @pytest.fixture(scope="session")
 def robot_posture(robot_ip, port):
