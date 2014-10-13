@@ -9,7 +9,7 @@ import time
 
 def robot_motion(motion, config_test):
     """
-    Docstring
+    Thread which make the robot move
     """
     rotation_speed = float(config_test.get('Test_Config', 'Rotation_speed'))
     time_test = float(config_test.get('Test_Config', 'Test_time'))
@@ -21,7 +21,7 @@ def robot_motion(motion, config_test):
 def record_inertialbase_data(
         get_all_inertialbase_objects, thread):
     """
-    Function which logs the sonar distances
+    Function which logs the datas
     """
     logger = get_all_inertialbase_objects["logger"]
     t_0 = time.time()
@@ -35,7 +35,8 @@ def record_inertialbase_data(
 
 def check_error(logger, config_test):
     """
-    Docstring
+    Function which checks the error
+    at the end of the test
     """
     angle_tolerance = float(config_test.get('Test_Config', 'Angle_tolerance'))
     result = []
