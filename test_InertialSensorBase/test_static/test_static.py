@@ -11,7 +11,7 @@ when the robot is static.
 Robot in rest position.
 '''
 import threading
-from test_static_utils import check_error, record_inetialbase_data, wait
+from test_static_utils import check_error, record_inertialbase_data, wait
 
 
 
@@ -23,6 +23,6 @@ def test_static(get_all_inertialbase_objects, config_test):
     wait_thread = threading.Thread(target=wait, args=(config_test,))
     wait_thread.start()
     print "test is running ..."
-    logger = record_inetialbase_data(get_all_inertialbase_objects, wait_thread)
+    logger = record_inertialbase_data(get_all_inertialbase_objects, wait_thread)
     result = check_error(logger, config_test)
     assert 'Fail' not in result

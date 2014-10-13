@@ -23,7 +23,7 @@ def print_error(sensor, value, result):
     result.append("Fail")
     print sensor + " : " + colored("Fail", "red")
     print sensor + " value = " + str(value)
-    return error
+    return result
 
 def error(logger, sensor, tolerance, result):
     """
@@ -64,7 +64,7 @@ def check_error(logger, config_test):
     result = error(logger, "GyrZ", tolerance_gyr_all, result)
     return result
 
-def record_inetialbase_data(
+def record_inertialbase_data(
         get_all_inertialbase_objects, thread):
     """
     Function which logs the inertial base datas
