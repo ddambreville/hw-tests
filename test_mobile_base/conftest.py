@@ -3,8 +3,18 @@ import tools
 import subdevice
 import threading
 import time
+import datetime
 import os
 import csv
+from naoqi import ALProxy
+
+
+@pytest.fixture(scope="session")
+def leds(robot_ip, port):
+    """
+    Fixture which returns a proxy to ALLeds module
+    """
+    return ALProxy("ALLeds", robot_ip, port)
 
 
 @pytest.fixture(scope="session")
@@ -19,7 +29,7 @@ def wait_time():
 @pytest.fixture(scope="session")
 def wait_time_bumpers():
     """
-    Returns the wait time before checking again bumpers [ms]
+    Returns the time before checking bumpers again [ms]
     """
     return int(tools.read_parameter("config.cfg", "MobileBaseParameters",
                                     "wait_time_bumpers"))
@@ -55,18 +65,10 @@ def max_fraction():
 @pytest.fixture(scope="session")
 def max_random():
     """
-    Returns the maximum value for rand funtion
+    Returns the maximum value for the rand funtion
     """
     return int(tools.read_parameter("config.cfg", "MobileBaseParameters",
                                     "max_random"))
-
-@pytest.fixture(scope="session")
-def nb_cables_crossing():
-    """
-    Returns wanted number of cables crossing 
-    """
-    return int(tools.read_parameter("config.cfg", "CablesRoutingParameters",
-                                    "Nb_cables_crossing"))
 
 
 @pytest.fixture(scope="session")
@@ -81,12 +83,10 @@ def stop_robot(request, dcm, mem, wait_time):
             dcm, mem,"WheelFL")
         wheel_b_speed_actuator  = subdevice.WheelSpeedActuator(
             dcm, mem,"WheelB")
-
         wheel_fr_speed_actuator.qvalue = (0.0, 0)
         wheel_fl_speed_actuator.qvalue = (0.0, 0)
         wheel_b_speed_actuator.qvalue  = (0.0, 0)
         print "Robot stopped"
-
         tools.wait(dcm, wait_time)
 
     request.addfinalizer(fin)
@@ -105,7 +105,7 @@ def unstiff_joints(dcm, mem, wait_time):
 
 
 @pytest.fixture(scope="session")
-def log_wheels_speed(request, dcm, mem, log_period):
+def log_wheels_speed(request, dcm, mem, system, log_period):
     """
     Log wheels' speeds [rad/s] every 0.5s
     """
@@ -116,8 +116,15 @@ def log_wheels_speed(request, dcm, mem, log_period):
     wheel_b_speed_sensor  = subdevice.WheelSpeedSensor(
         dcm, mem, "WheelB")
 
-    log_file = open("wheels_speeds.csv", 'w')
-    log_file.write(
+    file_extension = "csv"
+    robot_name = system.robotName()
+    date = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    log_type = "wheels_speeds"
+    file_name = "-".join([robot_name, date, log_type])
+    output = ".".join([file_name, file_extension])
+
+    data = open(output, 'w')
+    data.write(
             "Time (s)" + "," +
             "wheel FR speed [rad/s]" + "," +
             "wheel FL speed [rad/s]" + "," +
@@ -139,12 +146,11 @@ def log_wheels_speed(request, dcm, mem, log_period):
                         str(wheel_fr_speed_sensor.value) + "," + \
                         str(wheel_fl_speed_sensor.value) + "," + \
                         str(wheel_b_speed_sensor.value) + "\n"
-                log_file.write(line)
+                data.write(line)
+                data.flush()
 
     log_thread = threading.Thread(target=log, args=(threading_flag,))
     log_thread.start()
-
-    print("log_wheels_speeds started !\n")
 
     def fin():
         threading_flag.set()
@@ -153,7 +159,7 @@ def log_wheels_speed(request, dcm, mem, log_period):
 
 
 @pytest.fixture(scope="session")
-def log_bumper_pressions(request, dcm, mem, wait_time_bumpers):
+def log_bumper_pressions(request, dcm, mem, system, wait_time_bumpers):
     """
        If one or more bumpers are pressed,
        it saves wheels' speeds [rad/s]
@@ -171,13 +177,21 @@ def log_bumper_pressions(request, dcm, mem, wait_time_bumpers):
 
     list_bumpers = [bumper_right, bumper_left, bumper_back]
 
-    data = open("bumper_pressions.csv", 'w')
+    file_extension = "csv"
+    robot_name = system.robotName()
+    date = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    log_type = "wheels_speeds_when_bumper_pressions"
+    file_name = "-".join([robot_name, date, log_type])
+    output = ".".join([file_name, file_extension])
+
+    data = open(output, 'w')
     data.write("Bumper FR" + "," +
                "Bumper FL" + "," +
                "Bumper B" + "," +
                "wheel FR speed [rad/s]" + "," +
                "wheel FL speed [rad/s]" + "," +
                "Wheel B speed [rad/s]" + "\n")
+    data.flush()
 
     threading_flag = threading.Event()
 
@@ -195,16 +209,15 @@ def log_bumper_pressions(request, dcm, mem, wait_time_bumpers):
                 else:
                     line += str(0) + ","
             if flag > 0:
-                line += str(speed_fr) + "," +\
-                        str(speed_fl) + "," +\
+                line += str(speed_fr) + "," + \
+                        str(speed_fl) + "," + \
                         str(speed_b) + "\n"
                 data.write(line)
+                data.flush()
             tools.wait(dcm, wait_time_bumpers)
 
     log_thread = threading.Thread(target=log, args=(threading_flag,))
     log_thread.start()
-
-    print("log_bumper_pressions started !\n")
 
     def fin():
         threading_flag.set()

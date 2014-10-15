@@ -2,35 +2,29 @@ import pytest
 import tools
 import subdevice
 import threading
+import time
 import math
 import random
 import mobile_base_utils
+from naoqi import ALProxy
 
 
-def is_bumper_pressed(dcm, mem, wait_time_bumpers):
-    """Returns True if one or more bumpers are pressed"""
-    bumper_right = subdevice.Bumper(dcm, mem, "FrontRight")
-    bumper_left  = subdevice.Bumper(dcm, mem, "FrontLeft")
-    bumper_back  = subdevice.Bumper(dcm, mem, "Back")
-
-    list_bumpers = [bumper_right, bumper_left, bumper_back]
-
-    timer = tools.Timer(dcm, 1000000000)
-
-    while timer.is_time_not_out():
-        flag = 0
-        for bumper in list_bumpers:
-            if bumper.value == 1:
-                flag += 1
-        if flag > 0:
-            return True
-        tools.wait(dcm, wait_time_bumpers)
+SHOULDER_LEDS=[
+"ChestBoard/Led/Red/Actuator/Value",
+"ChestBoard/Led/Green/Actuator/Value",
+"ChestBoard/Led/Blue/Actuator/Value"
+]
 
 
 def move_random(dcm, mem, wait_time, min_fraction, max_fraction, max_random):
     """
     Makes the robot move randomly
     """
+
+    #---------------------------------------------------------#
+    #-------------------- Object creations -------------------#
+    #---------------------------------------------------------#
+
     wheel_fr_speed_actuator = subdevice.WheelSpeedActuator(
         dcm, mem, "WheelFR")
     wheel_fl_speed_actuator = subdevice.WheelSpeedActuator(
@@ -38,7 +32,7 @@ def move_random(dcm, mem, wait_time, min_fraction, max_fraction, max_random):
     wheel_b_speed_actuator  = subdevice.WheelSpeedActuator(
         dcm, mem, "WheelB")
 
-    # random fractions for wheels' speeds
+    # Random fractions for wheels' speeds
     fraction_wheel_fr = float(format(random.uniform(
         min_fraction, max_fraction), '.2f'))
     fraction_wheel_fl = float(format(random.uniform(
@@ -46,7 +40,7 @@ def move_random(dcm, mem, wait_time, min_fraction, max_fraction, max_random):
     fraction_wheel_b  = float(format(random.uniform(
         0.1, 0.2), '.2f'))
 
-    # set vwheels' speeds [rad/s]
+    # Set wheels' speeds [rad/s]
     speed_fr = fraction_wheel_fr * wheel_fr_speed_actuator.maximum
     speed_fl = fraction_wheel_fl * wheel_fl_speed_actuator.maximum
     speed_b  = fraction_wheel_b  * wheel_b_speed_actuator.maximum
@@ -88,20 +82,24 @@ def move_random(dcm, mem, wait_time, min_fraction, max_fraction, max_random):
         return liste
 
 
-def test_move_random(dcm, mem, wait_time, wait_time_bumpers,
+def test_move_random(dcm, mem, leds, wait_time, wait_time_bumpers,
                      min_fraction, max_fraction, max_random,
                      stop_robot, wake_up_pos_brakes_closed,
                      stiff_robot_wheels, unstiff_joints,
-                     log_wheels_speed, log_bumper_pressions,
-                     nb_cables_crossing):
+                     log_wheels_speed, log_bumper_pressions):
+
     '''
     The robot moves randomly
     '''
+
+    # To modify shoulder leds
+    leds.createGroup("shoulder_group", SHOULDER_LEDS)
+    leds.on("shoulder_group")
+
     #---------------------------------------------------------#
     #-------------------- Object creations -------------------#
     #---------------------------------------------------------#
-
-    # WHEELS
+    # Wheel speed actuators
     wheel_fr_speed_actuator = subdevice.WheelSpeedActuator(
         dcm, mem, "WheelFR")
     wheel_fl_speed_actuator = subdevice.WheelSpeedActuator(
@@ -109,7 +107,23 @@ def test_move_random(dcm, mem, wait_time, wait_time_bumpers,
     wheel_b_speed_actuator  = subdevice.WheelSpeedActuator(
         dcm, mem, "WheelB")
 
-    # BUMPERS
+    # Wheel temperature sensors
+    wheel_fr_temperature = subdevice.WheelTemperatureSensor(
+        dcm, mem, "WheelFR")
+    wheel_fl_temperature = subdevice.WheelTemperatureSensor(
+        dcm, mem, "WheelFL")
+    wheel_b_temperature = subdevice.WheelTemperatureSensor(
+        dcm, mem, "WheelB")
+
+    # Wheel stiffness actuators
+    wheel_fr_stiffness_actuator = subdevice.WheelStiffnessActuator(
+        dcm, mem, "WheelFR")
+    wheel_fl_stiffness_actuator = subdevice.WheelStiffnessActuator(
+        dcm, mem, "WheelFL")
+    wheel_b_stiffness_actuator  = subdevice.WheelStiffnessActuator(
+        dcm, mem, "WheelB")
+
+    # Bumpers
     bumper_right = subdevice.Bumper(dcm, mem, "FrontRight")
     bumper_left  = subdevice.Bumper(dcm, mem, "FrontLeft")
     bumper_back  = subdevice.Bumper(dcm, mem, "Back")
@@ -119,48 +133,57 @@ def test_move_random(dcm, mem, wait_time, wait_time_bumpers,
     #---------------------------------------------------------#
     parameters_cables = tools.read_section(
         "config.cfg", "CablesRoutingParameters")
-    cable_detection = mobile_base_utils.CablesCrossing(dcm, mem)
-    cable_detection.start()
 
     #---------------------------------------------------------#
     #-------------- Bumpers activation detection -------------#
     #---------------------------------------------------------#
     parameters_bumpers = tools.read_section(
         "config.cfg", "BumpersActivationsParameters")
-    bumper_detection = mobile_base_utils.BumpersCounting(dcm, mem,
-        wait_time_bumpers)
-    bumper_detection.start()
 
-    # TESTS RAPIDES POUR VERIFIER QUE CA MARCHE
-    # while cable_detection.cables_crossing < nb_cables_crossing:
-    #     pass
-    # while bumper_detection.bumpers_activations < \
-    #       int(parameters_bumpers["nb_bumper_activations"][0]):
-    #     pass
+    flag_test = tools.read_section("config.cfg", "TestChoice")
+
+    if bool(flag_test["test_bumpers"][0]):
+        bumper_detection = mobile_base_utils.BumpersCounting(dcm, mem,
+        wait_time_bumpers)
+        bumper_detection.start()
+
+    if bool(flag_test["test_cables_crossing"][0]):
+        cable_detection = mobile_base_utils.CablesCrossing(dcm, mem)
+        cable_detection.start()
 
     #---------------------------------------------------------#
     #------------------ Launch the movement ------------------#
     #---------------------------------------------------------#
+    while bumper_right.value == 1 or \
+          bumper_left.value  == 1 or \
+          bumper_back.value  == 1:
+        print("One or more bumpers are blocked --> Unlock them to begin test")
+        if bumper_right.value == 1:
+            leds.fadeRGB("FaceLeds", "red", 0.)
+        if bumper_left.value == 1:
+            leds.fadeRGB("FaceLeds", "green", 0.)
+        if bumper_back.value == 1:
+            leds.fadeRGB("FaceLeds", "blue", 0.)
+        tools.wait(dcm, wait_time)
+    leds.reset("FaceLeds")
+
     liste_commands = move_random(dcm, mem, wait_time,
-                                 min_fraction, max_fraction, max_random)
 
     #---------------------------------------------------------#
     #----------------------- Main Loop -----------------------#
     #---------------------------------------------------------#
-    flag_stop = False
-    while flag_stop == False and \
-          cable_detection.cables_crossing < nb_cables_crossing and\
-          bumper_detection.bumpers_activations < \
-          int(parameters_bumpers["nb_bumper_activations"][0]):
+    print("Main Loop\n")
+    flag_bumpers = False
+    flag_cables  = False
 
-        if is_bumper_pressed(dcm, mem, wait_time_bumpers) == True:
-            # print("\nBumper pressed => We stop the robot\n")
+    while flag_bumpers == False or flag_cables == False:
+
+        if bumper_detection._is_bumper_pressed == True:
+            print("\nBumper pressed => robot is stopped")
             wheel_fr_speed_actuator.qvalue = (0.0, 0)
             wheel_fl_speed_actuator.qvalue = (0.0, 0)
             wheel_b_speed_actuator.qvalue  = (0.0, 0)
-            # tools.wait(dcm, wait_time)
 
-            # print("\nRobot going back\n")
             timed_commands_wheelfr = [( (-1) * liste_commands[0][0][0],
                                       wait_time)]
             timed_commands_wheelfl = [( (-1) * liste_commands[1][0][0],
@@ -168,23 +191,76 @@ def test_move_random(dcm, mem, wait_time, wait_time_bumpers,
             timed_commands_wheelb  = [( (-1) * liste_commands[2][0][0],
                                       wait_time)]
 
+            print("Going back")
             wheel_fr_speed_actuator.mqvalue = timed_commands_wheelfr
             wheel_fl_speed_actuator.mqvalue = timed_commands_wheelfl
             wheel_b_speed_actuator.mqvalue  = timed_commands_wheelb
-            tools.wait(dcm, wait_time)
+
+            tools.wait(dcm, 2*wait_time)
+
+            wheel_fr_speed_actuator.qvalue = (0.0, 0)
+            wheel_fl_speed_actuator.qvalue = (0.0, 0)
+            wheel_b_speed_actuator.qvalue  = (0.0, 0)
 
             while bumper_right.value == 1 or \
                   bumper_left.value  == 1 or \
                   bumper_back.value  == 1:
-                pass
-                # print("\nBumper blocked !\n")
+                print("Bumper blocked")
+                if bumper_right.value == 1:
+                    leds.fadeRGB("FaceLeds", "red", 0.)
+                if bumper_left.value == 1:
+                    leds.fadeRGB("FaceLeds", "green", 0.)
+                if bumper_back.value == 1:
+                    leds.fadeRGB("FaceLeds", "blue", 0.)
+                tools.wait(dcm, wait_time)
+            leds.reset("FaceLeds")
 
-            # print("\nRandom again\n")
+            print("Random again\n")
             liste_commands = move_random(dcm, mem, wait_time,
-                                         min_fraction, max_fraction, max_random)
         else:
             try:
                 pass
             except KeyboardInterrupt:
-                print("Key board interrupt")
-                flag_stop = True
+                flag_bumpers = True
+                flag_cables  = True
+
+        if bool(flag_test["test_bumpers"][0]) and \
+                bumper_detection.bumpers_activations > \
+                int(parameters_bumpers["nb_bumper_activations"][0]):
+            flag_bumpers = True
+
+        if bool(flag_test["test_cables_crossing"][0]) and \
+                cable_detection.cables_crossing > \
+                int(parameters_cables["Nb_cables_crossing"][0]):
+            flag_cables = True
+
+        # Stops briefly the test if wheels are too hot
+        if wheel_fr_temperature.status == 2 or \
+           wheel_fl_temperature.status == 2 or \
+           wheel_b_temperature.status  == 2:
+
+            print("Wheels too hot --> Waiting")
+            leds.fadeListRGB("shoulder_group", [0x00FF00FF,], [0.,])
+
+            wheel_fr_speed_actuator.qvalue = (0.0, 0)
+            wheel_fl_speed_actuator.qvalue = (0.0, 0)
+            wheel_b_speed_actuator.qvalue  = (0.0, 0)
+
+            wheel_fr_stiffness_actuator.qvalue = (0.0, 0)
+            wheel_fl_stiffness_actuator.qvalue = (0.0, 0)
+            wheel_b_stiffness_actuator.qvalue  = (0.0, 0)
+
+            # Wait for status = 1
+            while wheel_fr_temperature.status != 0 or \
+                  wheel_fl_temperature.status != 0 or \
+                  wheel_b_temperature.status  != 0:
+                print("Wheels too hot --> Waiting")
+                tools.wait(dcm, 30000)
+
+            print("Random again\n")
+            leds.reset("shoulder_group")
+            wheel_fr_stiffness_actuator.qvalue = (1.0, 0)
+            wheel_fl_stiffness_actuator.qvalue = (1.0, 0)
+            wheel_b_stiffness_actuator.qvalue  = (1.0, 0)
+            liste_commands = move_random(dcm, mem, wait_time,
+                                         min_fraction, max_fraction, max_random)

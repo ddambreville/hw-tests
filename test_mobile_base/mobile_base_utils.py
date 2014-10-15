@@ -1,5 +1,5 @@
-import subdevice
 import tools
+import subdevice
 import threading
 import time
 import os
@@ -15,14 +15,21 @@ class BumpersCounting(threading.Thread):
         self.dcm = dcm
         self.mem = mem
         self._bumpers_activations = 0
+        self._is_bumper_pressed = False
         self._end_bumpers_activations = False
         self.wait_time_bumpers = wait_time_bumpers
 
     def _get_bumpers_activations(self):
         """
-        To get the number of bumper activations
+        To get the number of activations
         """
         return self._bumpers_activations
+
+    def _get_is_bumper_pressed(self):
+        """
+        To know if a bumper is pressed
+        """
+        return self._is_bumper_pressed
 
     def run(self):
         bumper_right = subdevice.Bumper(self.dcm, self.mem, "FrontRight")
@@ -60,20 +67,29 @@ class BumpersCounting(threading.Thread):
             previous_time = 0.
             data = open(parameters["Log_file_name"][0], 'w')
             data.write("Bumpers activations,Time\n0,0\n")
+            data.flush()
 
         time_init = time.time()
 
         # Loop
         while not self._end_bumpers_activations:
+            flag = 0
+            self._is_bumper_pressed = False
             for bumper in list_bumpers:
                 if bumper.value == 1:
+                    flag += 1
                     self._bumpers_activations += 1
-                    data.write(str(self._bumpers_activations) + "," +\
-                        str(time.time() - time_init + previous_time) + "\n")
-                    print("nb of bumpers activations: " +
-                        str(self._bumpers_activations))
+                    data.write(str(self._bumpers_activations) + "," + \
+                               str(time.time() - time_init + previous_time) + "\n")
+                    print("nb of bumpers activations: " + str(self._bumpers_activations))
                     data.flush()
+            if flag > 0:
+                self._is_bumper_pressed = True
             tools.wait(self.dcm, self.wait_time_bumpers)
+            # while bumper_right.value == 1 or \
+            #       bumper_left.value == 1 or \
+            #       bumper_back.value == 1:
+            #     pass
 
     def stop(self):
         """
@@ -82,6 +98,7 @@ class BumpersCounting(threading.Thread):
         self._end_bumpers_activations = True
 
     bumpers_activations = property(_get_bumpers_activations)
+    is_bumper_pressed = property(_get_is_bumper_pressed)
 
 
 class CablesCrossing(threading.Thread):
