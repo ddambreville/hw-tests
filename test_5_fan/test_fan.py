@@ -1,5 +1,5 @@
 import pytest
-import tools
+import qha_tools
 import subdevice
 import fan_utils
 from threading import Thread
@@ -38,8 +38,8 @@ class TestFan:
         fan_behavior.start()
 
         # logger and timer objects creation
-        logger = tools.Logger()
-        timer = tools.Timer(dcm, 1000)
+        logger = qha_tools.Logger()
+        timer = qha_tools.Timer(dcm, 1000)
 
         # test loop
         while fan_behavior.isAlive():

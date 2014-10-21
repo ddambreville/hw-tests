@@ -1,5 +1,5 @@
 import pytest
-import tools
+import qha_tools
 import subdevice
 import threading
 import math
@@ -218,14 +218,14 @@ def kneepitch_cycling(dcm, mem, max_joint_temperature):
     hiproll_position_actuator = subdevice.JointPositionActuator(
         dcm, mem, "HipRoll")
 
-    parameters = tools.read_section("test_pod.cfg", "DynamicCycling")
+    parameters = qha_tools.read_section("test_pod.cfg", "DynamicCycling")
 
     # Initial position
     hippitch_position_actuator.qvalue = (0.,
         int(parameters["time_go_initial_position"][0]) * 1000)
     hiproll_position_actuator.qvalue = (0.,
         int(parameters["time_go_initial_position"][0]) * 1000)
-    tools.wait(dcm, int(parameters["time_go_initial_position"][0]) * 1000)
+    qha_tools.wait(dcm, int(parameters["time_go_initial_position"][0]) * 1000)
     hippitch_hardness_actuator.qqvalue = 0.
 
     while kneepitch_temperature.value < max_joint_temperature:
@@ -233,12 +233,12 @@ def kneepitch_cycling(dcm, mem, max_joint_temperature):
             float(parameters["amplitude_kneepitch"][0]),
             int(parameters["time_movement_kneepitch"][0]) * 1000
         )
-        tools.wait(dcm, int(parameters["time_movement_kneepitch"][0]) * 1000)
+        qha_tools.wait(dcm, int(parameters["time_movement_kneepitch"][0]) * 1000)
         kneepitch_position_actuator.qvalue = (
             -float(parameters["amplitude_kneepitch"][0]),
             int(parameters["time_movement_kneepitch"][0]) * 1000
         )
-        tools.wait(dcm, int(parameters["time_movement_kneepitch"][0]) * 1000)
+        qha_tools.wait(dcm, int(parameters["time_movement_kneepitch"][0]) * 1000)
         print(str(kneepitch_temperature.value))
 
         if abs(hippitch_position_sensor.value) > \
@@ -249,12 +249,12 @@ def kneepitch_cycling(dcm, mem, max_joint_temperature):
                 int(parameters["time_after_slipping"][0]) * 1000)
             kneepitch_position_actuator.qvalue = (0.,
                 int(parameters["time_after_slipping"][0]) * 1000)
-            tools.wait(dcm, int(parameters["time_after_slipping"][0]) * 1000)
+            qha_tools.wait(dcm, int(parameters["time_after_slipping"][0]) * 1000)
             hippitch_hardness_actuator.qqvalue = 0.
 
     kneepitch_position_actuator.qvalue = (0.,
         int(parameters["time_go_initial_position"][0]) * 1000)
-    tools.wait(dcm, int(parameters["time_go_initial_position"][0]) * 1000)
+    qha_tools.wait(dcm, int(parameters["time_go_initial_position"][0]) * 1000)
     hippitch_hardness_actuator.qqvalue = 1.
 
 
@@ -274,14 +274,14 @@ def hippitch_cycling(dcm, mem, max_joint_temperature):
     hiproll_position_actuator = subdevice.JointPositionActuator(
         dcm, mem, "HipRoll")
 
-    parameters = tools.read_section("test_pod.cfg", "DynamicCycling")
+    parameters = qha_tools.read_section("test_pod.cfg", "DynamicCycling")
 
     # Initial position
     kneepitch_position_actuator.qvalue = (0.,
         int(parameters["time_go_initial_position"][0]) * 1000)
     hiproll_position_actuator.qvalue = (0.,
         int(parameters["time_go_initial_position"][0]) * 1000)
-    tools.wait(dcm, int(parameters["time_go_initial_position"][0]) * 1000)
+    qha_tools.wait(dcm, int(parameters["time_go_initial_position"][0]) * 1000)
     kneepitch_hardness_actuator.qqvalue = 0.
 
     while hippitch_temperature.value < max_joint_temperature:
@@ -289,12 +289,12 @@ def hippitch_cycling(dcm, mem, max_joint_temperature):
             float(parameters["amplitude_hippitch"][0]),
             int(parameters["time_movement_hippitch"][0]) * 1000
         )
-        tools.wait(dcm, int(parameters["time_movement_hippitch"][0]) * 1000)
+        qha_tools.wait(dcm, int(parameters["time_movement_hippitch"][0]) * 1000)
         hippitch_position_actuator.qvalue = (
             -float(parameters["amplitude_hippitch"][0]),
             int(parameters["time_movement_hippitch"][0]) * 1000
         )
-        tools.wait(dcm, int(parameters["time_movement_hippitch"][0]) * 1000)
+        qha_tools.wait(dcm, int(parameters["time_movement_hippitch"][0]) * 1000)
         print(str(hippitch_temperature.value))
 
         if abs(kneepitch_position_sensor.value) > \
@@ -305,12 +305,12 @@ def hippitch_cycling(dcm, mem, max_joint_temperature):
                 int(parameters["time_after_slipping"][0]) * 1000)
             hippitch_position_actuator.qvalue = (0.,
                 int(parameters["time_after_slipping"][0]) * 1000)
-            tools.wait(dcm, int(parameters["time_after_slipping"][0]) * 1000)
+            qha_tools.wait(dcm, int(parameters["time_after_slipping"][0]) * 1000)
             kneepitch_hardness_actuator.qqvalue = 0.
 
     hippitch_position_actuator.qvalue = (0.,
         int(parameters["time_go_initial_position"][0]) * 1000)
-    tools.wait(dcm, int(parameters["time_go_initial_position"][0]) * 1000)
+    qha_tools.wait(dcm, int(parameters["time_go_initial_position"][0]) * 1000)
     kneepitch_hardness_actuator.qqvalue = 1.
 
 
@@ -334,14 +334,14 @@ def hiproll_cycling(dcm, mem, max_joint_temperature):
     hiproll_temperature = subdevice.JointTemperature(
         dcm, mem, "HipRoll")
 
-    parameters = tools.read_section("test_pod.cfg", "DynamicCycling")
+    parameters = qha_tools.read_section("test_pod.cfg", "DynamicCycling")
 
     # Initial position
     kneepitch_position_actuator.qvalue = (0.,
         int(parameters["time_go_initial_position"][0]) * 1000)
     hippitch_position_actuator.qvalue = (0.,
         int(parameters["time_go_initial_position"][0]) * 1000)
-    tools.wait(dcm, int(parameters["time_go_initial_position"][0]) * 1000)
+    qha_tools.wait(dcm, int(parameters["time_go_initial_position"][0]) * 1000)
     kneepitch_hardness_actuator.qqvalue = 0.
     hippitch_hardness_actuator.qqvalue = 0.
 
@@ -350,12 +350,12 @@ def hiproll_cycling(dcm, mem, max_joint_temperature):
             float(parameters["amplitude_hiproll"][0]),
             int(parameters["time_movement_hiproll"][0]) * 1000
         )
-        tools.wait(dcm, int(parameters["time_movement_hiproll"][0]) * 1000)
+        qha_tools.wait(dcm, int(parameters["time_movement_hiproll"][0]) * 1000)
         hiproll_position_actuator.qvalue = (
             -float(parameters["amplitude_hiproll"][0]),
             int(parameters["time_movement_hiproll"][0]) * 1000
         )
-        tools.wait(dcm, int(parameters["time_movement_hiproll"][0]) * 1000)
+        qha_tools.wait(dcm, int(parameters["time_movement_hiproll"][0]) * 1000)
         print(str(hiproll_temperature.value))
 
         if abs(hippitch_position_sensor.value) > \
@@ -371,12 +371,12 @@ def hiproll_cycling(dcm, mem, max_joint_temperature):
             kneepitch_hardness_actuator.qqvalue = 1.
             kneepitch_position_actuator.qvalue = (0.,
                 int(parameters["time_after_slipping"][0]) * 1000)
-            tools.wait(dcm, int(parameters["time_after_slipping"][0]) * 1000)
+            qha_tools.wait(dcm, int(parameters["time_after_slipping"][0]) * 1000)
             kneepitch_hardness_actuator.qqvalue = 0.
 
     hiproll_position_actuator.qvalue = (0.,
         int(parameters["time_go_initial_position"][0]) * 1000)
-    tools.wait(dcm, int(parameters["time_go_initial_position"][0]) * 1000)
+    qha_tools.wait(dcm, int(parameters["time_go_initial_position"][0]) * 1000)
     kneepitch_hardness_actuator.qqvalue = 1.
     hippitch_hardness_actuator.qqvalue = 1.
 
@@ -396,7 +396,7 @@ def test_pod_damage(dcm, mem, wake_up_pos, kill_motion, stiff_robot,
         dcm, mem, "HipRoll")
 
     # Test parameters
-    parameters = tools.read_section("test_pod.cfg", "DynamicTestParameters")
+    parameters = qha_tools.read_section("test_pod.cfg", "DynamicTestParameters")
 
     motion = subdevice.WheelsMotion(dcm, mem, 0.15)
     motion.stiff_wheels(
@@ -417,7 +417,7 @@ def test_pod_damage(dcm, mem, wake_up_pos, kill_motion, stiff_robot,
     plot_log = Plot(dcm, mem, parameters["easy_plot_csv_name"][0])
     plot_log.start()
 
-    timer = tools.Timer(dcm, int(parameters["test_time"][0]) * 1000)
+    timer = qha_tools.Timer(dcm, int(parameters["test_time"][0]) * 1000)
 
     # Use detection during movement class
     log_during_movement = DetectionDuringMovement(

@@ -1,9 +1,9 @@
 import pytest
 import subdevice
-import tools
+import qha_tools
 
 
-@pytest.fixture(params=tools.use_section("joint_enslavement.cfg",
+@pytest.fixture(params=qha_tools.use_section("joint_enslavement.cfg",
                                          "JulietteJoints"))
 def test_objects_dico(request, result_base_folder, dcm, mem):
     """
@@ -15,9 +15,9 @@ def test_objects_dico(request, result_base_folder, dcm, mem):
         dcm, mem, request.param)
     joint_position_sensor = subdevice.JointPositionSensor(
         dcm, mem, request.param)
-    joint_test_limit = tools.read_parameter(
+    joint_test_limit = qha_tools.read_parameter(
         "joint_enslavement.cfg", "JointsLimits", request.param)
-    logger = tools.Logger()
+    logger = qha_tools.Logger()
 
     def fin():
         """Method executed after a joint test."""
@@ -56,7 +56,7 @@ def test_leg_dico(request, result_base_folder, dcm, mem):
         dcm, mem, "KneePitch")
     kneepitch_position_sensor = subdevice.JointPositionSensor(
         dcm, mem, "KneePitch")
-    logger = tools.Logger()
+    logger = qha_tools.Logger()
 
     def fin():
         """Method executed after a joint test."""
@@ -80,7 +80,7 @@ def test_leg_dico(request, result_base_folder, dcm, mem):
     return dico_object
 
 
-@pytest.fixture(params=tools.use_section("joint_enslavement.cfg", "JulietteWheels"))
+@pytest.fixture(params=qha_tools.use_section("joint_enslavement.cfg", "JulietteWheels"))
 def test_wheels_dico(request, result_base_folder, dcm, mem):
     """
     Create the appropriate objects for each joint.
@@ -91,7 +91,7 @@ def test_wheels_dico(request, result_base_folder, dcm, mem):
         dcm, mem, request.param)
     wheel_speed_sensor = subdevice.WheelSpeedSensor(
         dcm, mem, request.param)
-    logger = tools.Logger()
+    logger = qha_tools.Logger()
 
     def fin():
         """Method executed after a joint test."""
@@ -116,19 +116,19 @@ def test_wheels_dico(request, result_base_folder, dcm, mem):
 @pytest.fixture(scope="module")
 def test_time():
     """It returns the test time in milliseconds [ms]"""
-    return int(tools.read_parameter(
+    return int(qha_tools.read_parameter(
         "joint_enslavement.cfg", "Parameters", "TestTime"))
 
 
 @pytest.fixture(scope="module")
 def test_limit():
     """It returns the limit error in degrees."""
-    return float(tools.read_parameter(
+    return float(qha_tools.read_parameter(
         "joint_enslavement.cfg", "Parameters", "TestLegLimit"))
 
 
 @pytest.fixture(scope="module")
 def test_wheels_limit():
     """It returns the limit error in radians per seconds."""
-    return float(tools.read_parameter(
+    return float(qha_tools.read_parameter(
         "joint_enslavement.cfg", "Parameters", "TestWheelsLimit"))

@@ -1,5 +1,5 @@
 import pytest
-import tools
+import qha_tools
 import subdevice
 import threading
 import time
@@ -131,16 +131,16 @@ def test_move_random(dcm, mem, leds, wait_time, wait_time_bumpers,
     #---------------------------------------------------------#
     #--------------- Cables crossing detection ---------------#
     #---------------------------------------------------------#
-    parameters_cables = tools.read_section(
+    parameters_cables = qha_tools.read_section(
         "config.cfg", "CablesRoutingParameters")
 
     #---------------------------------------------------------#
     #-------------- Bumpers activation detection -------------#
     #---------------------------------------------------------#
-    parameters_bumpers = tools.read_section(
+    parameters_bumpers = qha_tools.read_section(
         "config.cfg", "BumpersActivationsParameters")
 
-    flag_test = tools.read_section("config.cfg", "TestChoice")
+    flag_test = qha_tools.read_section("config.cfg", "TestChoice")
 
     if bool(flag_test["test_bumpers"][0]):
         bumper_detection = mobile_base_utils.BumpersCounting(dcm, mem,
@@ -164,7 +164,7 @@ def test_move_random(dcm, mem, leds, wait_time, wait_time_bumpers,
             leds.fadeRGB("FaceLeds", "green", 0.)
         if bumper_back.value == 1:
             leds.fadeRGB("FaceLeds", "blue", 0.)
-        tools.wait(dcm, wait_time)
+        qha_tools.wait(dcm, wait_time)
     leds.reset("FaceLeds")
 
     liste_commands = move_random(dcm, mem, wait_time,
@@ -196,7 +196,7 @@ def test_move_random(dcm, mem, leds, wait_time, wait_time_bumpers,
             wheel_fl_speed_actuator.mqvalue = timed_commands_wheelfl
             wheel_b_speed_actuator.mqvalue  = timed_commands_wheelb
 
-            tools.wait(dcm, 2*wait_time)
+            qha_tools.wait(dcm, 2*wait_time)
 
             wheel_fr_speed_actuator.qvalue = (0.0, 0)
             wheel_fl_speed_actuator.qvalue = (0.0, 0)
@@ -212,7 +212,7 @@ def test_move_random(dcm, mem, leds, wait_time, wait_time_bumpers,
                     leds.fadeRGB("FaceLeds", "green", 0.)
                 if bumper_back.value == 1:
                     leds.fadeRGB("FaceLeds", "blue", 0.)
-                tools.wait(dcm, wait_time)
+                qha_tools.wait(dcm, wait_time)
             leds.reset("FaceLeds")
 
             print("Random again\n")
@@ -255,7 +255,7 @@ def test_move_random(dcm, mem, leds, wait_time, wait_time_bumpers,
                   wheel_fl_temperature.status != 0 or \
                   wheel_b_temperature.status  != 0:
                 print("Wheels too hot --> Waiting")
-                tools.wait(dcm, 30000)
+                qha_tools.wait(dcm, 30000)
 
             print("Random again\n")
             leds.reset("shoulder_group")

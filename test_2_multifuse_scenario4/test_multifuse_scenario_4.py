@@ -1,5 +1,5 @@
 import pytest
-import tools
+import qha_tools
 import subdevice
 import math
 import easy_plot_connection
@@ -63,11 +63,11 @@ class TestMultifuse:
 
         # position dictionnary creation with normal min or max
         state = \
-            tools.read_section(
+            qha_tools.read_section(
                 "multifuse_scenario4.cfg", fuse_temperature.part)
         # creating joint list
         joint_list = state.keys()
-        tools.stiff_joints(dcm, mem, joint_list)
+        qha_tools.stiff_joints(dcm, mem, joint_list)
 
         # defining increment in radians
         increment = math.radians(joint_limit_extension)
@@ -85,10 +85,10 @@ class TestMultifuse:
             joint_object.qvalue = (new_maximum_angle, 10000)
 
         # loop timer creation
-        timer = tools.Timer(dcm, test_time)
+        timer = qha_tools.Timer(dcm, test_time)
 
         # logger creation
-        logger = tools.Logger()
+        logger = qha_tools.Logger()
 
         # list object creation
         joint_hardness_list = \
@@ -230,8 +230,8 @@ class TestMultifuse:
                 joint_object.minimum = value[0]
                 joint_object.qvalue = (joint_object.minimum, 500)
 
-        tools.wait(dcm, 1000)
-        tools.unstiff_joints(dcm, mem, joint_list)
+        qha_tools.wait(dcm, 1000)
+        qha_tools.unstiff_joints(dcm, mem, joint_list)
 
         assert flag_key
         assert fuse_state

@@ -9,7 +9,7 @@ Created on September 11, 2014
 
 import pytest
 from subdevice import Laser, Sonar
-import tools
+import qha_tools
 import laser_utils
 
 
@@ -39,7 +39,7 @@ def get_vertical_x_segments(request, result_base_folder, dcm, mem):
     dico["Verti_Left"] = Laser(
         dcm, mem, "Front/Vertical/Left/Seg01/X/Sensor")
 
-    logger = tools.Logger()
+    logger = qha_tools.Logger()
     dico["logger"] = logger
 
     def fin():
@@ -68,7 +68,7 @@ def get_horizontal_x_segments(request, result_base_folder, dcm, mem, side):
     for i in range(10, 16):
         dico["seg" + str(i)] = Laser(dcm, mem, side + "/Horizontal/Seg"
                                      + str(i) + "/X/Sensor")
-    logger = tools.Logger()
+    logger = qha_tools.Logger()
     dico["logger"] = logger
 
     def fin():
@@ -111,8 +111,8 @@ def get_sensor_objects(request, result_base_folder, dcm, mem):
         dico["Shovel_X_seg" + str(i)] = Laser(
             dcm, mem, "Front/Shovel/Seg0" + str(i) + "/X/Sensor")
 
-    logger_dist = tools.Logger()
-    logger_error = tools.Logger()
+    logger_dist = qha_tools.Logger()
+    logger_error = qha_tools.Logger()
     dico["logger_dist"] = logger_dist
     dico["logger_error"] = logger_error
 

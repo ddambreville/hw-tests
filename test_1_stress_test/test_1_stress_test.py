@@ -1,5 +1,5 @@
 import pytest
-import tools
+import qha_tools
 import subdevice
 import time
 from stress_test_utils import *

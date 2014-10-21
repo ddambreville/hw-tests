@@ -14,7 +14,7 @@ Make a noaqi restart before the test to reset the odometry.
 
 '''
 
-from tools import switch, case
+from qha_tools import switch, case
 import threading
 from termcolor import colored
 

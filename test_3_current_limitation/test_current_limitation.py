@@ -1,5 +1,5 @@
 import pytest
-import tools
+import qha_tools
 import subdevice
 import math
 
@@ -20,8 +20,8 @@ class TestCurrentLimitation:
         joint_position_sensor = test_objects_dico["jointPositionSensor"]
         joint_temperature_sensor = test_objects_dico["jointTemperatureSensor"]
         joint_current_sensor = test_objects_dico["jointCurrentSensor"]
-        slav = tools.SlidingAverage(test_params["sa_nb_points"])
-        logger = tools.Logger()
+        slav = qha_tools.SlidingAverage(test_params["sa_nb_points"])
+        logger = qha_tools.Logger()
 
         # Going to initial position
         subdevice.multiple_set(dcm, mem, rest_pos, wait=True)
@@ -35,7 +35,7 @@ class TestCurrentLimitation:
             joint_position_actuator.qvalue = (joint_initial_minimum, 3000)
         else:
             joint_position_actuator.qvalue = (joint_initial_maximum, 3000)
-        tools.wait(dcm, 3000)
+        qha_tools.wait(dcm, 3000)
 
         # setting current limitations
         joint_max_current = joint_current_sensor.maximum
@@ -68,11 +68,11 @@ class TestCurrentLimitation:
             joint_position_actuator.qvalue = (joint_new_maximum, 1000)
 
         if joint_position_actuator.short_name in ("KneePitch", "HipPitch"):
-            timer = tools.Timer(dcm, 6000)
-            timer_limit = tools.Timer(dcm, 3000)
+            timer = qha_tools.Timer(dcm, 6000)
+            timer_limit = qha_tools.Timer(dcm, 3000)
         else:
-            timer = tools.Timer(dcm, test_params["test_time"])
-            timer_limit = tools.Timer(dcm, test_params["test_time_limit"])
+            timer = qha_tools.Timer(dcm, test_params["test_time"])
+            timer_limit = qha_tools.Timer(dcm, test_params["test_time_limit"])
 
         while flag_joint is True and timer.is_time_not_out():
 

@@ -1,5 +1,5 @@
 import pytest
-import tools
+import qha_tools
 import subdevice
 import threading
 import easy_plot_connection
@@ -91,7 +91,7 @@ def test_damage(dcm, mem, wake_up_pos_brakes_closed, unstiff_parts):
     Test robot docking/undocking to check damages
     """
     # Test parameters
-    parameters = tools.read_section("test_pod.cfg", "DockCyclingParameters")
+    parameters = qha_tools.read_section("test_pod.cfg", "DockCyclingParameters")
 
     # Objects creation
     motion = subdevice.WheelsMotion(dcm, mem, float(parameters["speed"][0]))
@@ -118,7 +118,7 @@ def test_damage(dcm, mem, wake_up_pos_brakes_closed, unstiff_parts):
     flag_bumper = True
     flag_keep_connexion = True
 
-    timer = tools.Timer(dcm, 10)
+    timer = qha_tools.Timer(dcm, 10)
     log_file = open(parameters["cycling_cvs_name"][0], 'w')
     log_file.write(
         "CyclesDone,CyclesDoneWithBumperOk," +
@@ -141,7 +141,7 @@ def test_damage(dcm, mem, wake_up_pos_brakes_closed, unstiff_parts):
         # Robot moves front
         cycles_done += 1
         motion.move_x(float(parameters["distance_front"][0]))
-        tools.wait(dcm, int(parameters["time_wait_out_the_pod"][0]) * 1000)
+        qha_tools.wait(dcm, int(parameters["time_wait_out_the_pod"][0]) * 1000)
         unlock_bumper_status = back_bumper_sensor.value
         # Verification of bumper
         if back_bumper_sensor.value == 1:
@@ -155,7 +155,7 @@ def test_damage(dcm, mem, wake_up_pos_brakes_closed, unstiff_parts):
             ["WheelFR", "WheelFL", "WheelB"],
             float(parameters["stiffness_wheels_value"][0])
         )
-        tools.wait(
+        qha_tools.wait(
             dcm,
             float(parameters["time_wait_before_verify_detection"][0]) * 1000
         )
@@ -198,7 +198,7 @@ def test_damage(dcm, mem, wake_up_pos_brakes_closed, unstiff_parts):
                 int(parameters["wheels_temperature_limit"][0]) or\
                 wheelfl_temperature_sensor.value > \
                 int(parameters["wheels_temperature_limit"][0]):
-            tools.wait(dcm, int(parameters["time_wait_wheels cooled"][0]))
+            qha_tools.wait(dcm, int(parameters["time_wait_wheels cooled"][0]))
 
         # End if nb_cycles is reached
         if cycles_done == int(parameters["nb_cycles"][0]):

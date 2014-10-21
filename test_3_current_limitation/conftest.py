@@ -1,9 +1,9 @@
 import pytest
-import tools
+import qha_tools
 import subdevice
 
 
-@pytest.fixture(params=tools.use_section("test_current_limitation.cfg", "JulietteJoints"))
+@pytest.fixture(params=qha_tools.use_section("test_current_limitation.cfg", "JulietteJoints"))
 def test_objects_dico(request, dcm, mem):
     """
     Create the appropriate objects for each joint.
@@ -30,15 +30,15 @@ def test_objects_dico(request, dcm, mem):
 @pytest.fixture(scope="module")
 def parameters():
     """It returns the test parameters"""
-    test_time = int(tools.read_parameter(
+    test_time = int(qha_tools.read_parameter(
         "test_current_limitation.cfg", "Parameters", "TestTime"))
-    test_time_limit = int(tools.read_parameter(
+    test_time_limit = int(qha_tools.read_parameter(
         "test_current_limitation.cfg", "Parameters", "TestTimeLimit"))
-    limit_extension = int(tools.read_parameter(
+    limit_extension = int(qha_tools.read_parameter(
         "test_current_limitation.cfg", "Parameters", "LimitExtension"))
-    limit_factor = float(tools.read_parameter(
+    limit_factor = float(qha_tools.read_parameter(
         "test_current_limitation.cfg", "Parameters", "LimitFactor"))
-    sa_nb_points = int(tools.read_parameter(
+    sa_nb_points = int(qha_tools.read_parameter(
         "test_current_limitation.cfg", "Parameters", "SlidingAverageNbPoints"))
     dico_to_return = {
         "test_time": test_time,

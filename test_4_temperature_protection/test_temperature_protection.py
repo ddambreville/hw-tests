@@ -1,5 +1,5 @@
 import pytest
-import tools
+import qha_tools
 import subdevice
 import math
 import easy_plot_connection
@@ -28,8 +28,8 @@ class TestTemperatureProtection:
         joint_temperature_sensor = test_objects_dico["jointTemperatureSensor"]
         joint_hardness_actuator = test_objects_dico["JointHardnessActuator"]
         joint_current_sensor = test_objects_dico["jointCurrentSensor"]
-        slav = tools.SlidingAverage(test_params["sa_nb_points"])
-        logger = tools.Logger()
+        slav = qha_tools.SlidingAverage(test_params["sa_nb_points"])
+        logger = qha_tools.Logger()
 
         # Knowing the board, we can know if the motor is a MCC or DC Brushless
         joint_board = joint_position_actuator.device
@@ -46,7 +46,7 @@ class TestTemperatureProtection:
             joint_position_actuator.qvalue = (joint_initial_minimum, 3000)
         else:
             joint_position_actuator.qvalue = (joint_initial_maximum, 3000)
-        tools.wait(dcm, 3000)
+        qha_tools.wait(dcm, 3000)
 
         # setting current limitations
         joint_current_max = joint_current_sensor.maximum
@@ -72,11 +72,11 @@ class TestTemperatureProtection:
 
         # set timers
         if joint_position_actuator.short_name in ("KneePitch", "HipPitch"):
-            timer = tools.Timer(dcm, 60000)
-            timer_limit = tools.Timer(dcm, 3000)
+            timer = qha_tools.Timer(dcm, 60000)
+            timer_limit = qha_tools.Timer(dcm, 3000)
         else:
-            timer = tools.Timer(dcm, test_params["test_time"])
-            timer_limit = tools.Timer(dcm, test_params["test_time_limit"])
+            timer = qha_tools.Timer(dcm, test_params["test_time"])
+            timer_limit = qha_tools.Timer(dcm, test_params["test_time_limit"])
 
         # set position actuator out of the joint mechanical stop
         if joint_position_actuator.short_name in \
@@ -129,7 +129,7 @@ class TestTemperatureProtection:
                 flag_max_current_exceeded = True
 
             if max_allowed_current != old_mac:
-                timer_current_decrease = tools.Timer(dcm, 100)
+                timer_current_decrease = qha_tools.Timer(dcm, 100)
 
             # averaged current has not to exceed limit high
             if joint_current_sa > current_limit_high and \
@@ -158,7 +158,7 @@ class TestTemperatureProtection:
             if flag_max_temperature_exceeded is False and \
                 joint_temperature > joint_temperature_max:
                 flag_max_temperature_exceeded = True
-                timer_max = tools.Timer(dcm, 100)
+                timer_max = qha_tools.Timer(dcm, 100)
                 print "max temperature exceeded a first time"
 
             if flag_max_temperature_exceeded and timer_max.is_time_out() and \

@@ -1,4 +1,4 @@
-import tools
+import qha_tools
 import subdevice
 import threading
 import time
@@ -38,7 +38,7 @@ class BumpersCounting(threading.Thread):
 
         list_bumpers = [bumper_right, bumper_left, bumper_back]
 
-        parameters = tools.read_section("config.cfg",
+        parameters = qha_tools.read_section("config.cfg",
             "BumpersActivationsParameters")
 
         # If file already exists, reading to know the previous state
@@ -85,7 +85,7 @@ class BumpersCounting(threading.Thread):
                     data.flush()
             if flag > 0:
                 self._is_bumper_pressed = True
-            tools.wait(self.dcm, self.wait_time_bumpers)
+            qha_tools.wait(self.dcm, self.wait_time_bumpers)
             # while bumper_right.value == 1 or \
             #       bumper_left.value == 1 or \
             #       bumper_back.value == 1:
@@ -121,7 +121,7 @@ class CablesCrossing(threading.Thread):
         gyro_x = subdevice.InertialSensorBase(self.dcm, self.mem, "GyroscopeX")
         gyro_y = subdevice.InertialSensorBase(self.dcm, self.mem, "GyroscopeY")
 
-        parameters = tools.read_section("config.cfg", "CablesRoutingParameters")
+        parameters = qha_tools.read_section("config.cfg", "CablesRoutingParameters")
 
         # If file already exists, reading to know the previous state
         if os.path.exists(parameters["Log_file_name"][0]):

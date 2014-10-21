@@ -1,5 +1,5 @@
 from naoqi import ALProxy
-import tools
+import qha_tools
 import time
 import subdevice
 import pytest
@@ -145,7 +145,7 @@ def wake_up_pos():
     """
     Fixture which retrieves wakeUp joints position from a configuration file.
     """
-    return tools.read_section(PATH + "/global_test_configuration/"
+    return qha_tools.read_section(PATH + "/global_test_configuration/"
                               "juliette_positions.cfg", "wakeUp")
 
 
@@ -154,7 +154,7 @@ def rest_pos():
     """
     Fixture which retrieves rest joints position from a configuration file.
     """
-    return tools.read_section(PATH + "/global_test_configuration/"
+    return qha_tools.read_section(PATH + "/global_test_configuration/"
                               "juliette_positions.cfg", "rest")
 
 
@@ -163,7 +163,7 @@ def zero_pos():
     """
     Fixture which retrieves zero joints position from a configuration file.
     """
-    return tools.read_section(PATH + "/global_test_configuration/"
+    return qha_tools.read_section(PATH + "/global_test_configuration/"
                               "juliette_positions.cfg", "zero")
 
 
@@ -214,12 +214,12 @@ def result_base_folder(system, mem):
     store the log files.
     """
     local_time = time.localtime(time.time())
-    year = tools.int_to_two_digit_string(local_time[0])
-    month = tools.int_to_two_digit_string(local_time[1])
-    day = tools.int_to_two_digit_string(local_time[2])
-    hour = tools.int_to_two_digit_string(local_time[3])
-    minu = tools.int_to_two_digit_string(local_time[4])
-    sec = tools.int_to_two_digit_string(local_time[5])
+    year = qha_tools.int_to_two_digit_string(local_time[0])
+    month = qha_tools.int_to_two_digit_string(local_time[1])
+    day = qha_tools.int_to_two_digit_string(local_time[2])
+    hour = qha_tools.int_to_two_digit_string(local_time[3])
+    minu = qha_tools.int_to_two_digit_string(local_time[4])
+    sec = qha_tools.int_to_two_digit_string(local_time[5])
 
     result_folder_name = "{HeadType}_{HeadID}_{SystemVersion}_{Year}_{Month}_{Day}_{Hour}:{Min}:{Sec}".format(
         HeadType=mem.getData("RobotConfig/Head/Type"),
@@ -391,7 +391,7 @@ def wake_up_pos_brakes_closed(request, dcm, mem, wake_up_pos, rest_pos,
                 kneepitch_hardness_actuator.qqvalue = 1.
                 hippitch_position_actuator.qvalue = (0., 1000)
                 kneepitch_position_actuator.qvalue = (0., 1000)
-                tools.wait(dcm, 2100)
+                qha_tools.wait(dcm, 2100)
                 hippitch_hardness_actuator.qqvalue = 0.
                 kneepitch_hardness_actuator.qqvalue = 0.
 

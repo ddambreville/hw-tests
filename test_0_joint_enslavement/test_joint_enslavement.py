@@ -1,4 +1,4 @@
-import tools
+import qha_tools
 import subdevice
 import math
 import pytest
@@ -50,7 +50,7 @@ class TestEnslavement:
         joint_position_actuator.explore(2 * test_time)
 
         # Timer creation just before test loop
-        timer = tools.Timer(dcm, 4 * test_time)
+        timer = qha_tools.Timer(dcm, 4 * test_time)
 
         # Test loop
         while timer.is_time_not_out():
@@ -96,7 +96,7 @@ class TestEnslavement:
         kneepitch_position_actuator.explore(2 * test_time, max_to_min=False)
 
         # Timer creation just before test loop
-        timer = tools.Timer(dcm, 4 * test_time)
+        timer = qha_tools.Timer(dcm, 4 * test_time)
 
         # Test loop
         while timer.is_time_not_out():
@@ -145,7 +145,7 @@ class TestEnslavement:
         wheel_speed_actuator = test_wheels_dico["wheelActuator"]
         wheel_speed_sensor = test_wheels_dico["wheelSensor"]
         logger = test_wheels_dico["logger"]
-        sliding_avg = tools.SlidingAverage(3)
+        sliding_avg = qha_tools.SlidingAverage(3)
 
         # Flag initialization
         logger.flag = True
@@ -158,7 +158,7 @@ class TestEnslavement:
             0.1, 1000., 2000., sens="positive", second_invert_trapeze=True)
 
         # Timer creation just before test loop
-        timer = tools.Timer(dcm, 4 * test_time)
+        timer = qha_tools.Timer(dcm, 4 * test_time)
 
         # Test loop
         while timer.is_time_not_out():

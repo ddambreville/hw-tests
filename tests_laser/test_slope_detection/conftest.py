@@ -9,7 +9,7 @@ Created on September 23, 2014
 
 import pytest
 from subdevice import Laser
-import tools
+import qha_tools
 import ConfigParser
 
 
@@ -39,7 +39,7 @@ def get_slope_segments(request, result_base_folder, dcm, mem):
     dico["Right_Distance"] = Laser(
         dcm, mem, "Front/Vertical/Right/Slope/X/Sensor")
 
-    logger = tools.Logger()
+    logger = qha_tools.Logger()
     dico["logger"] = logger
 
     def fin():

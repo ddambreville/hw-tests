@@ -1,5 +1,5 @@
 import pytest
-import tools
+import qha_tools
 from math import radians
 import threading
 import time
@@ -29,10 +29,10 @@ def sa_objects():
     of points for each joint.
     It reads the test configuration file.
     """
-    sa_nb_points = tools.read_section(CONFIG_FILE, "SlidingAverageNbPoints")
+    sa_nb_points = qha_tools.read_section(CONFIG_FILE, "SlidingAverageNbPoints")
     dico_object = dict()
     for joint, nb_points in sa_nb_points.items():
-        dico_object[joint] = tools.SlidingAverage(int(nb_points[0]))
+        dico_object[joint] = qha_tools.SlidingAverage(int(nb_points[0]))
     return dico_object
 
 
@@ -84,12 +84,12 @@ def temperature_logger(
     test class and stops it at the end.
     """
     print "activating temperature logger..."
-    logger = tools.Logger()
+    logger = qha_tools.Logger()
     thread_flag = threading.Event()
 
     def logging(thread_flag, plot, plot_server, max_allowed_temperatures):
         """Logging temperatures while the test class is not finished."""
-        timer = tools.Timer(dcm, 1000)
+        timer = qha_tools.Timer(dcm, 1000)
         while not thread_flag.is_set():
             loop_time = timer.dcm_time() / 1000.
             list_of_param = [("Time", loop_time)]
@@ -150,7 +150,7 @@ def allowed_temperature_emergencies():
     It returns a dictionnary with allowed temperature emergency for each joint.
     """
     print "reading allowed temperature emergencies..."
-    return tools.read_section(CONFIG_FILE, "AllowedTemperatureEmergencies")
+    return qha_tools.read_section(CONFIG_FILE, "AllowedTemperatureEmergencies")
 
 
 @pytest.fixture(scope="session")
@@ -183,7 +183,7 @@ def offset_protection():
     @rtype : float
 
     """
-    return radians(float(tools.read_parameter(CONFIG_FILE,
+    return radians(float(qha_tools.read_parameter(CONFIG_FILE,
                                               "GeneralParameters", "Offset")))
 
 
@@ -193,7 +193,7 @@ def ack_nack_ratio():
     @returns : Max nack/ack ratio accepted for the robot board.
     @rtype : float
     """
-    return float(tools.read_parameter(CONFIG_FILE, "GeneralParameters",
+    return float(qha_tools.read_parameter(CONFIG_FILE, "GeneralParameters",
                                       "AckNackRatio"))
 
 
@@ -206,12 +206,12 @@ def obstacle_distance():
     If the robot detects an obstacle closer than this distance, it does not
     rotate around itself.
     """
-    return (float(tools.read_parameter(CONFIG_FILE,
+    return (float(qha_tools.read_parameter(CONFIG_FILE,
                                        "GeneralParameters",
                                        "ObstacleDistance")))
 
 
-@pytest.fixture(params=tools.use_section("stress_test.cfg", "Tests"))
+@pytest.fixture(params=qha_tools.use_section("stress_test.cfg", "Tests"))
 def test_parameters_dico(request, motion, offset_protection):
     """
     @returns : Dictionary of motion parameters
@@ -219,7 +219,7 @@ def test_parameters_dico(request, motion, offset_protection):
 
     It returns as many dictionaries as arguments in params [len(params)]
     """
-    dico = tools.read_section(CONFIG_FILE, request.param)
+    dico = qha_tools.read_section(CONFIG_FILE, request.param)
     return dico
 
 
@@ -239,7 +239,7 @@ def limit_battery_charge():
     @returns : Battery minimum state of charde allowed to pass the test.
     @rtype : float
     """
-    return float(tools.read_parameter(CONFIG_FILE, "GeneralParameters",
+    return float(qha_tools.read_parameter(CONFIG_FILE, "GeneralParameters",
                                       "LimitBatteryCharge"))
 
 
@@ -249,7 +249,7 @@ def posture_speed_fraction():
     @returns : Speed fraction in order to go to postures.
     @rtype : float
     """
-    return float(tools.read_parameter(CONFIG_FILE, "GeneralParameters",
+    return float(qha_tools.read_parameter(CONFIG_FILE, "GeneralParameters",
                                       "InitPostureSpeedFraction"))
 
 

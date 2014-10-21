@@ -1,9 +1,9 @@
 import pytest
 import subdevice
-import tools
+import qha_tools
 
 
-@pytest.fixture(params=tools.use_section("multifuse_scenario4.cfg", "Test"))
+@pytest.fixture(params=qha_tools.use_section("multifuse_scenario4.cfg", "Test"))
 def fuse(request, dcm, mem):
     fuse_temperature = subdevice.FuseTemperature(dcm, mem, request.param)
     fuse_current = subdevice.FuseCurrent(dcm, mem, request.param)
@@ -32,7 +32,7 @@ def multi_fuseboard_total_current(dcm, mem):
 @pytest.fixture(scope="module")
 def test_time():
     """Give test time."""
-    return int(tools.read_parameter(
+    return int(qha_tools.read_parameter(
         "multifuse_scenario4.cfg",
         "Parameters",
         "TestTime"
@@ -42,7 +42,7 @@ def test_time():
 @pytest.fixture(scope="module")
 def joint_limit_extension():
     """Give joint limit extension in degrees."""
-    return float(tools.read_parameter(
+    return float(qha_tools.read_parameter(
         "multifuse_scenario4.cfg",
         "Parameters",
         "jointLimitExtension"

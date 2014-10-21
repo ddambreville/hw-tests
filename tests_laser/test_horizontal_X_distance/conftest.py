@@ -5,7 +5,7 @@ Created on August 22, 2014
 '''
 
 import pytest
-import tools
+import qha_tools
 import ConfigParser
 
 
@@ -19,7 +19,7 @@ def config_test():
     return cfg
 
 
-@pytest.fixture(params=tools.use_section("TestConfig.cfg", "Horizontal_Side"))
+@pytest.fixture(params=qha_tools.use_section("TestConfig.cfg", "Horizontal_Side"))
 def side(request):
     """
     Fixture which returns the side(s) to be tested
