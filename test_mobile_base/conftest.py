@@ -1,5 +1,5 @@
 import pytest
-import qha_tools
+import tools
 import subdevice
 import threading
 import time
@@ -18,11 +18,19 @@ def leds(robot_ip, port):
 
 
 @pytest.fixture(scope="session")
+def expressiveness(robot_ip, port):
+    """
+    Fixture which returns a proxy to ALExpressiveness module
+    """
+    return ALProxy("_ALExpressiveness", robot_ip, port)
+
+
+@pytest.fixture(scope="session")
 def wait_time():
     """
     Returns a wait time [ms]
     """
-    return int(qha_tools.read_parameter("config.cfg", "MobileBaseParameters",
+    return int(tools.read_parameter("config.cfg", "MobileBaseParameters",
                                     "wait_time"))
 
 
@@ -31,7 +39,7 @@ def wait_time_bumpers():
     """
     Returns the time before checking bumpers again [ms]
     """
-    return int(qha_tools.read_parameter("config.cfg", "MobileBaseParameters",
+    return int(tools.read_parameter("config.cfg", "MobileBaseParameters",
                                     "wait_time_bumpers"))
 
 
@@ -40,7 +48,7 @@ def log_period():
     """
     Returns the log period [s]
     """
-    return float(qha_tools.read_parameter("config.cfg", "MobileBaseParameters",
+    return float(tools.read_parameter("config.cfg", "MobileBaseParameters",
                                       "log_period"))
 
 
@@ -49,7 +57,7 @@ def min_fraction():
     """
     Returns the minimum fraction speed for a wheel
     """
-    return float(qha_tools.read_parameter("config.cfg", "MobileBaseParameters",
+    return float(tools.read_parameter("config.cfg", "MobileBaseParameters",
                                       "min_fraction"))
 
 
@@ -58,7 +66,7 @@ def max_fraction():
     """
     Returns the maximum fraction speed for a wheel
     """
-    return float(qha_tools.read_parameter("config.cfg", "MobileBaseParameters",
+    return float(tools.read_parameter("config.cfg", "MobileBaseParameters",
                                       "max_fraction"))
 
 
@@ -67,7 +75,7 @@ def max_random():
     """
     Returns the maximum value for the rand funtion
     """
-    return int(qha_tools.read_parameter("config.cfg", "MobileBaseParameters",
+    return int(tools.read_parameter("config.cfg", "MobileBaseParameters",
                                     "max_random"))
 
 
@@ -87,7 +95,7 @@ def stop_robot(request, dcm, mem, wait_time):
         wheel_fl_speed_actuator.qvalue = (0.0, 0)
         wheel_b_speed_actuator.qvalue  = (0.0, 0)
         print "Robot stopped"
-        qha_tools.wait(dcm, wait_time)
+        tools.wait(dcm, wait_time)
 
     request.addfinalizer(fin)
 
@@ -97,11 +105,11 @@ def unstiff_joints(dcm, mem, wait_time):
     """
     Unstiff all joints except HipPitch, KneePitch and Wheels
     """
-    joints = qha_tools.use_section("config.cfg", "JulietteJoints")
+    joints = tools.use_section("config.cfg", "JulietteJoints")
     for joint in joints:
         joint_hardness = subdevice.JointHardnessActuator(dcm, mem, joint)
         joint_hardness.qqvalue = 0.0
-    qha_tools.wait(dcm, wait_time)
+    tools.wait(dcm, wait_time)
 
 
 @pytest.fixture(scope="session")
@@ -214,7 +222,7 @@ def log_bumper_pressions(request, dcm, mem, system, wait_time_bumpers):
                         str(speed_b) + "\n"
                 data.write(line)
                 data.flush()
-            qha_tools.wait(dcm, wait_time_bumpers)
+            tools.wait(dcm, wait_time_bumpers)
 
     log_thread = threading.Thread(target=log, args=(threading_flag,))
     log_thread.start()
