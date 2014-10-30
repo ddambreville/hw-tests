@@ -93,28 +93,30 @@ def get_sensor_objects(request, result_base_folder, dcm, mem):
     h_sides = ["Front", "Left", "Right"]
     v_sides = ["Left", "Right"]
     s_sides = ["Front", "Back"]
+    bag = qha_tools.Bag(mem)
     dico = {}
     for each in h_sides:
         for i in range(1, 10):
-            dico["Horizontal_X_seg" + str(i) + "_" + each] = Laser(
-                dcm, mem, each + "/Horizontal/Seg0" + str(i) + "/X/Sensor")
+            bag.add_object("Horizontal_X_seg" + str(i) + "_" + each, Laser(
+                dcm, mem, each + "/Horizontal/Seg0" + str(i) + "/X/Sensor"))
         for i in range(10, 16):
-            dico["Horizontal_X_seg" + str(i) + "_" + each] = Laser(
-                dcm, mem, each + "/Horizontal/Seg" + str(i) + "/X/Sensor")
+            bag.add_object("Horizontal_X_seg" + str(i) + "_" + each, Laser(
+                dcm, mem, each + "/Horizontal/Seg" + str(i) + "/X/Sensor"))
     for each in v_sides:
-        dico["Vertical_X_seg01_" + each] = Laser(
-            dcm, mem, "Front/Vertical/" + each + "/Seg01/X/Sensor")
+        bag.add_object("Vertical_X_seg01_" + each, Laser(
+            dcm, mem, "Front/Vertical/" + each + "/Seg01/X/Sensor"))
     for each in s_sides:
-        dico["Sonar_" + each] = Sonar(
-            dcm, mem, each)
+        bag.add_object("Sonar_" + each, Sonar(
+            dcm, mem, each))
     for i in range(1, 4):
-        dico["Shovel_X_seg" + str(i)] = Laser(
-            dcm, mem, "Front/Shovel/Seg0" + str(i) + "/X/Sensor")
+        bag.add_object("Shovel_X_seg" + str(i), Laser(
+            dcm, mem, "Front/Shovel/Seg0" + str(i) + "/X/Sensor"))
 
     logger_dist = qha_tools.Logger()
     logger_error = qha_tools.Logger()
     dico["logger_dist"] = logger_dist
     dico["logger_error"] = logger_error
+    dico["bag"] = bag
 
     def fin():
         """Method executed after a joint test."""

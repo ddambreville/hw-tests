@@ -39,25 +39,12 @@ def record_sensor_data(lasers_dico, thread):
     Record laser data
     """
     logger = lasers_dico["logger_dist"]
+    bag = lasers_dico["bag"]
     time_debut = time.time()
     while thread.isAlive():
-        for each in H_SIDES:
-            for i in range(1, 16):
-                logger.log(("Horizontal_X_seg" + str(i) + "_" +
-                            each, lasers_dico["Horizontal_X_seg" + str(i) +
-                                              "_" + each].value))
-        for each in V_SIDES:
-            logger.log(
-                ("Vertical_X_seg01_" + each, lasers_dico["Vertical_X_seg01_" +
-                                                         each].value))
-        for each in S_SIDES:
-            logger.log(
-                ("Sonar_" + each, lasers_dico["Sonar_" +
-                                              each].value))
-        for i in range(1, 4):
-            logger.log(
-                ("Shovel_X_seg" + str(i), lasers_dico["Shovel_X_seg" +
-                                                      str(i)].value))
+        joints_value = bag.value
+        for each in joints_value.keys():
+            logger.log((each, joints_value[each]))
         logger.log(("Time", time.time() - time_debut))
     return logger
 
