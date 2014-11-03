@@ -7,9 +7,11 @@ import time
 
 
 class Plot(threading.Thread):
+
     """
     Class to log during test.
     """
+
     def __init__(self, dcm, mem, file_name):
         threading.Thread.__init__(self)
         self.dcm = dcm
@@ -90,8 +92,10 @@ def test_damage(dcm, mem, wake_up_pos_brakes_closed, unstiff_parts):
     """
     Test robot docking/undocking to check damages
     """
+    time.sleep(10)
     # Test parameters
-    parameters = qha_tools.read_section("test_pod.cfg", "DockCyclingParameters")
+    parameters = qha_tools.read_section(
+        "test_pod.cfg", "DockCyclingParameters")
 
     # Objects creation
     motion = subdevice.WheelsMotion(dcm, mem, float(parameters["speed"][0]))
@@ -163,7 +167,7 @@ def test_damage(dcm, mem, wake_up_pos_brakes_closed, unstiff_parts):
         t_init = timer.dcm_time()
         test_time = 0
         while robot_on_charging_station.value == 1 and\
-                test_time < int(parameters["time_wait_in_the_pod"][0]) * 1000:
+                test_time < int(parameters["time_wait_on_the_pod"][0]) * 1000:
             detection = 1
             loose_connexion_flag = 0
             test_time = timer.dcm_time() - t_init
@@ -171,7 +175,7 @@ def test_damage(dcm, mem, wake_up_pos_brakes_closed, unstiff_parts):
         if test_time == 0:
             detection = 0
         # If connexion is lost
-        elif test_time < int(parameters["time_wait_in_the_pod"][0]) * 1000:
+        elif test_time < int(parameters["time_wait_on_the_pod"][0]) * 1000:
             loose_connexion_flag = 1
             flag_keep_connexion = False
         # Verification of bumper
