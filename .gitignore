@@ -1,6 +1,7 @@
 *.pyc
 .cache/
 */Results
+*/*/Results
 *~
 *.csv
 *.bmp
