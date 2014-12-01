@@ -41,13 +41,6 @@ class TestTemperatureProtection:
         joint_initial_maximum = joint_position_actuator.maximum
         joint_initial_minimum = joint_position_actuator.minimum
 
-        # put joint to its initial mechanical stop in 3 seconds
-        if joint_position_actuator.short_name in ("HipPitch", "RShoulderRoll"):
-            joint_position_actuator.qvalue = (joint_initial_minimum, 3000)
-        else:
-            joint_position_actuator.qvalue = (joint_initial_maximum, 3000)
-        qha_tools.wait(dcm, 3000)
-
         # setting current limitations
         joint_current_max = joint_current_sensor.maximum
 
@@ -57,33 +50,46 @@ class TestTemperatureProtection:
         delta_temperature = joint_temperature_max - joint_temperature_min
 
         # setting new min and max out of the mechanical stop
-        joint_new_maximum = \
-            joint_initial_maximum + \
-            math.radians(test_params["limit_extension"])
+        if joint_initial_maximum >= 0.0:
+            joint_new_maximum = \
+                joint_initial_maximum + \
+                math.radians(test_params["limit_extension"])
+        else:
+            joint_new_maximum = \
+                joint_initial_maximum - \
+                math.radians(test_params["limit_extension"])
 
-        joint_new_minimum = \
-            joint_initial_minimum - \
-            math.radians(test_params["limit_extension"])
+        if joint_initial_minimum <= 0.0:
+            joint_new_minimum = \
+                joint_initial_minimum - \
+                math.radians(test_params["limit_extension"])
+        else:
+            joint_new_minimum = \
+                joint_initial_minimum + \
+                math.radians(test_params["limit_extension"])
 
         joint_position_actuator.maximum = [
             [[joint_new_maximum, dcm.getTime(0)]], "Merge"]
         joint_position_actuator.minimum = [
             [[joint_new_minimum, dcm.getTime(0)]], "Merge"]
 
-        # set timers
-        if joint_position_actuator.short_name in ("KneePitch", "HipPitch"):
+        # set timer limit
+        timer_limit = qha_tools.Timer(dcm, test_params["test_time_limit"])
+
+        # for Brushless motors, max test time is 60 seconds
+        brushless_motors = ("KneePitch", "HipPitch", "HipRoll")
+        if joint_position_actuator.short_name in brushless_motors:
             timer = qha_tools.Timer(dcm, 60000)
-            timer_limit = qha_tools.Timer(dcm, 3000)
         else:
             timer = qha_tools.Timer(dcm, test_params["test_time"])
-            timer_limit = qha_tools.Timer(dcm, test_params["test_time_limit"])
 
         # set position actuator out of the joint mechanical stop
+        # going out of physical mechanical stop in 5 seconds
         if joint_position_actuator.short_name in \
             ("HipPitch", "RShoulderRoll", "HipRoll"):
-            joint_position_actuator.qvalue = (joint_new_minimum, 1000)
+            joint_position_actuator.qvalue = (joint_new_minimum, 5000)
         else:
-            joint_position_actuator.qvalue = (joint_new_maximum, 1000)
+            joint_position_actuator.qvalue = (joint_new_maximum, 5000)
 
         flag_first_iteration = True
         while flag_loop is True and timer.is_time_not_out():
@@ -140,7 +146,8 @@ class TestTemperatureProtection:
             # once max current is exceeded, current hasn't to be lower than
             # limit low
             if flag_max_current_exceeded and \
-                joint_current_sa < current_limit_low:
+                joint_current_sa < current_limit_low and not \
+                flag_max_temperature_exceeded:
                 flag_joint = False
                 print "current has been lower than low limit"
 
@@ -156,19 +163,20 @@ class TestTemperatureProtection:
             # if joint temperature higher than a limit value, stiffness must
             # be set to 0, so that joint current must be null after 100ms.
             if flag_max_temperature_exceeded is False and \
-                joint_temperature > joint_temperature_max:
+                joint_temperature >= joint_temperature_max:
                 flag_max_temperature_exceeded = True
-                timer_max = qha_tools.Timer(dcm, 100)
+                timer_max = qha_tools.Timer(dcm, 1000)
                 print "max temperature exceeded a first time"
 
             if flag_max_temperature_exceeded and timer_max.is_time_out() and \
                 joint_current != 0:
                 flag_joint = False
-                flag_loop = False  # out of the test loop
+                #flag_loop = False  # out of the test loop
                 print "max temperature exceeded and current is not null"
 
-            if flag_max_temperature_exceeded and joint_current == 0:
+            if flag_max_temperature_exceeded and joint_current == 0.0:
                 flag_loop = False
+                print "current null reached"
 
             old_mac = max_allowed_current
 
