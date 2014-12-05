@@ -5,7 +5,6 @@ import threading
 import time
 import plot_touchdetection
 import uuid
-from naoqi import ALModule
 
 
 def move_joint(name, value, speed, motion):
@@ -53,35 +52,6 @@ def movement(joint_name, joint_min, joint_max, joint_temp, parameters,
         )
     if joint_temp.value > int(parameters["TemperatureMax"][0]):
         print "Joint too hot !!!"
-
-
-class Error(threading.Thread):
-
-    """
-    Class to compare actuator and sensor.
-    """
-
-    def __init__(self, actuator, sensor, limit):
-        threading.Thread.__init__(self)
-        self.actuator = actuator
-        self.sensor = sensor
-        self.limit = limit
-
-        self.flag = True
-        self.end = False
-
-    def run(self):
-        """ Compare """
-        while not self.end:
-            if abs(self.actuator.value - self.sensor.value) > self.limit:
-                self.flag = False
-
-    def get_flag(self):
-        return self.flag
-
-    def stop(self):
-        """ To stop logging """
-        self.end = True
 
 
 class EventModule:
@@ -154,16 +124,6 @@ def test_touchdetection(dcm, mem, motion, session, motion_wake_up,
     )
     plot.start()
 
-    # Compare position & speed between actuator & sensor
-    error_position = Error(joint_position_actuator,
-                           joint_position_actuator,
-                           float(parameters["LimitErrorPosition"][0]))
-    error_speed = Error(joint_speed_actuator,
-                        joint_speed_sensor,
-                        float(parameters["LimitErrorSpeed"][0]))
-    error_position.start()
-    error_speed.start()
-
     # Movement
     set_position(dcm, mem, motion, joint)
     time.sleep(2)
@@ -179,10 +139,6 @@ def test_touchdetection(dcm, mem, motion, session, motion_wake_up,
     # Stop send datas
     plot.stop()
     time.sleep(0.25)
-
-    # Stop threads
-    error_position.stop()
-    error_speed.stop()
 
     if touchdetection.flag:
         assert False
