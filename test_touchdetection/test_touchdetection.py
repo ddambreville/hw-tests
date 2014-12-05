@@ -26,14 +26,13 @@ def set_position(dcm, mem, motion, section):
         move_joint(name, angle, 0.1, motion)
 
 
-def movement(joint_name, joint_min, joint_max, joint_temp, parameters,
+def movement(joint_name, joint_min, joint_max, joint_temp, speed, parameters,
              motion):
 
-    if parameters["TouchStop"][0] == True:
+    if parameters["MecanicTouchStop"][0] == True:
         amplitude = 1
     else:
         amplitude = 0.90
-    print(joint_name)
 
     time_init = time.time()
     while (time.time() - time_init) < float(parameters["TimeByJoint"][0]) and\
@@ -41,13 +40,13 @@ def movement(joint_name, joint_min, joint_max, joint_temp, parameters,
         move_joint(
             joint_name,
             joint_max * amplitude,
-            float(parameters["Speed"][0]),
+            speed,
             motion
         )
         move_joint(
             joint_name,
             joint_min * amplitude,
-            float(parameters["Speed"][0]),
+            speed,
             motion
         )
     if joint_temp.value > int(parameters["TemperatureMax"][0]):
@@ -89,7 +88,8 @@ class EventModule:
 
 
 def test_touchdetection(dcm, mem, motion, session, motion_wake_up,
-                        remove_safety, parameters, test_objects_dico):
+                        remove_safety, parameters, speed_value,
+                        test_objects_dico):
     """
     Test touch detection.
     """
@@ -106,6 +106,7 @@ def test_touchdetection(dcm, mem, motion, session, motion_wake_up,
     joint_speed_actuator = test_objects_dico["jointSpeedActuator"]
     joint_speed_sensor = test_objects_dico["jointSpeedSensor"]
     joint_temperature = test_objects_dico["jointTemperature"]
+    speed = speed_value["Speed"]
 
     # Go to initial position
     set_position(dcm, mem, motion, "ReferencePosition")
@@ -119,10 +120,22 @@ def test_touchdetection(dcm, mem, motion, session, motion_wake_up,
         joint_position_sensor,
         joint_speed_actuator,
         joint_speed_sensor,
+        joint_temperature,
         float(parameters["LimitErrorPosition"][0]),
         float(parameters["LimitErrorSpeed"][0])
     )
     plot.start()
+
+    print("\n\nJoint : " + joint + " - Speed : " + str(speed) + "\n")
+
+    # Verify joint not too hot
+    # If too hot, remove stiffness and wait
+    while joint_temperature.value > int(parameters["TemperatureMin"][0]):
+        motion._setStiffnesses("Body", 0.0)
+        print("Joint too hot : " + str(joint_temperature.value))
+        print("-> Wait " + str(parameters["TimeWait"][0]) + "s")
+        time.sleep(int(parameters["TimeWait"][0]))
+    motion._setStiffnesses("Body", 1.0)
 
     # Movement
     set_position(dcm, mem, motion, joint)
@@ -132,6 +145,7 @@ def test_touchdetection(dcm, mem, motion, session, motion_wake_up,
              joint_position_actuator.minimum,
              joint_position_actuator.maximum,
              joint_temperature,
+             speed,
              parameters,
              motion
              )

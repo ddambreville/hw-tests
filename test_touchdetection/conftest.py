@@ -91,6 +91,16 @@ def test_objects_dico(request, dcm, mem):
     }
     return dico_objects
 
+@pytest.fixture(params=qha_tools.use_section("touch_detection.cfg", "Speed"))
+def speed_value(request):
+    """
+    Speed
+    """
+    dico_speed = {
+        "Speed": float(request.param)
+    }
+    return dico_speed
+
 
 @pytest.fixture(scope="session")
 def parameters():

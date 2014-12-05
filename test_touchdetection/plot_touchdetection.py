@@ -11,7 +11,7 @@ class Plot(threading.Thread):
     """
 
     def __init__(self, joint, mem, event, joint_pos_act, joint_pos_sen,
-                 joint_speed_act, joint_speed_sen, limit_position,
+                 joint_speed_act, joint_speed_sen, joint_temp, limit_position,
                  limit_speed):
         threading.Thread.__init__(self)
         self._name = joint
@@ -21,6 +21,7 @@ class Plot(threading.Thread):
         self._joint_position_sensor = joint_pos_sen
         self._joint_speed_actuator = joint_speed_act
         self._joint_speed_sensor = joint_speed_sen
+        self._joint_temperature = joint_temp
         self._limit_position = limit_position
         self._limit_speed = limit_speed
 
@@ -42,7 +43,8 @@ class Plot(threading.Thread):
             "ErrorPosition",
             "SpeedActuator",
             "SpeedSensor",
-            "ErrorSpeed"
+            "ErrorSpeed",
+            "Temperature"
         ]) + "\n"
         log_file.write(line_to_write)
         log_file.flush()
@@ -51,10 +53,30 @@ class Plot(threading.Thread):
         while not self._end:
             elapsed_time = time.time() - time_init
             plot_server.add_point(
+                "PositionActuator",
+                elapsed_time,
+                self._joint_position_actuator.value
+            )
+            plot_server.add_point(
+                "PositionSensor",
+                elapsed_time,
+                self._joint_position_sensor.value
+            )
+            plot_server.add_point(
                 "PositionError",
                 elapsed_time,
                 self._joint_position_actuator.value -
                 self._joint_position_sensor.value
+            )
+            plot_server.add_point(
+                "SpeedActuator",
+                elapsed_time,
+                self._joint_speed_actuator.value
+            )
+            plot_server.add_point(
+                "SpeedSensor",
+                elapsed_time,
+                self._joint_speed_sensor.value
             )
             plot_server.add_point(
                 "SpeedError",
@@ -87,6 +109,11 @@ class Plot(threading.Thread):
                 elapsed_time,
                 self._event.flag_event
             )
+            plot_server.add_point(
+                "Temperature",
+                elapsed_time,
+                self._joint_temperature.value
+            )
 
             event = self._mem.getData("TouchChanged")
 
@@ -102,6 +129,7 @@ class Plot(threading.Thread):
                 str(self._joint_speed_sensor.value),
                 str(self._joint_speed_actuator.value -
                     self._joint_speed_sensor.value),
+                str(self._joint_temperature.value)
             ]) + "\n"
             log_file.write(line_to_write)
             log_file.flush()
