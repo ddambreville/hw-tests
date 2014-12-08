@@ -21,6 +21,19 @@ def move_joint(name, value, speed, motion):
     motion.angleInterpolationWithSpeed(name, value, speed)
 
 
+def stiffness_part(motion, parts, value):
+    """
+    Remove stiffness for defined parts.
+    No return.
+
+    @motion     : proxy to ALMotion (object)
+    @parts      : list of parts to remove stiffness
+    """
+
+    for k in parts:
+        motion._setStiffnesses(k, value)
+
+
 def set_position(dcm, mem, motion, section):
     """
     Put robot in initial position.
@@ -51,7 +64,7 @@ def movement(joint_name, joint_min, joint_max, joint_temp, speed,
     """
     Cycle of joint movement.
     Assert false if max temperature is reached.
-    Else no return
+    No return.
 
     @joint_name         : name of joint to move (string)
     @joint_min          : minimal joint position (float)
@@ -94,12 +107,13 @@ def movement(joint_name, joint_min, joint_max, joint_temp, speed,
 class EventModule(object):
 
     """
-    Module to launch function if event detected.
-
-    @mem        : proxy to ALMemory (object)
+    Module which launch function if event detected.
     """
 
     def __init__(self, mem):
+        """
+        @mem        : proxy to ALMemory (object)
+        """
         self.mem = mem
         self._flag_event = 0      # = 1 when event detected, else = 0
         self._flag = False        # True when event detected at least one time
@@ -193,7 +207,9 @@ def test_touchdetection(dcm, mem, motion, session, motion_wake_up,
         joint_speed_sensor,
         joint_temperature,
         float(parameters["LimitErrorPosition"][0]),
-        float(parameters["LimitErrorSpeed"][0])
+        float(parameters["LimitErrorSpeed"][0]),
+        int(parameters["TemperatureMaxToStart"][0]),
+        int(parameters["TemperatureMax"][0])
     )
     plot.start()
 
@@ -226,10 +242,25 @@ def test_touchdetection(dcm, mem, motion, session, motion_wake_up,
             print "LShoulderRoll too hot -> Wait"
             time.sleep(int(parameters["TimeWait"][0]))
 
-    # Movement
+    # Initial position
     set_position(dcm, mem, motion, joint)
     time.sleep(2)
 
+    # Remove stiffness for unused parts
+    # Head stiffness never remove
+    # Can't remove stiffness on the Leg and move upper body
+    # Can't remove stiffness on arm if Leg move -> event detection
+    if parameters["StiffAllRobot"][0] == "False":
+        if joint in ["RShoulderPitch", "RShoulderRoll", "RElbowYaw",
+                     "RElbowRoll", "RWristYaw"]:
+            stiffness_part(motion, ["LArm"], 0.0)
+        elif joint in ["LShoulderPitch", "LshoulderRoll", "LElbowYaw",
+                       "LElbowRoll", "LWristYaw"]:
+            stiffness_part(motion, ["RArm"], 0.0)
+        elif joint in ["HeadPitch", "HeadYaw"]:
+            stiffness_part(motion, ["LArm", "RArm"], 0.0)
+
+    # Movement
     movement(joint,
              joint_position_actuator.minimum,
              joint_position_actuator.maximum,
@@ -240,6 +271,8 @@ def test_touchdetection(dcm, mem, motion, session, motion_wake_up,
              int(parameters["TemperatureMax"][0]),
              motion
              )
+
+    stiffness_part(motion, ["Body"], 1.0)
 
     # Stop send datas
     plot.stop()

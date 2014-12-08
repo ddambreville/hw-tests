@@ -12,7 +12,23 @@ class Plot(threading.Thread):
 
     def __init__(self, joint, mem, event, joint_pos_act, joint_pos_sen,
                  joint_speed_act, joint_speed_sen, joint_temp, limit_position,
-                 limit_speed):
+                 limit_speed, temp_max, temp_max_to_start):
+        """
+        @joint                  : joint name (string)
+        @mem                    : proxy to Motion (object)
+        @event                  : event flag (integer)
+        @joint_pos_act          : joint position actuator object (object)
+        @joint_pos_sen          : joint position sensor object (object)
+        @joint_speed_act        : joint speed actuator object (object)
+        @joint_speed_sen        : joint speed sensor object (object)
+        @joint_temp             : joint temperature object (object)
+        @limit_position         : limit position (integer)
+        @limit_speed            : limit speed (integer)
+        @temp_max               : maximal joint temperature permitted (integer)
+        @temp_max_to_start      : maximal joint temperature permitted to start
+                                  (integer)
+        """
+
         threading.Thread.__init__(self)
         self._name = joint
         self._mem = mem
@@ -24,6 +40,8 @@ class Plot(threading.Thread):
         self._joint_temperature = joint_temp
         self._limit_position = limit_position
         self._limit_speed = limit_speed
+        self._temp_max = temp_max
+        self._temp_max_to_start = temp_max_to_start
 
         self._end = False
 
@@ -41,10 +59,16 @@ class Plot(threading.Thread):
             "PositionActuator",
             "PositionSensor",
             "ErrorPosition",
+            "MaxLimitErrorPosition",
+            "MinLimitErrorPosition",
             "SpeedActuator",
             "SpeedSensor",
             "ErrorSpeed",
-            "Temperature"
+            "MaxLimitErrorSpeed",
+            "MinLimitErrorSpeed",
+            "Temperature",
+            "TemperatureMin",
+            "TemperatureMax"
         ]) + "\n"
         log_file.write(line_to_write)
         log_file.flush()
@@ -114,6 +138,16 @@ class Plot(threading.Thread):
                 elapsed_time,
                 self._joint_temperature.value
             )
+            plot_server.add_point(
+                "TemperatureMin",
+                elapsed_time,
+                self._temp_max_to_start
+            )
+            plot_server.add_point(
+                "TemperatureMax",
+                elapsed_time,
+                self._temp_max
+            )
 
             event = self._mem.getData("TouchChanged")
 
@@ -125,11 +159,17 @@ class Plot(threading.Thread):
                 str(self._joint_position_sensor.value),
                 str(self._joint_position_actuator.value -
                     self._joint_position_sensor.value),
+                str(self._limit_position),
+                str(-self._limit_position),
                 str(self._joint_speed_actuator.value),
                 str(self._joint_speed_sensor.value),
                 str(self._joint_speed_actuator.value -
                     self._joint_speed_sensor.value),
-                str(self._joint_temperature.value)
+                str(self._limit_speed),
+                str(-self._limit_speed),
+                str(self._joint_temperature.value),
+                str(self._temp_max_to_start),
+                str(self._temp_max)
             ]) + "\n"
             log_file.write(line_to_write)
             log_file.flush()
