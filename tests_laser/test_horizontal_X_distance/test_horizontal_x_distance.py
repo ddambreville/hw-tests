@@ -10,7 +10,6 @@ horizontal laser you want to test.
 [Initial conditions]
 The robot must be in front of a wall or a flat object.
 Make a noaqi restart before the test to reset the odometry.
->>>>>>> df9f636... Update of horizontal X test scripts
 
 '''
 

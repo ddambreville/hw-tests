@@ -84,7 +84,7 @@ def get_horizontal_x_segments(request, result_base_folder, dcm, mem, side):
     return dico
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def get_sensor_objects(request, result_base_folder, dcm, mem):
     """
     Return a dictionary with several objects for

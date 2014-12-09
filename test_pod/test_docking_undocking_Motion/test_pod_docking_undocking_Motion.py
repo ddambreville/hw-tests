@@ -25,7 +25,7 @@ def test_pod_docking_undocking_Motion(dcm, mem, motion, alrecharge, coord,
     print coord[2]
     test_utils.init()
     log_file = csv_file
-    test_utils.QUEUE.enqueue("leaveStation")
+    test_utils.QUEUE.enqueue("lookForStation")
     time.sleep(5)
     my_dict = get_dict
     stop = False

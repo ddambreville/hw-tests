@@ -95,24 +95,25 @@ def check_error(logger, config_test):
 
 
 def test_verticaux_x(
-    check_error_laser, dcm, mem, motion, wakeup, get_vertical_x_segments,
+     dcm, mem, motion, wakeup, get_vertical_x_segments,
         config_test, remove_safety, remove_diagnosis, result_base_folder):
     """
     Test main function which tests the X distance
     of the horizontal lasers
     """
-    path = os.path.abspath("./") + "/" + result_base_folder
+    time.sleep(10)
+    #path = os.path.abspath("./") + "/" + result_base_folder
     pos_0 = motion.getRobotPosition(True)[0]
-    cam = CameraViewer.camera_connect()
+    #cam = CameraViewer.camera_connect()
     motion_thread = threading.Thread(target=robot_motion, args=(
         motion, pos_0, config_test))
-    image_thread = threading.Thread(target=laser_utils.save_laser_image, args=(
-        cam, path, motion_thread))
+    #image_thread = threading.Thread(target=laser_utils.save_laser_image, args=(
+        #cam, path, motion_thread))
     motion_thread.start()
-    image_thread.start()
+    #image_thread.start()
     logger = record_vertical_data(
         get_vertical_x_segments, motion, pos_0, motion_thread,
         config_test)
     result = check_error(logger, config_test)
-    CameraViewer.camera_disconnect(cam)
+    #CameraViewer.camera_disconnect(cam)
     assert 'Fail' not in result

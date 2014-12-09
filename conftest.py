@@ -8,6 +8,7 @@ import os
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 
+
 def pytest_addoption(parser):
     """Configuration of pytest parsing."""
     parser.addoption(
@@ -80,6 +81,7 @@ def motion(robot_ip, port):
     except RuntimeError:
         return "MotionKilled"
 
+
 @pytest.fixture(scope="session")
 def alrecharge(robot_ip, port):
     """ Fixture chich returns a proxy to ALRecharge module. """
@@ -146,7 +148,7 @@ def wake_up_pos():
     Fixture which retrieves wakeUp joints position from a configuration file.
     """
     return qha_tools.read_section(PATH + "/global_test_configuration/"
-                              "juliette_positions.cfg", "wakeUp")
+                                  "juliette_positions.cfg", "wakeUp")
 
 
 @pytest.fixture(scope="session")
@@ -155,7 +157,7 @@ def rest_pos():
     Fixture which retrieves rest joints position from a configuration file.
     """
     return qha_tools.read_section(PATH + "/global_test_configuration/"
-                              "juliette_positions.cfg", "rest")
+                                  "juliette_positions.cfg", "rest")
 
 
 @pytest.fixture(scope="session")
@@ -164,7 +166,7 @@ def zero_pos():
     Fixture which retrieves zero joints position from a configuration file.
     """
     return qha_tools.read_section(PATH + "/global_test_configuration/"
-                              "juliette_positions.cfg", "zero")
+                                  "juliette_positions.cfg", "zero")
 
 
 @pytest.fixture(scope="session")
@@ -395,7 +397,6 @@ def wake_up_pos_brakes_closed(request, dcm, mem, wake_up_pos, rest_pos,
                 hippitch_hardness_actuator.qqvalue = 0.
                 kneepitch_hardness_actuator.qqvalue = 0.
 
-
     my_thread = threading.Thread(target=control)
     my_thread.start()
 
@@ -407,3 +408,33 @@ def wake_up_pos_brakes_closed(request, dcm, mem, wake_up_pos, rest_pos,
         subdevice.multiple_set(dcm, mem, rest_pos, wait=True)
 
     request.addfinalizer(fin)
+
+
+@pytest.fixture(scope="session")
+def joint_list(motion):
+    """Returns the robot's joint list once per test session."""
+    return motion.getBodyNames("Body")
+
+
+@pytest.fixture(scope="session")
+def boards(dcm, mem, joint_list):
+    """
+    @param dcm : proxy to dcm
+    @type  dcm : object
+    @param mem : proxy to ALMemory
+    @type mem : object
+    @param joint_list : list of all robot joints.
+    @type joint_list : list
+
+    @returns : List of all the boards liked to the robot joints.
+    @rtype : list of strings
+
+    Invoked once per test session.
+    """
+    boards = list()
+    for joint in joint_list:
+        joint_current_sensor = subdevice.JointCurrentSensor(dcm, mem, joint)
+        joint_board = joint_current_sensor.device
+        if joint_board not in boards:
+            boards.append(joint_board)
+    return boards
