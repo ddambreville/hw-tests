@@ -3,7 +3,9 @@ import qha_tools
 import subdevice
 import math
 import easy_plot_connection
+import logging
 
+logging.basicConfig(level=logging.DEBUG)
 
 @pytest.mark.usefixtures("kill_motion")
 class TestMultifuse:
@@ -31,16 +33,24 @@ class TestMultifuse:
         memoryName="RobotConfig/Head/MinMaxChangeAllowed" description=""
         value="1" type="string" />
         """
+        # logger initialization
+        log = logging.getLogger('test_fuseboard_temperature')
+
         # plot_server initialisation
         if plot:
             plot_server = easy_plot_connection.Server(local_plot=True)
 
         # flag initialization
-        flag = True
+        flag_loop = True
         flag_key = True
         fuse_state = True
         flag_ambiant_temperature = True
         flag_fuse_status = True
+        flag_first_overshoot = False
+        flag_protection_on = False
+
+        # flags
+        (flag1, flag2, flag3) = (False, False, False)
 
         # objects creation
         fuse_temperature = fuse["FuseTemperature"]
@@ -51,15 +61,23 @@ class TestMultifuse:
 
         # checking that ALMemory key MinMaxChange Allowed = 1
         if int(mem.getData("RobotConfig/Head/MinMaxChangeAllowed")) != 1:
-            flag = False
+            flag_loop = False
             flag_key = False
-            print "MinMaxChangeAllowed ALMemory key missing"
+            log.error("MinMaxChangeAllowed ALMemory key missing")
 
         # setting fuse temperature min and max
         fuse_temperature_max = fuse_temperature.maximum
         fuse_temperature_min = fuse_temperature.minimum
         fuse_temperature_mid = (
             fuse_temperature_max + fuse_temperature_min) / 2.
+
+        # setting fuse temperature min and max for hysteresis
+        fuse_temperature_max_hyst = fuse_temperature_max - 10
+        log.debug("fuse_temperature_max_hyst = "+str(fuse_temperature_max_hyst))
+        fuse_temperature_min_hyst = fuse_temperature_min - 10
+        log.debug("fuse_temperature_min_hyst = "+str(fuse_temperature_min_hyst))
+        fuse_temperature_mid_hyst = fuse_temperature_mid - 10
+        log.debug("fuse_temperature_mid_hyst = "+str(fuse_temperature_mid_hyst))
 
         # position dictionnary creation with normal min or max
         state = \
@@ -84,9 +102,6 @@ class TestMultifuse:
                 [[new_maximum_angle, dcm.getTime(0)]], "Merge"]
             joint_object.qvalue = (new_maximum_angle, 10000)
 
-        # loop timer creation
-        timer = qha_tools.Timer(dcm, test_time)
-
         # logger creation
         logger = qha_tools.Logger()
 
@@ -97,8 +112,11 @@ class TestMultifuse:
             [subdevice.JointCurrentSensor(dcm, mem, joint)
              for joint in joint_list]
 
+        # loop timer creation
+        timer = qha_tools.Timer(dcm, test_time)
+
         # test loop
-        while flag is True:
+        while flag_loop:
             try:
                 loop_time = timer.dcm_time() / 1000.
                 fuse_temperature_status = fuse_temperature.status
@@ -114,9 +132,9 @@ class TestMultifuse:
                 multifuseboard_total_current = \
                     multi_fuseboard_total_current.value
                 stiffness_decrease = mem.getData(
-                    "Device/SubDeviceList/BatteryFuse/StiffnessDecrease/Value")
+                    "Device/SubDeviceList/FuseProtection/StiffnessDecrease/Value")
                 stiffness_decrease_immediate = mem.getData(
-                    "Device/SubDeviceList/BatteryFuse/StiffnessDecreaseImmediate/Value")
+                    "Device/SubDeviceList/FuseProtection/StiffnessDecreaseImmediate/Value")
 
                 listeofparams = [
                     ("Time", loop_time),
@@ -185,42 +203,98 @@ class TestMultifuse:
                         loop_time, stiffness_decrease_immediate)
 
                 # Checking REQ_FUSE_TEMPERATURE_002
-                if fuse_temperature_value <\
-                    multifuseboard_ambiant_tmp:
+                if fuse_temperature_value < multifuseboard_ambiant_tmp:
                     flag_ambiant_temperature = False
+                    log.info("Fuse temperature is lower than MultiFuseBoard" +\
+                     "ambiant temperature")
 
-                # Checking REQ_FUSE_TEMPERATURE_003
-                if fuse_temperature_value < fuse_temperature_min and\
-                    fuse_temperature_status != 0:
-                    flag_fuse_status = False
-                elif((fuse_temperature_min < fuse_temperature_value <
-                      fuse_temperature_mid) and (fuse_temperature_status != 1)):
-                    flag_fuse_status = False
-                elif((fuse_temperature_mid < fuse_temperature_value <
-                      fuse_temperature_max) and (fuse_temperature_status != 2)):
-                    flag_fuse_status = False
-                elif((fuse_temperature_value >= fuse_temperature_max) and
-                     (fuse_temperature_status != 3)):
-                    flag_fuse_status = False
-
-                # Checking REQ_FUSE_PROTECTION_001
+                # Checking REQ_FUSE_PERF_003
+                # Fuse status evolves correctly with its estimated temperature
+                # Hysteresis works correctly too
+                if fuse_temperature_value >= fuse_temperature_min:
+                    flag1 = True
+                if fuse_temperature_min < fuse_temperature_value <=\
+                 fuse_temperature_mid:
+                    flag2 = True
                 if fuse_temperature_value >= fuse_temperature_max:
-                    flag = False
-                    if fuse_temperature.part == "DW" and\
-                        stiffness_decrease_immediate != 0:
-                        fuse_state = False
+                    flag3 = True
+
+                if (flag1, flag2, flag3) == (False, False, False):
+                    theorical_status = 0
+                elif (flag1, flag2, flag3) == (True, False, False):
+                    theorical_status = 1
+                elif (flag1, flag2, flag3) == (True, True, False):
+                    theorical_status = 2
+                elif (flag1, flag2, flag3) == (True, True, True):
+                    theorical_status = 3
+
+                if theorical_status == 3 and fuse_temperature_value <=\
+                 fuse_temperature_max_hyst:
+                    theorical_status = 2
+                    flag3 = False
+                if theorical_status == 2 and fuse_temperature_value <=\
+                 fuse_temperature_mid_hyst:
+                    theorical_status = 1
+                    flag2 = False
+                if theorical_status == 1 and fuse_temperature_value <=\
+                 fuse_temperature_min_hyst:
+                    theorical_status = 0
+                    flag1 = False
+
+                if fuse_temperature_status != theorical_status:
+                    log.warning("!!! Fuse status problem !!!")
+                    log.info("fuse temperature = " +\
+                     str(fuse_temperature_value))
+                    log.info("fuse status = " + str(fuse_temperature_status))
+                    log.info("fuse theorical status = " + str(theorical_status))
+                    flag_fuse_status = False
+
+                # Indicating first overshoot
+                if fuse_temperature_value >= fuse_temperature_max and not\
+                 flag_first_overshoot:
+                    flag_first_overshoot = True
+                    log.info("First temperature overshoot")
+                    timer_overshoot = qha_tools.Timer(dcm, 200)
+
+                # Indicating that protection worked
+                # Set stiffness actuator to 0 to let fuse cool down
+                if flag_first_overshoot and timer_overshoot.is_time_out()\
+                 and not flag_protection_on and\
+                  (stiffness_decrease_immediate == 0 or\
+                   stiffness_decrease == 0):
+                    log.info("Flag protection ON")
+                    flag_protection_on = True
+                    log.info("Concerned joints pluggin activated")
+                    qha_tools.unstiff_joints(dcm, mem, joint_list)
+
+                # Checking REQ_FUSE_PERF_004
+                if flag_first_overshoot and timer_overshoot.is_time_out():
+                    if fuse_temperature.part == "LegFuse":
+                        if stiffness_decrease_immediate != 0:
+                            fuse_state = False
+                            log.warning("LegFuse protection NOK")
                     else:
                         if stiffness_decrease != 0:
                             fuse_state = False
+                            log.warning(fuse_temperature.part +\
+                             " protection NOK")
+
+                if flag_protection_on and fuse_temperature_value < 80.0:
+                    flag_loop = False
+                    log.info("End of test, fuse temperature is cold enough")
 
             except KeyboardInterrupt:
-                flag = False  # out of test loop
+                flag_loop = False  # out of test loop
+                log.info("KeyboardInterrupt from user")
+
+        log.info("!!!! OUT OF TEST LOOP !!!!")
 
         file_name = "_".join([str(fuse_temperature.part), str(fuse_state)])
         result_file_path = "/".join([result_base_folder, file_name]) + ".csv"
         logger.log_file_write(result_file_path)
 
         # setting original min and max
+        log.info("Setting orininal min and max position actuator values...")
         for joint, value in state.items():
             joint_object = subdevice.JointPositionActuator(dcm, mem, joint)
             if value[0] > 0:
@@ -230,7 +304,8 @@ class TestMultifuse:
                 joint_object.minimum = value[0]
                 joint_object.qvalue = (joint_object.minimum, 500)
 
-        qha_tools.wait(dcm, 1000)
+        qha_tools.wait(dcm, 200)
+        log.info("Unstiff concerned joints")
         qha_tools.unstiff_joints(dcm, mem, joint_list)
 
         assert flag_key
