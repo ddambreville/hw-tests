@@ -1,9 +1,6 @@
 import pytest
 import qha_tools
 import subdevice
-from naoqi import ALProxy
-from naoqi import ALBroker
-from qi import Session
 
 
 class MotionActuatorValue(object):
@@ -32,42 +29,6 @@ class MotionSensorValue(object):
     value = property(_get_value)
 
 
-@pytest.fixture(scope="session")
-def broker(robot_ip, port):
-    """
-    broker
-    """
-    return ALBroker("broker", "0.0.0.0", 0, robot_ip, port)
-
-
-@pytest.fixture(scope="session")
-def motion_wake_up(request, motion):
-    """
-    Robot wakeUp.
-    """
-    motion.wakeUp()
-
-    def fin():
-        """Method executed after the end of the test."""
-        motion.rest()
-
-    request.addfinalizer(fin)
-
-
-@pytest.fixture(scope="session")
-def remove_safety(request, motion):
-    """
-    Remove sensors
-    """
-    motion.setExternalCollisionProtectionEnabled("All", False)
-
-    def fin():
-        """Method executed after the end of the test."""
-        motion.setExternalCollisionProtectionEnabled("All", True)
-
-    request.addfinalizer(fin)
-
-
 @pytest.fixture(params=qha_tools.use_section("touch_detection.cfg", "Joints"))
 def test_objects_dico(request, dcm, mem):
     """
@@ -91,6 +52,7 @@ def test_objects_dico(request, dcm, mem):
     }
     return dico_objects
 
+
 @pytest.fixture(params=qha_tools.use_section("touch_detection.cfg", "Speed"))
 def speed_value(request):
     """
@@ -105,11 +67,3 @@ def speed_value(request):
 @pytest.fixture(scope="session")
 def parameters():
     return qha_tools.read_section("touch_detection.cfg", "TestParameters")
-
-
-@pytest.fixture(scope="function", autouse=False)
-def session(robot_ip, port, request):
-    """ Connect a session to a NAOqi """
-    ses = Session()
-    ses.connect("tcp://" + robot_ip + ":" + str(port))
-    return ses

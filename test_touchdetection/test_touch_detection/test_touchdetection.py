@@ -60,7 +60,7 @@ def set_position(dcm, mem, motion, section):
 
 
 def movement(joint_name, joint_min, joint_max, joint_temp, speed,
-             mechanical_stop, number, temp_max, motion):
+             mechanical_stop, number, temp_max, motion, plot):
     """
     Cycle of joint movement.
     Assert false if max temperature is reached.
@@ -75,6 +75,7 @@ def movement(joint_name, joint_min, joint_max, joint_temp, speed,
     @number             : number of movement (integer)
     @temp_max           : maximal joint temperature permitted (integer)
     @motion             : proxy to ALMotion (object)
+    @plot               : plot object (object)
     """
 
     if mechanical_stop:
@@ -101,6 +102,7 @@ def movement(joint_name, joint_min, joint_max, joint_temp, speed,
         if joint_temp.value > temp_max:
             print "Joint too hot !!!"
             print "Do again the test with a lower maximal temperature to start"
+            plot.stop()
             assert False
 
 
@@ -163,7 +165,7 @@ def test_touchdetection(dcm, mem, motion, session, motion_wake_up,
                         test_objects_dico):
     """
     Test touch detection : no false positive test.
-    Move joints at different speeds (cf associated config file)
+    Move joints at different speeds (cf associated config file).
     Assert True if no TouchChanged event is detected.
 
     @dcm            : proxy to DCM (object)
@@ -193,7 +195,7 @@ def test_touchdetection(dcm, mem, motion, session, motion_wake_up,
     joint_temperature = test_objects_dico["jointTemperature"]
     speed = speed_value["Speed"]
 
-    # Go to initial position
+    # Go to reference position
     set_position(dcm, mem, motion, "ReferencePosition")
 
     # Send datas
@@ -269,7 +271,8 @@ def test_touchdetection(dcm, mem, motion, session, motion_wake_up,
              bool(parameters["MechanicalStop"][0]),
              int(parameters["MovementNumberByJoint"][0]),
              int(parameters["TemperatureMax"][0]),
-             motion
+             motion,
+             plot
              )
 
     stiffness_part(motion, ["Body"], 1.0)
