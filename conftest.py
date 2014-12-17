@@ -5,6 +5,7 @@ import subdevice
 import pytest
 import threading
 import os
+from qi import Session
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 
@@ -438,3 +439,24 @@ def boards(dcm, mem, joint_list):
         if joint_board not in boards:
             boards.append(joint_board)
     return boards
+
+
+def session(robot_ip, port):
+    """ Connect a session to a NAOqi """
+    ses = Session()
+    ses.connect("tcp://" + robot_ip + ":" + str(port))
+    return ses
+
+
+@pytest.fixture(scope="session")
+def motion_wake_up(request, motion):
+    """
+    Robot wakeUp.
+    """
+    motion.wakeUp()
+
+    def fin():
+        """Method executed after the end of the test."""
+        motion.rest()
+
+    request.addfinalizer(fin)
