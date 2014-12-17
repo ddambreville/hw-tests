@@ -440,7 +440,7 @@ def boards(dcm, mem, joint_list):
             boards.append(joint_board)
     return boards
 
-
+@pytest.fixture(scope="session")
 def session(robot_ip, port):
     """ Connect a session to a NAOqi """
     ses = Session()
