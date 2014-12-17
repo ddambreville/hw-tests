@@ -52,7 +52,7 @@ class Plot(threading.Thread):
         plot_server.curves_erase()
 
         log_file = open(self._name + ".csv", 'w')
-        line_to_write = ";".join([
+        line_to_write = ",".join([
             "Time",
             "Event",
             "EventType",
@@ -149,12 +149,14 @@ class Plot(threading.Thread):
                 self._temp_max
             )
 
-            event = self._mem.getData("TouchChanged")
+            event = str(self._mem.getData("TouchChanged"))
+            # Remove , to avoid conflict in csv file
+            event = event.replace(',', '')
 
-            line_to_write = ";".join([
+            line_to_write = ",".join([
                 str(elapsed_time),
                 str(self._event.flag_event),
-                str(event),
+                event,
                 str(self._joint_position_actuator.value),
                 str(self._joint_position_sensor.value),
                 str(self._joint_position_actuator.value -
