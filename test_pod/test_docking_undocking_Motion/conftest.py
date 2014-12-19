@@ -15,7 +15,7 @@ from math import pi
 import os
 from termcolor import colored
 
-CYCLE = 10
+CYCLE = 1
 
 
 def all_coord():
@@ -24,9 +24,10 @@ def all_coord():
     """
     coords = []
     cpt = 0
+    dist = [0, 0.4, 1]
     while cpt < CYCLE:
-        for y in range(-1, 2):
-            coords.append([0.1, 0.1 * y, cpt])
+        for x_coord in dist:
+            coords.append([x_coord, 0, cpt])
         cpt = cpt + 1
     return coords
 
@@ -82,7 +83,7 @@ def coord(request):
 
 
 @pytest.fixture(scope="session")
-def get_pod_objects(request, result_base_folder, dcm, mem):
+def get_pod_objects(dcm, mem):
     """
     Return a dictionary with several objects for
     POD test
@@ -93,16 +94,6 @@ def get_pod_objects(request, result_base_folder, dcm, mem):
     dico["battery_current"] = BatteryCurrentSensor(dcm, mem)
     logger = qha_tools.Logger()
     dico["logger"] = logger
-
-    def fin():
-        """Method executed after a joint test."""
-        result_file_path = "/".join(
-            [
-                result_base_folder,
-                "Pod_Log"
-            ]) + ".csv"
-        logger.log_file_write(result_file_path)
-    request.addfinalizer(fin)
     return dico
 
 
