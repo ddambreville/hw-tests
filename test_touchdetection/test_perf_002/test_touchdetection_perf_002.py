@@ -75,6 +75,38 @@ def move_joint(name, value, speed, motion):
     motion.angleInterpolationWithSpeed(name, value, speed)
 
 
+class BaseRotation(threading.Thread):
+
+    """
+    Base rotates
+    """
+
+    def __init__(self, motion, speed):
+        """
+        @motion     : proxy to ALMotion (object)
+        @speed      : speed to move between [0-1] (float)
+        """
+        threading.Thread.__init__(self)
+
+        self._motion = motion
+        self._speed = speed
+
+        self._end = False
+
+    def run(self):
+        """
+        Movement.
+        """
+        while not self._end:
+            self._motion.move(0, 0, self._speed)
+
+    def stop(self):
+        """
+        Stop movement.
+        """
+        self._end = True
+
+
 def test_touchdetection_perf_002(dcm, mem, motion, session, motion_wake_up,
                                  remove_sensors, move_arms_enabled, parameters,
                                  speed_value):
@@ -100,6 +132,25 @@ def test_touchdetection_perf_002(dcm, mem, motion, session, motion_wake_up,
     module_id = session.registerService(module_name, touchdetection)
     touchdetection.subscribe(module_name, expected)
 
+    flag = False
+
+    # Objects creation
+    rshoulderroll_position_actuator = subdevice.JointPositionActuator(
+        dcm, mem, "RShoulderRoll")
+    lshoulderroll_position_actuator = subdevice.JointPositionActuator(
+        dcm, mem, "LShoulderRoll")
+    rshoulderroll_hardness = subdevice.JointHardnessActuator(
+        dcm, mem, "RShoulderRoll")
+    lshoulderroll_hardness = subdevice.JointHardnessActuator(
+        dcm, mem, "LShoulderRoll")
+    speed = speed_value["Speed"]
+
+    # Initial position
+    move_joint("RShoulderRoll", rshoulderroll_position_actuator.minimum,
+               float(parameters["Speed"][0]), motion)
+    move_joint("LShoulderRoll", lshoulderroll_position_actuator.maximum,
+               float(parameters["Speed"][0]), motion)
+
     plot = plot_touchdetection.Plot(
         dcm,
         mem,
@@ -112,20 +163,17 @@ def test_touchdetection_perf_002(dcm, mem, motion, session, motion_wake_up,
     )
     plot.start()
 
-    # Objects creation
-    rshoulderroll_position_actuator = subdevice.JointPositionActuator(
-        dcm, mem, "RShoulderRoll")
-    lshoulderroll_position_actuator = subdevice.JointPositionActuator(
-        dcm, mem, "LShoulderRoll")
-    speed = speed_value["Speed"]
+    move = BaseRotation(motion, speed)
+    move.start()
 
-    move_joint("RShoulderRoll", rshoulderroll_position_actuator.minimum,
-               float(parameters["Speed"][0]), motion)
-    move_joint("LShoulderRoll", lshoulderroll_position_actuator.maximum,
-               float(parameters["Speed"][0]), motion)
-
-    while not touchdetection.flag:
-        motion.move(0, 0, speed)
+    end = False
+    while not end:
+        if touchdetection.flag_event:
+            if rshoulderroll_hardness.value == 0 or \
+                    lshoulderroll_hardness.value == 0:
+                end = True
+                move.stop()
+                flag = True
 
     time.sleep(2)
 
