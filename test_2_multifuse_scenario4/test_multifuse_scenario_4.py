@@ -213,8 +213,8 @@ class TestMultifuse:
                 # Hysteresis works correctly too
                 if fuse_temperature_value >= fuse_temperature_min:
                     flag1 = True
-                if fuse_temperature_min < fuse_temperature_value <=\
-                 fuse_temperature_mid:
+                if fuse_temperature_mid < fuse_temperature_value <=\
+                 fuse_temperature_max:
                     flag2 = True
                 if fuse_temperature_value >= fuse_temperature_max:
                     flag3 = True
