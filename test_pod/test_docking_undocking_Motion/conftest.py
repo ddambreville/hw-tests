@@ -15,7 +15,7 @@ from math import pi
 import os
 from termcolor import colored
 
-CYCLE = 1
+CYCLES = 2
 
 
 def all_coord():
@@ -25,7 +25,7 @@ def all_coord():
     coords = []
     cpt = 0
     dist = [0, 0.4, 1]
-    while cpt < CYCLE:
+    while cpt < CYCLES:
         for x_coord in dist:
             coords.append([x_coord, 0, cpt])
         cpt = cpt + 1
@@ -68,7 +68,10 @@ def csv_file():
     output = os.path.abspath("log_test.csv")
     log_file = open(output, 'w')
     log_file.write(
-        "Angle,robot_on_charging_station,BackBumper,battery_current\n"
+        "Angle,robot_on_charging_station,BackBumper,battery_current, \
+        leaveStation_OK, leaveStation_NOK, lookForStation_OK, \
+        lookForStation_NOK, moveInFrontOfStation_OK, moveInFrontOfStation_NOK, \
+        dockOnStation_OK, dockOnStation_NOK\n"
     )
 
     return log_file

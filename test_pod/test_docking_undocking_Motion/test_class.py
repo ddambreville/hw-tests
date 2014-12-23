@@ -20,6 +20,10 @@ class TestPodMotion(object):
         Initialisation de la class
         """
         self.state = None
+        self.leave_station_result = [0, 0]
+        self.look_station_result = [0, 0]
+        self.move_station_result = [0, 0]
+        self.dock_station_result = [0, 0]
 
     def set_state(self, state):
         '''
@@ -48,7 +52,15 @@ class TestPodMotion(object):
         log_file.write(str(get_pod_objects[
             "backbumper"].value) + ",")
         log_file.write(str(get_pod_objects[
-            "battery_current"].value) + "\n")
+            "battery_current"].value) + ",")
+        log_file.write(str(self.leave_station_result[0]) + "," +
+                       str(self.leave_station_result[1]) + "," +
+                       str(self.look_station_result[0]) + "," +
+                       str(self.look_station_result[1]) + "," +
+                       str(self.move_station_result[0]) + "," +
+                       str(self.move_station_result[1]) + "," +
+                       str(self.dock_station_result[0]) + "," +
+                       str(self.dock_station_result[1]) + "\n")
         log_file.flush()
         if get_pod_objects["robot_on_charging_station"].value == 1:
             self.set_state("Arret")
@@ -64,9 +76,11 @@ class TestPodMotion(object):
         print result
         my_dict["leaveStation"].append(result)
         if result == False:
+            self.leave_station_result[1] += 1
             self.set_state("leave_motion")
         else:
             self.set_state("move")
+            self.leave_station_result[0] += 1
         time.sleep(0.5)
 
     def leave_motion(self, motion):
@@ -96,8 +110,10 @@ class TestPodMotion(object):
         my_dict["lookForStation"].append(tab[0])
         if tab[0] == True:
             self.set_state("moveInFrontOfStation")
+            self.look_station_result[0] += 1
         else:
             self.set_state("lookForStation")
+            self.look_station_result[1] += 1
         time.sleep(0.5)
         return tab[0]
 
@@ -111,8 +127,10 @@ class TestPodMotion(object):
         my_dict["moveInFrontOfStation"].append(result)
         if result == True:
             self.set_state("dockOnStation")
+            self.move_station_result[0] += 1
         else:
             self.set_state("moveInFrontOfStation")
+            self.move_station_result[1] += 1
         time.sleep(0.5)
         return result
 
@@ -129,6 +147,8 @@ class TestPodMotion(object):
                 "robot_on_charging_station"].value == 1:
             time.sleep(4)
             self.set_state("log_data")
+            self.dock_station_result[0] += 1
         else:
             self.set_state("dockOnStation")
+            self.dock_station_result[1] += 1
         return result

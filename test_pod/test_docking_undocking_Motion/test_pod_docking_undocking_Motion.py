@@ -12,7 +12,7 @@ Robot in rest position on the pod
 '''
 from qha_tools import switch, case
 from test_class import TestPodMotion
-# import time
+import time
 from termcolor import colored
 
 
@@ -64,3 +64,4 @@ def test_pod_docking_undocking_Motion(dcm, mem, motion, alrecharge, coord,
                 print "\r"
                 stop = True
                 assert False
+        time.sleep(0.5)
