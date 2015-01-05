@@ -9,9 +9,9 @@ import easy_plot_connection
 @pytest.mark.usefixtures("kill_motion", "stiff_robot")
 class TestTemperatureProtection:
 
-    def test_joint_current_limitation(self, dcm, mem, parameters,
-                                      test_objects_dico, result_base_folder,
-                                      rest_pos, plot):
+    def test_joint_temperature_protection(self, dcm, mem, parameters,
+                                          test_objects_dico, result_base_folder,
+                                          rest_pos, plot):
         # flags initialization
         flag_joint = True
         flag_loop = True
@@ -34,6 +34,9 @@ class TestTemperatureProtection:
 
         # Knowing the board, we can know if the motor is a MCC or DC Brushless
         joint_board = joint_position_actuator.device
+
+        # Creating device object to acceed to its error
+        joint_board_object = device.Device(dcm, mem, joint_board)
 
         # Going to initial position
         subdevice.multiple_set(dcm, mem, rest_pos, wait=True)
@@ -102,6 +105,7 @@ class TestTemperatureProtection:
                 joint_position = joint_position_sensor.value
                 joint_hardness_value = joint_hardness_actuator.value
                 joint_current_sa = slav.calc()
+                firmware_error = joint_board_object.error
                 dcm_time = timer.dcm_time() / 1000.
 
                 # Max current adaptation if joint temperature higher than Min
@@ -192,7 +196,8 @@ class TestTemperatureProtection:
                     ("TemperatureMin", joint_temperature_min),
                     ("TemperatureMax", joint_temperature_max),
                     ("Command", joint_position_command),
-                    ("Position", joint_position)
+                    ("Position", joint_position),
+                    ("FWError", firmware_error)
                 )
 
                 # for real time plot
