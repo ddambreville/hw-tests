@@ -12,11 +12,24 @@ from subdevice import ChargingStationSensor, Bumper, BatteryCurrentSensor, \
 import qha_tools
 import threading
 import time
-from math import pi
+from math import pi, cos, sin
 import os
 from termcolor import colored
 
-CYCLES = 2
+
+def returnlist(char):
+    """
+    Make liste
+    """
+    liste = []
+    i = 0
+    for numb, each in enumerate(char):
+        if each == " ":
+            liste.append(float(char[i: numb]))
+            i = numb + 1
+        elif numb == len(char) - 1:
+            liste.append(float(char[i: numb + 1]))
+            i = numb + 1
 
 
 def all_coord():
@@ -29,10 +42,14 @@ def all_coord():
     cfg.read('TestConfig.cfg')
     angles = cfg.get('TestConfig', 'Angles')
     distances = cfg.get('TestConfig', 'Distances')
-    dist = [0, 0.4, 1]
-    while cpt < CYCLES:
-        for x_coord in dist:
-            coords.append([x_coord, 0, cpt])
+    cycles = int(cfg.get('TestConfig', 'Cycles'))
+    liste_angles = returnlist(angles)
+    liste_distances = returnlist(distances)
+    while cpt < cycles:
+        for angle in liste_angles:
+            for distance in liste_distances:
+                coords.append(
+                    [distance * cos(angle), distance * sin(angle), cpt])
         cpt = cpt + 1
     return coords
 
@@ -138,7 +155,7 @@ def log_joints(request, result_base_folder, dcm, mem, motion):
         while not thread_flag.is_set():
             joints_value = bag.value
             for each in joints_value.keys():
-                if "Wheel" in each or "Bumper" in each  or \
+                if "Wheel" in each or "Bumper" in each or
                         "charging" in each or "battery" in each:
                     logger.log((each, joints_value[each]))
                 else:
@@ -147,7 +164,7 @@ def log_joints(request, result_base_folder, dcm, mem, motion):
             logger.log(("Time", time.time() - t_0))
         time.sleep(0.01)
 
-    log_thread = threading.Thread(target=log, args=(logger, bag))
+    log_thread=threading.Thread(target=log, args=(logger, bag))
     log_thread.start()
 
     def fin():
@@ -155,7 +172,7 @@ def log_joints(request, result_base_folder, dcm, mem, motion):
         Docstring
         """
         thread_flag.set()
-        result_file_path = "/".join(
+        result_file_path="/".join(
             [
                 result_base_folder,
                 "Joint_Log"
