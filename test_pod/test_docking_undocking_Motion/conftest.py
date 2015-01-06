@@ -4,6 +4,7 @@ Created on October 16, 2014
 @author: amartin
 '''
 
+import ConfigParser
 import pytest
 from subdevice import ChargingStationSensor, Bumper, BatteryCurrentSensor, \
     JointPositionActuator, JointPositionSensor, \
@@ -24,6 +25,10 @@ def all_coord():
     """
     coords = []
     cpt = 0
+    cfg = ConfigParser.ConfigParser()
+    cfg.read('TestConfig.cfg')
+    angles = cfg.get('TestConfig', 'Angles')
+    distances = cfg.get('TestConfig', 'Distances')
     dist = [0, 0.4, 1]
     while cpt < CYCLES:
         for x_coord in dist:
