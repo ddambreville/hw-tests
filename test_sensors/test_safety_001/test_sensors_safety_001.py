@@ -3,7 +3,6 @@ import qha_tools
 import subdevice
 import time
 import uuid
-import save_sensors_values
 import multi_logger
 
 
@@ -59,9 +58,9 @@ class EventModule(object):
 
 
 def move(motion, speed, direction):
-    motion.move(int(direction["x"][0]),
-                int(direction["y"][0]),
-                int(direction["z"][0])
+    motion.move(float(speed) * int(direction["x"][0]),
+                float(speed) * int(direction["y"][0]),
+                float(speed) * int(direction["z"][0])
                 )
 
 
