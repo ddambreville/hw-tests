@@ -171,6 +171,11 @@ def zero_pos():
 
 
 @pytest.fixture(scope="session")
+def stiffness_off():
+    return qha_tools.read_section(PATH + "/global_test_configuration/"
+                                  "juliette_configuration.cfg", "stiffnessOff")
+
+@pytest.fixture(scope="session")
 def stiff_robot(request, dcm, mem, rest_pos):
     """
     This method automatically stiffs the robot at the beginning of the
