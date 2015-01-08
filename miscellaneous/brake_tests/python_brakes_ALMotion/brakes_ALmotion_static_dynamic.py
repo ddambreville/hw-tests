@@ -9,7 +9,7 @@
 @summary: brakes dynamic performances using ALMotion module.
 '''
 
-# -----------------------------------        
+# -----------------------------------
 # ------------- Import --------------
 # -----------------------------------
 
@@ -20,7 +20,7 @@ import math
 import datetime
 import time
 
-# ------------------------------------------------        
+# ------------------------------------------------
 # ------------- Joint control class --------------
 # ------------------------------------------------
 
@@ -38,19 +38,19 @@ class Joint(object):
         self.mem = mem
         self.jointName = jointName
         self.prefixe = "Device/SubDeviceList/"
-    
+
     def _set_position(self, request):
         """request is a Tuple : (angle[rad], speed(between 0 and 1) -> percentage of max speed allowed by ALMotion)"""
         self.motion.post.angleInterpolationWithSpeed(self.jointName, request[0], request[1])
-        
+
     def _set_position_bloquant(self, request):
         """request is a Tuple : (angle[rad], speed(between 0 and 1) -> percentage of max speed allowed by ALMotion)"""
         self.motion.angleInterpolationWithSpeed(self.jointName, request[0], request[1])
-    
+
     def _get_position(self):
         """get position in [rad] from ALMemory"""
         return float(self.mem.getData(self.prefixe+self.jointName+"/Position/Sensor/Value"))
-    
+
     def _set_stiffness(self, request):
         """
         Set joint stiffness. Value must be between [0,1].
@@ -58,31 +58,31 @@ class Joint(object):
         the brake protection.
         """
         self.motion._setStiffnesses(self.jointName, request)
-        
+
     def _get_stiffness(self):
         """Retrieve robot's stiffness from ALMemory."""
         return float(self.mem.getData(self.prefixe+self.jointName+"/Position/Sensor/Value"))
-    
+
     def _get_mechanicalStopMin(self):
         """Retrieve joint's minimal mechanical stop."""
         return float(self.mem.getData(self.prefixe+self.jointName+"/Position/Actuator/Min"))
-        
+
     def _get_mechanicalStopMax(self):
         """Retrieve joint's maximal mechanical stop."""
         return float(self.mem.getData(self.prefixe+self.jointName+"/Position/Actuator/Max"))
-        
+
     def _get_temperature(self):
         """Retrieve joint temperature."""
         return float(self.mem.getData(self.prefixe+self.jointName+"/Temperature/Sensor/Value"))
-    
+
     position = property(_get_position, _set_position)
     positionbloquant = property(_get_position, _set_position_bloquant)
     stiffness = property(_get_stiffness, _set_stiffness)
     mechanicalStopMin = property(_get_mechanicalStopMin)
     mechanicalStopMax = property(_get_mechanicalStopMax)
     temperature = property(_get_temperature)
-        
-# ------------------------------------------------        
+
+# ------------------------------------------------
 # ------------- Motion dynamic test --------------
 # ------------------------------------------------
 
@@ -113,7 +113,7 @@ class MotionDynamicBrakesTest(object):
         # ---------------------------------------------------------------------
         # TEST PARAMETERS - values which can be modified
         # ---------------------------------------------------------------------
-        
+
         # speed
         self.slowSpeed = 0.2
         self.maxSpeed = 1.0
@@ -130,11 +130,11 @@ class MotionDynamicBrakesTest(object):
         self.step = 2.0
         # max temperature
         self.jointMaxTemperature = 70.0
-        
+
         # ---------------------------------------------------------------------
         self.nbDynaTest = (self.angleMaxHip - self.angleMinHip) / (self.step) + 1
         self.nbDynaTestKnee = (self.angleMaxKnee - self.angleMinKnee) / (self.step) + 1
-        
+
         # joints object creation
         self.principalJoint = Joint(self.motion, self.mem, self.jointName)
         if(self.jointName == "HipPitch"):
@@ -170,25 +170,25 @@ class MotionDynamicBrakesTest(object):
         # nbDynaTest
         if self.jointName == "KneePitch":
             self.nbDynaTest = self.nbDynaTestKnee
-        
+
         # dynamicCyclingTest parameters adaptation
         if self.direction == "Positive":
-            self.cyclingBrakingAngleDegrees *= -1        
-    
+            self.cyclingBrakingAngleDegrees *= -1
+
     def wakeUp(self):
         self.motion.wakeUp()
-        
+
     def rest(self):
         self.motion.rest()
-        
+
     def disableBrakesProtection(self):
         self.motion.setMotionConfig([["ENABLE_BRAKES_PROTECTION", False]])
         print("Brakes protection disabled")
-        
+
     def enableBrakesProtection(self):
         self.motion.setMotionConfig([["ENABLE_BRAKES_PROTECTION", True]])
         print("Brakes protection enabled")
-        
+
     def disableArmsExternalProtection(self):
         try:
             self.motion.setExternalCollisionProtectionEnabled("Arms", False)
@@ -197,7 +197,7 @@ class MotionDynamicBrakesTest(object):
             print("Impossible to disable Arms external collision protection")
             print("Check settings in robot's web page")
             print("---------------------------------------------------------")
-            
+
     def enableArmsExternalProtection(self):
         try:
             self.motion.setExternalCollisionProtectionEnabled("Arms", True)
@@ -205,7 +205,7 @@ class MotionDynamicBrakesTest(object):
             print("---------------------------------------------------------")
             print("Impossible to enable Arms external collision protection")
             print("---------------------------------------------------------")
-    
+
     def goToInitialPosition(self):
         time.sleep(5)
         print("going to initial position...")
@@ -216,7 +216,7 @@ class MotionDynamicBrakesTest(object):
             positionToReach = self.principalJoint.mechanicalStopMin
         self.principalJoint.position = (positionToReach, self.slowSpeed)
         time.sleep(5)
-        
+
     def reachTheOtherSideWithMaxSpeed(self):
         print("reaching the other side with speed")
         if self.direction == "Positive":
@@ -224,7 +224,7 @@ class MotionDynamicBrakesTest(object):
         else:
             positionToReach = self.principalJoint.mechanicalStopMax
         self.principalJoint.position = (positionToReach, self.maxSpeed)
-        
+
     def reachTheOtherSideBraking(self, brakingAngle):
         self.reachTheOtherSideWithMaxSpeed()
         # brake just when the braking angle is reached
@@ -244,7 +244,7 @@ class MotionDynamicBrakesTest(object):
         # retrieving braking angle after
         brakingAgnleAfter = self.principalJoint.position
         return (brakingAgnleBefore, brakingAgnleAfter)
-    
+
     def waitTemperatureDecrease(self):
         """If one of the joint temperature reaches the fixed limit, wait until the temperature decreases"""
         if((self.principalJoint.temperature >= self.jointMaxTemperature) or (self.secondJoint.temperature >= self.jointMaxTemperature)):
@@ -253,7 +253,7 @@ class MotionDynamicBrakesTest(object):
             while(self.principalJoint.temperature >= self.jointMaxTemperature or self.secondJoint.temperature >= self.jointMaxTemperature):
                 pass
                 time.sleep(2)
-        
+
     def start(self):
         # initialization
         brakingAngle = self.angleMin
@@ -261,16 +261,16 @@ class MotionDynamicBrakesTest(object):
         flagHip = False
         flagKnee = False
         joints = [self.principalJoint, self.secondJoint]
-        
+
         # disabling brakes protection
         self.disableBrakesProtection()
-        
+
         # disable arms external collision protection
         self.disableArmsExternalProtection()
-        
+
         # start log
         self.logger.log()
-        
+
         # test loop
         cptTest = 0
         while(cptTest < self.nbDynaTest and flag is False):
@@ -299,36 +299,36 @@ class MotionDynamicBrakesTest(object):
                 brakingAngle += self.step
             cptTest += 1
             self.waitTemperatureDecrease()
-        
+
         # out of the loop -> rest position
         self.rest()
-        
+
         # stop log
         self.logger.stop()
-        
+
         # enabling brakes protection
         self.enableBrakesProtection()
-        
+
         # print test result
         if(flagHip is True):
             print("Stopped because Hip out of its Holding Cone")
         if(flagKnee is True):
             print("Stopped because Knee out of its Holding Cone")
         print("Angle max = " + str(brakingAngle))
-        
+
     def startCycling(self):
         # initialization
         brakingAngle = self.cyclingBrakingAngleDegrees
-        
+
         # disabling brakes protection
         self.disableBrakesProtection()
-        
+
         # disable arms external collision protection
         self.disableArmsExternalProtection()
-        
+
         # start log
         self.logger.log()
-        
+
         # test cycling loop
         for i in range(self.nbCyclingDynamicTest):
             # cycle information
@@ -341,21 +341,21 @@ class MotionDynamicBrakesTest(object):
             # reach the other side at 100% of speed allowed by ALMotion
             self.reachTheOtherSideBraking(brakingAngle)
             self.waitTemperatureDecrease()
-        
+
         # out of the loop -> rest position
         self.rest()
-        
+
         # stop log
         self.logger.stop()
-        
+
         # enabling brakes protection
         self.enableBrakesProtection()
- 
-        
-# ------------------------------------------------        
+
+
+# ------------------------------------------------
 # ------------- Motion static test ---------------
 # ------------------------------------------------
-        
+
 class MotionStaticBrakesTest(MotionDynamicBrakesTest):
     def __init__(self, ip, jointName, direction, initialAngle):
         MotionDynamicBrakesTest.__init__(self, ip, jointName, direction, 0.0, 1)
@@ -385,53 +385,53 @@ class MotionStaticBrakesTest(MotionDynamicBrakesTest):
         print("angle initial="+str(self.initialAngle))
         print("debut du test...")
         print("------------------------------------------\n\n")
-            
+
     def areJointStatics(self):
         print("checking that no joint in slipping...")
         # Initial HipPitch position
         initialPositionHip = self.hipPitch.position
         initialHipPositionHipDeg = math.degrees(initialPositionHip)
-        
+
         # Initial KneePitch position
         initialPositionKnee = self.kneePitch.position
         initialHipPositionKneeDeg = math.degrees(initialPositionKnee)
-        
+
         # Initial time
         t0 = time.time()
-        
+
         # Control boolean initialization
         hipState = True
         kneeState = True
         state = True
-        
+
         while(time.time() - t0 < self.waitTime and state is True):
             positionHip = self.hipPitch.position
             positionHipDeg = math.degrees(positionHip)
-            
+
             positionKnee = self.kneePitch.position
             positionKneeDeg = math.degrees(positionKnee)
-            
+
             deltaHipDeg = abs(positionHipDeg - initialHipPositionHipDeg)
             deltaKneeDeg = abs(positionKneeDeg - initialHipPositionKneeDeg)
-            
+
             if(deltaHipDeg >= self.limitDeg):
                 hipState = False
                 state = False
-            
+
             if(deltaKneeDeg >= self.limitDeg):
                 kneeState = False
                 state = False
-                
+
         return (state, hipState, kneeState)
-    
+
     def closeBrakes(self):
         self.hipPitch.stiffness = 0.0
         self.kneePitch.stiffness = 0.0
-    
+
     def openBrakes(self):
         self.hipPitch.stiffness = 1.0
         self.kneePitch.stiffness = 1.0
-        
+
     def printRealInformations(self):
         print("\n")
         print"[Position information]"
@@ -440,20 +440,20 @@ class MotionStaticBrakesTest(MotionDynamicBrakesTest):
         print"[Temperature information]"
         print("HipPitch temperature = "+str(self.hipPitch.temperature)+"°C")
         print("KneePitch temperature = "+str(self.kneePitch.temperature)+"°C")
-        
+
     def start(self):
-        
+
         # disabling brakes protection
         self.disableBrakesProtection()
-        
+
         # disable arms external collision protection
         self.disableArmsExternalProtection()
-        
+
         # initialization
         flag = True
         angularCommandDeg = self.initialAngle
         angularCommandRad = math.radians(angularCommandDeg)
-        
+
         # test
         while(flag is True):
             # robot wake up
@@ -483,11 +483,11 @@ class MotionStaticBrakesTest(MotionDynamicBrakesTest):
             if((abs(angularCommandRad) >= abs(self.hipPitch.mechanicalStopMax))):
                 flag = False
                 print("Impossible to go further, command out of mechanical stop")
-        
+
         # out of the loop -> rest position
         print("Test finished, going to rest position")
         self.rest()
-        
+
 class CyclingWakeUpRestTest(MotionDynamicBrakesTest):
     def __init__(self, ip):
         self.ip = ip
@@ -507,46 +507,47 @@ class CyclingWakeUpRestTest(MotionDynamicBrakesTest):
         self.output = ".".join([self.filePath,self.extension])
         self.decimal = 3
         self.logger = multi_logger.Logger(self.ip, self.confFilePath, self.samplePeriod, self.output, self.decimal)
-    
+
     def wakeUp(self):
         self.motion.wakeUp()
-        
+
     def rest(self):
         self.motion.rest()
-        
+
     def disableBrakesProtection(self):
         self.motion.setMotionConfig([["ENABLE_BRAKES_PROTECTION", False]])
-        print("Brakes protection disabled")
-        
+
     def enableBrakesProtection(self):
         self.motion.setMotionConfig([["ENABLE_BRAKES_PROTECTION", True]])
-        print("Brakes protection enabled")
-        
-    def cycling_behavior(self):
-        self.wakeUp()
-        self.disableBrakesProtection()
-        self.rest()
-        self.enableBrakesProtection()
-        time.sleep(5)
-    
+
     def start(self):
         # start log
         self.logger.log()
-        
+
         # cycling wakeUp-rest behavior
-        for i in range(self.nbcyles):
+        i = 0
+        while i < self.nbcyles:
             try:
-                self.cycling_behavior()
-                print(str(i+1))
+                self.wakeUp()
+                if self.motion.robotIsWakeUp() is True:
+                    self.disableBrakesProtection()
+                    self.rest()
+                    self.enableBrakesProtection()
+                    i += 1
+                    print "cycle number : " + str(i)
+                else:
+                    print "robot did not wake up !!!!!"
+                time.sleep(5)
+
             except KeyboardInterrupt:
-                print("script finished, bye")
+                print "script finished, bye"
                 exit()
-        
+
         # stop log
         self.logger.stop()
-        
-            
-# ---------------------------------        
+
+
+# ---------------------------------
 # ------------- Main --------------
 # ---------------------------------
 
@@ -564,7 +565,7 @@ def main(ip, jointName, direction, test, cyclingBrakingAngle, cycleNumber, initi
         test_wakeUp_rest = CyclingWakeUpRestTest(ip)
         test_wakeUp_rest.start()
 
-# ---------------------------------        
+# ---------------------------------
 # ----------- Parsing -------------
 # ---------------------------------
 
@@ -577,7 +578,7 @@ if __name__ == "__main__":
     parser.add_argument("--cyclingBrakingAngle", type=float, default=10.0, help="Braking angle during cycling dynamic tests")
     parser.add_argument("--cycleNumber", type=int, default=1, help="Number of dynamic test cycles you want to do")
     parser.add_argument("--initialAngle", type=float, default=30.0, help="Braking initial angle (degrees)")
-    
+
     args = parser.parse_args()
-    
+
     main(args.ip, args.joint, args.direction, args.test, args.cyclingBrakingAngle, args.cycleNumber, args.initialAngle)
