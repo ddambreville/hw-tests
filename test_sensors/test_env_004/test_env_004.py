@@ -65,7 +65,8 @@ def move(motion, speed, direction):
 
 
 def test_sensors_env_004(robot_ip, dcm, mem, motion, session,
-                            motion_wake_up, directions, speed_value):
+                         motion_wake_up, parameters, directions,
+                         speed_value):
     """
     Docstring
     """
@@ -101,7 +102,7 @@ def test_sensors_env_004(robot_ip, dcm, mem, motion, session,
 
     while not movefailed.flag and not flag_test:
         for sensor in sensors_list:
-            if mem.getData(sensor) < 1.2:
+            if mem.getData(sensor) < float(parameters["distance"][0]):
                 print(sensor)
                 motion.stopMove()
                 flag_test = True
