@@ -4,33 +4,58 @@ import subdevice
 import device
 import math
 import easy_plot_connection
+import logging
+import time
+import datetime
 
+# Creating log file
+DATE = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+logging.basicConfig(
+    filename='Results/'+str(DATE)+'.log',
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
 
 @pytest.mark.usefixtures("kill_motion", "stiff_robot")
 class TestTemperatureProtection:
 
     def test_joint_temperature_protection(self, dcm, mem, parameters,
-                                          test_objects_dico, result_base_folder,
-                                          rest_pos, plot):
+                                          joint, result_base_folder,
+                                          rest_pos, stiffness_off,
+                                          plot_server, plot):
+        # logger initialization
+        log = logging.getLogger('MOTOR_LIMITATION_PERF_HW_002')
+
         # flags initialization
         flag_joint = True
         flag_loop = True
         flag_max_current_exceeded = False
         flag_max_temperature_exceeded = False
+        flag_low_limit = False
+        flag_info = False
+        flag_info2 = False
+        flag_info3 = False
+        flag_info4 = False
 
-        # plot_server initialisation
+        # erasing real time curves
         if plot:
-            plot_server = easy_plot_connection.Server(local_plot=True)
+            plot_server.curves_erase()
 
         # Objects creation
         test_params = parameters
-        joint_position_actuator = test_objects_dico["jointPositionActuator"]
-        joint_position_sensor = test_objects_dico["jointPositionSensor"]
-        joint_temperature_sensor = test_objects_dico["jointTemperatureSensor"]
-        joint_hardness_actuator = test_objects_dico["JointHardnessActuator"]
-        joint_current_sensor = test_objects_dico["jointCurrentSensor"]
+        joint_position_actuator = joint.position.actuator
+        joint_position_sensor = joint.position.sensor
+        joint_temperature_sensor = joint.temperature
+        joint_hardness_actuator = joint.hardness
+        joint_current_sensor = joint.current
         slav = qha_tools.SlidingAverage(test_params["sa_nb_points"])
         logger = qha_tools.Logger()
+
+        log.info("")
+        log.info("*************************************")
+        log.info("Testing : " + str(joint.short_name))
+        log.info("*************************************")
+        log.info("")
 
         # Knowing the board, we can know if the motor is a MCC or DC Brushless
         joint_board = joint_position_actuator.device
@@ -40,6 +65,12 @@ class TestTemperatureProtection:
 
         # Going to initial position
         subdevice.multiple_set(dcm, mem, rest_pos, wait=True)
+        # unstiffing all the other joints to avoid leg motors overheat
+        subdevice.multiple_set(dcm, mem, stiffness_off, wait=False)
+        time.sleep(0.1)
+
+        # stiffing the joint we want to test
+        joint.hardness.qqvalue = 1.0
 
         # keeping initial joint min and max
         joint_initial_maximum = joint_position_actuator.maximum
@@ -96,7 +127,8 @@ class TestTemperatureProtection:
             joint_position_actuator.qvalue = (joint_new_maximum, 5000)
 
         flag_first_iteration = True
-        while flag_loop is True:
+        timer_current_decrease = qha_tools.Timer(dcm, 100)
+        while flag_loop is True and timer.is_time_not_out():
             try:
                 joint_temperature = joint_temperature_sensor.value
                 joint_current = joint_current_sensor.value
@@ -115,7 +147,8 @@ class TestTemperatureProtection:
                     if joint_temperature > joint_temperature_min:
                         delta_max = joint_temperature_max - joint_temperature
                         max_allowed_current = (
-                            (delta_max) / (delta_temperature)) * joint_current_max
+                            (delta_max) / (delta_temperature)) *\
+                        joint_current_max
                     else:
                         max_allowed_current = joint_current_max
                 else:
@@ -132,55 +165,70 @@ class TestTemperatureProtection:
                     flag_first_iteration = False
 
                 # defining current regulation limits
-                current_limit_high = max_allowed_current * 1.1
-                current_limit_low = max_allowed_current * 0.85
+                current_limit_high = max_allowed_current * \
+                (1.0 + test_params["limit_factor_sup"])
+                current_limit_low = max_allowed_current *\
+                (1.0 - test_params["limit_factor_inf"])
 
-                # setting flag to True if 95 percent of max current is exceeded
-                if joint_current_sa > 0.95 * max_allowed_current:
+                # setting flag to True if 90 percent of max current is exceeded
+                if joint_current_sa > 0.9 * max_allowed_current and not\
+                 flag_max_current_exceeded:
                     flag_max_current_exceeded = True
+                    log.info("90 percent of max allowed currend reached")
 
                 if max_allowed_current != old_mac:
                     timer_current_decrease = qha_tools.Timer(dcm, 100)
 
                 # averaged current has not to exceed limit high
                 if joint_current_sa > current_limit_high and \
-                    timer_current_decrease.is_time_out():
+                    timer_current_decrease.is_time_out() and not flag_info4:
                     flag_joint = False
-                    #print "current high limit exceeded"
+                    flag_info4 = True
+                    log.warning("current high limit exceeded")
 
                 # once max current is exceeded, current hasn't to be lower than
                 # limit low
                 if flag_max_current_exceeded and \
                     joint_current_sa < current_limit_low and not \
-                    flag_max_temperature_exceeded:
+                    flag_max_temperature_exceeded and not flag_low_limit:
                     flag_joint = False
-                    #print "current has been lower than low limit"
+                    flag_low_limit = True
+                    log.info("current has been lower than low limit")
 
                 # after time limit, current has to have exceeded max current
-                if timer_limit.is_time_out() and not flag_max_current_exceeded:
+                # if it has not, it is written on time in log file
+                if timer_limit.is_time_out() and not\
+                 flag_max_current_exceeded and flag_info is False:
                     flag_joint = False
-                    print "current has not exceeded 95 percent of max allowed"
+                    flag_info = True
+                    log.info("current has not exceeded 90 percent of max "+\
+                        "allowed current")
 
-                if joint_temperature >= joint_temperature_max + 5:
+                # hardware protection
+                if joint_temperature >= joint_temperature_max + 3:
                     flag_loop = False
-                    print "temperature too high (max+5 degrees)"
+                    log.warning("temperature too high (max+3 degrees)")
 
-                # if joint temperature higher than a limit value, stiffness must
-                # be set to 0, so that joint current must be null after 100ms.
+                # if joint temperature higher than a limit value,
+                # joint current must be null after 100ms.
                 if flag_max_temperature_exceeded is False and \
                     joint_temperature >= joint_temperature_max:
                     flag_max_temperature_exceeded = True
-                    timer_max = qha_tools.Timer(dcm, 1000)
-                    print "max temperature exceeded a first time"
+                    timer_max = qha_tools.Timer(dcm, 100)
+                    log.info("max temperature exceeded a first time")
 
-                if flag_max_temperature_exceeded and timer_max.is_time_out() and \
-                    joint_current != 0:
+                if flag_max_temperature_exceeded and\
+                timer_max.is_time_out() and joint_current != 0 and not\
+                flag_info2:
                     flag_joint = False
-                    print "max temperature exceeded and current is not null"
+                    flag_info2 = True
+                    log.critical("max temperature exceeded and current "+\
+                        "is not null")
 
-                if flag_max_temperature_exceeded and joint_current == 0.0:
-                    #flag_loop = False
-                    print "current null reached"
+                if flag_max_temperature_exceeded and joint_current == 0.0 and\
+                not flag_info3:
+                    flag_info3 = True
+                    log.info("current null reached")
 
                 old_mac = max_allowed_current
 
@@ -204,8 +252,8 @@ class TestTemperatureProtection:
                 if plot:
                     plot_server.add_point(
                         "Hardness", dcm_time, joint_hardness_value)
-                    #plot_server.add_point("Current", dcm_time, joint_current)
-                    plot_server.add_point("CurrentSA", dcm_time, joint_current_sa)
+                    plot_server.add_point(
+                        "CurrentSA", dcm_time, joint_current_sa)
                     plot_server.add_point(
                         "MaxAllowedCurrent", dcm_time, max_allowed_current)
                     plot_server.add_point(
@@ -225,7 +273,7 @@ class TestTemperatureProtection:
 
             except KeyboardInterrupt:
                 flag_loop = False
-                print "KeyboardInterrupt"
+                log.info("KeyboardInterrupt from user")
 
         # writing logger results into a csv file
         result_file_path = "/".join(
