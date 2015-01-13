@@ -5,6 +5,7 @@ import threading
 import time
 import uuid
 import plot_touchdetection
+import log_touchdetection
 
 
 class EventModule(object):
@@ -44,6 +45,56 @@ class EventModule(object):
             self._flag = True
         else:
             self._flag_event = 0
+
+    def _get_flag_event(self):
+        """
+        Return flag event.
+        """
+        return self._flag_event
+
+    def _get_flag(self):
+        """
+        Return flag.
+        """
+        return self._flag
+
+    flag_event = property(_get_flag_event)
+    flag = property(_get_flag)
+
+
+class EventModulePushRecovery(object):
+
+    """
+    Module which launch function if event detected.
+    """
+
+    def __init__(self, mem):
+        """
+        @mem        : proxy to ALMemory (object)
+        """
+        self.mem = mem
+        self._flag_event = 0      # = 1 when event detected, else = 0
+        self._flag = False        # True when event detected at least one time
+
+    def subscribe(self, module_name, events):
+        """
+        Subscribe to event.
+        Run function when event is detected.
+
+        @module_name    : event module name
+        @ events        : events expected (dictionnary)
+        """
+        for k in events.keys():
+            self.mem.subscribeToEvent(k, module_name, "_event_detected")
+
+    def _event_detected(self):
+        """
+        Function triggered when event is detected.
+        Change flags.
+        """
+        print("PushRecovery")
+        self._flag_event = 1
+        self._flag = True
 
     def _get_flag_event(self):
         """
@@ -126,13 +177,18 @@ def test_touchdetection_perf_002(dcm, mem, motion, session, motion_wake_up,
                       (dictionnary)
     @speed_value    : dictionnary {"speed":value} (dictionnary)
     """
+
     expected = {"TouchChanged": 1}
     module_name = "EventChecker_{}_".format(uuid.uuid4())
     touchdetection = EventModule(mem)
     module_id = session.registerService(module_name, touchdetection)
     touchdetection.subscribe(module_name, expected)
 
-    flag = False
+    expected = {"ALMotion/Safety/PushRecovery": 1}
+    module_name = "EventChecker_{}_".format(uuid.uuid4())
+    pushrecovery = EventModulePushRecovery(mem)
+    module_id_2 = session.registerService(module_name, pushrecovery)
+    pushrecovery.subscribe(module_name, expected)
 
     # Objects creation
     rshoulderroll_position_actuator = subdevice.JointPositionActuator(
@@ -151,17 +207,31 @@ def test_touchdetection_perf_002(dcm, mem, motion, session, motion_wake_up,
     move_joint("LShoulderRoll", lshoulderroll_position_actuator.maximum,
                float(parameters["Speed"][0]), motion)
 
-    plot = plot_touchdetection.Plot(
+    # plot = plot_touchdetection.Plot(
+    #     dcm,
+    #     mem,
+    #     touchdetection,
+    #     float(parameters["LimitErrorPosition"][0]),
+    #     float(parameters["LimitErrorSpeed"][0]),
+    #     int(parameters["TemperatureMax"][0]),
+    #     int(parameters["TemperatureMaxToStart"][0]),
+    #     parameters["FileName"][0]
+    # )
+    # plot.start()
+
+    log = log_touchdetection.Log(
         dcm,
         mem,
         touchdetection,
+        pushrecovery,
         float(parameters["LimitErrorPosition"][0]),
         float(parameters["LimitErrorSpeed"][0]),
         int(parameters["TemperatureMax"][0]),
         int(parameters["TemperatureMaxToStart"][0]),
-        parameters["FileName"][0]
+        str(speed) + ".csv"
     )
-    plot.start()
+    log.start()
+
 
     move = BaseRotation(motion, speed)
     move.start()
@@ -174,9 +244,21 @@ def test_touchdetection_perf_002(dcm, mem, motion, session, motion_wake_up,
                 end = True
                 move.stop()
                 flag = True
+        if pushrecovery.flag:
+            print "push flag"
+            end = True
+            move.stop()
+            flag = False
 
-    time.sleep(2)
 
-    plot.stop()
+    time.sleep(1)
+    print "End"
+
+    # plot.stop()
+    log.stop()
+    print "Finish"
 
     session.unregisterService(module_id)
+    session.unregisterService(module_id_2)
+
+    assert flag
