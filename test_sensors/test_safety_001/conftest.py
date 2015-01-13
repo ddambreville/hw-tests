@@ -1,6 +1,7 @@
 import pytest
 import subdevice
 import qha_tools
+from naoqi import ALProxy
 
 
 @pytest.fixture(scope="session")
