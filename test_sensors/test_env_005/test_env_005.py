@@ -72,8 +72,8 @@ def test_sensors_env_004(robot_ip, dcm, mem, motion, session,
 
     # Sensors
     sensors_list = qha_tools.read_section("sensors.cfg", "Sensors")
-    ir_right = subdevice.InfraredSpot(dcm, mem, "Right")
-    ir_left = subdevice.InfraredSpot(dcm, mem, "Left")
+    # ir_right = subdevice.InfraredSpot(dcm, mem, "Right")
+    # ir_left = subdevice.InfraredSpot(dcm, mem, "Left")
 
     log = multi_logger.Logger(
         robot_ip,
@@ -83,28 +83,63 @@ def test_sensors_env_004(robot_ip, dcm, mem, motion, session,
     )
     log.log()
 
+    log_file = open("ObstacleDetection.csv", 'w')
+    line_to_write = ",".join([
+        "Time",
+        "Sensor",
+        "Distance"
+    ]) + "\n"
+    log_file.write(line_to_write)
+    log_file.flush()
+
     # Movement
-    motion.move(0, 0, 0.3)
+    motion.move(0, 0, float(parameters["speed"][0]))
 
     time.sleep(1)
 
+    time_init = time.time()
     while True:
+        elapsed_time = time.time() - time_init
         try:
             for sensor in sensors_list:
                 if mem.getData(sensor) < float(parameters["distance2"][0]):
                     print(parameters["distance2"][0])
                     print(sensor)
+                    line_to_write = ",".join([
+                        str(elapsed_time),
+                        sensor,
+                        str(mem.getData(sensor))
+                    ]) + "\n"
+                    log_file.write(line_to_write)
+                    log_file.flush()
                     flag_test = True
                 elif mem.getData(sensor) < float(parameters["distance1"][0]):
                     print(parameters["distance1"][0])
                     print(sensor)
+                    line_to_write = ",".join([
+                        str(elapsed_time),
+                        sensor,
+                        str(mem.getData(sensor))
+                    ]) + "\n"
+                    log_file.write(line_to_write)
+                    log_file.flush()
                     flag_test = True
-            if ir_right.value == 1:
-                print("IR_Right")
-                flag_test = True
-            if ir_left.value == 1:
-                print("IR_Left")
-                flag_test = True
+                else:
+                    line_to_write = ",".join([
+                        str(elapsed_time),
+                        "None",
+                        "None"
+                    ]) + "\n"
+                    log_file.write(line_to_write)
+                    log_file.flush()
+            # if ir_right.value == 1:
+            #     print("IR_Right")
+            #     flag_test = True
+            # if ir_left.value == 1:
+            #     print("IR_Left")
+            #     flag_test = True
+            time.sleep(0.1)
+            motion.move(0, 0, 0.3)
         except KeyboardInterrupt:
             break
 
