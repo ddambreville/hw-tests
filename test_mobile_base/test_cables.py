@@ -91,7 +91,7 @@ def move_robot(dcm, mem, wait_time, list_wheels_to_use):
         dcm, mem, "WheelB")
 
     # Same speed for the 3 wheels
-    speed_fraction = 0.4
+    speed_fraction = 0.3
     speed = speed_fraction * wheel_fr_speed_actuator.maximum
 
     # To know which wheels are used for each sequence
@@ -132,9 +132,9 @@ def move_robot(dcm, mem, wait_time, list_wheels_to_use):
         return list_stiffed_wheels
 
 
-def test_move_random(dcm, mem, leds, expressiveness, wait_time, wait_time_bumpers, 
+def test_move_random(motion, dcm, mem, leds, expressiveness, wait_time, wait_time_bumpers, 
                      min_fraction, max_fraction, max_random, 
-                     stop_robot, wake_up_pos_brakes_closed, 
+                     stop_robot, wakeup_no_rotation, 
                      stiff_robot_wheels, unstiff_joints, 
                      log_wheels_speed, log_bumper_pressions):
 
@@ -180,6 +180,7 @@ def test_move_random(dcm, mem, leds, expressiveness, wait_time, wait_time_bumper
 
     # Disable notifications (from disconnected tablet)
     expressiveness._setNotificationEnabled(False)
+    motion.setExternalCollisionProtectionEnabled('All', False)
 
     # Switch off eyes and ears leds
     leds.off('FaceLeds')
@@ -216,13 +217,16 @@ def test_move_random(dcm, mem, leds, expressiveness, wait_time, wait_time_bumper
     #---------------------------------------------------------#
     #--------------------- Initialization --------------------#
     #---------------------------------------------------------#
+    #motion.wakeUp()
     flag_bumpers = False
     flag_cables  = False
     list_wheels_to_use = [1, 1, 0]
     #tools.wait(dcm, 30000)
     used_wheels = move_robot(dcm, mem, wait_time, list_wheels_to_use)
     tools.wait(dcm, 2000)
-
+    
+    acc_z = subdevice.InertialSensorBase(dcm, mem, "AccelerometerZ")
+    
     #---------------------------------------------------------#
     #----------------------- Main Loop -----------------------#
     #---------------------------------------------------------#
@@ -306,6 +310,20 @@ def test_move_random(dcm, mem, leds, expressiveness, wait_time, wait_time_bumper
                     int(parameters_cables["Nb_cables_crossing"][0]):
                 cable_detection.stop()
                 flag_cables = True
+            #print acc_z.value    
+            #try:
+            #-------- Robot has fallen ----------#
+            if (math.fabs(acc_z.value)) < 2.0:
+
+                if int(flag_test["test_bumpers"][0]) == 1:
+                    bumper_detection.stop()
+
+                if int(flag_test["test_cables_crossing"][0]) == 1:
+                    cable_detection.stop()
+ 
+                break
+            #except:
+            #    pass
 
         # Exit test if user interrupt
         except KeyboardInterrupt:

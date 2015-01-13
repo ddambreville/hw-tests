@@ -159,3 +159,43 @@ class CablesCrossing(threading.Thread):
             time.sleep(0.01)
 
     cables_crossing = property(_get_cables_crossing)
+
+
+def robot_motion(config_test, motion):
+    """
+    Move function
+    """
+    list_velocity=[]
+    time_test = float(config_test.get('config.cfg', 'Test_time'))
+    robot_velocity_min = float(config_test.get('config.cfg', 'Robot_velocity_min'))
+    robot_velocity_nom = float(config_test.get('config.cfg', 'Robot_velocity_nom'))
+    robot_velocity_max = float(config_test.get('config.cfg', 'Robot_velocity_max'))
+    list_velocity.append(robot_velocity_min)
+    list_velocity.append(robot_velocity_nom)
+    list_velocity.append(robot_velocity_max)
+
+    for robot_velocity in list_velocity:
+        motion.move(robot_velocity, 0, 0)
+        time.sleep(time_test)
+        motion.stopMove()
+
+
+def record_inertialbase_data(
+        get_all_inertialbase_objects, thread):
+    """
+    Function which logs the inertial base datas
+    """
+    logger = get_all_inertialbase_objects["logger"]
+    coord = ["X", "Y", "Z"]
+    t_0 = time.time()
+    while thread.isAlive():
+        for each in coord:
+            logger.log(("Acc" + each, get_all_inertialbase_objects[
+                "Acc" + each].value))
+            logger.log(("Angle" + each, get_all_inertialbase_objects[
+                "Angle" + each].value))
+            logger.log(("Gyr" + each, get_all_inertialbase_objects[
+                "Gyr" + each].value))
+        logger.log(("Time", time.time() - t_0))
+        time.sleep(0.005)
+    return logger
