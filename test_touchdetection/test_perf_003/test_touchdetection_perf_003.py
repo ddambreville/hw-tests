@@ -4,7 +4,7 @@ import subdevice
 import threading
 import time
 import uuid
-import plot_touchdetection
+import log_touchdetection
 
 
 class EventModule(object):
@@ -61,7 +61,7 @@ class EventModule(object):
     flag = property(_get_flag)
 
 
-def run_behavior(albehaviormanager, behavior_name):
+def run_behavior(albehaviormanager, behavior_name, log):
     """
     Funtion to run behavior.
     No return.
@@ -75,11 +75,13 @@ def run_behavior(albehaviormanager, behavior_name):
     else:
         print("\n\nBehavior " + behavior_name + "is not present")
         print("Add the behavior and throw again")
+        log.stop()
         assert False
 
 
-def test_touchdetection_with_dances(mem, session, albehaviormanager,
-                                motion_wake_up, behaviors):
+def test_touchdetection_with_dances(dcm, mem, motion, session,
+                                    albehaviormanager, motion_wake_up,
+                                    parameters, behaviors):
     """
     Test rollonomes with dances or behaviors : no fall down.
     Launch requested dances (cf associated config file).
@@ -100,12 +102,23 @@ def test_touchdetection_with_dances(mem, session, albehaviormanager,
     touchdetection.subscribe(module_name, expected)
 
     behavior = behaviors["Name"]
-    run_behavior(albehaviormanager, behavior)
+
+    log = log_touchdetection.Log(
+        dcm,
+        mem,
+        touchdetection,
+        float(parameters["LimitErrorPosition"][0]),
+        float(parameters["LimitErrorSpeed"][0]),
+        behavior + ".csv"
+    )
+    log.start()
+
+    run_behavior(albehaviormanager, behavior, log)
 
     session.unregisterService(module_id)
 
-    if touchdetection.flag:
-        assert True
+    log.stop()
 
-    assert False
+    motion._setStiffnesses("Body", 1.0)
 
+    assert touchdetection.flag

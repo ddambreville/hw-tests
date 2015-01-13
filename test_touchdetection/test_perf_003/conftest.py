@@ -10,8 +10,16 @@ def albehaviormanager(robot_ip, port):
     return ALProxy("ALBehaviorManager", robot_ip, port)
 
 
+@pytest.fixture(scope="session")
+def parameters():
+    """
+    Return parameters (config file).
+    """
+    return qha_tools.read_section("perf_003.cfg", "TestParameters")
+
+
 @pytest.fixture(params=qha_tools.use_section(
-                "touchdetection_perf_003.cfg", "BehaviorsName"))
+                "perf_003.cfg", "BehaviorsName"))
 def behaviors(request):
     """
     Behaviors and dances.
