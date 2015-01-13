@@ -106,14 +106,14 @@ def test_sensors_env_004(robot_ip, dcm, mem, motion, session,
                 print(sensor)
                 motion.stopMove()
                 flag_test = True
-        if ir_right.value == 1:
-            print("IR_Right")
-            motion.stopMove()
-            flag_test = True
-        if ir_left.value == 1:
-            print("IR_Left")
-            motion.stopMove()
-            flag_test = True
+        # if ir_right.value == 1:
+        #     print("IR_Right")
+        #     motion.stopMove()
+        #     flag_test = True
+        # if ir_left.value == 1:
+        #     print("IR_Left")
+        #     motion.stopMove()
+        #     flag_test = True
 
     log.stop()
 
