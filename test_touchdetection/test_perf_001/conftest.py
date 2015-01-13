@@ -97,3 +97,9 @@ def remove_sensors(alnavigation):
 def alnavigation(robot_ip, port):
     """Fixture which returns a proxy to ALNavigation module."""
     return ALProxy("ALNavigation", robot_ip, port)
+
+
+@pytest.fixture(scope="session")
+def alleds(robot_ip, port):
+    """ Fixture which returns a proxy to ALLeds module."""
+    return ALProxy("ALLeds", robot_ip, port)

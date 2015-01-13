@@ -189,9 +189,9 @@ def movement(joint_name, joint_min, joint_max, joint_temp, speed,
             assert False
 
 
-def test_touchdetection_perf_001(dcm, mem, motion, session, motion_wake_up,
-                                 remove_sensors, parameters, speed_value,
-                                 test_objects_dico, directions):
+def test_touchdetection_perf_001(dcm, mem, motion, alleds, session,
+                                 motion_wake_up, remove_sensors, parameters,
+                                 speed_value, test_objects_dico, directions):
     """
     Test touch detection perf 001 : remove joint stiffness if touch detected.
     Move joints at different speeds (cf associated config file).
@@ -200,6 +200,7 @@ def test_touchdetection_perf_001(dcm, mem, motion, session, motion_wake_up,
     @dcm            : proxy to DCM (object)
     @mem            : proxy to ALMemory (object)
     @motion         : proxy to ALMotion (object)
+    @alleds         : proxy to ALLeds (object)
     @session        : Session in qi (object)
     @motion_wake_up : robot does is wakeUp
     @remove_sensors : remove Laser, Sonar & Asus sensors
@@ -227,6 +228,8 @@ def test_touchdetection_perf_001(dcm, mem, motion, session, motion_wake_up,
     direction = directions["Direction"]
 
     print("Joint : " + joint + " - Direction : " + direction)
+
+    alleds.fadeRGB("FaceLeds", "red", 0)
 
     # Go to reference position
     set_position(dcm, mem, motion, "perf_001.cfg",
@@ -281,6 +284,8 @@ def test_touchdetection_perf_001(dcm, mem, motion, session, motion_wake_up,
                    float(parameters["Speed"][0]), motion)
         time.sleep(2)
 
+        alleds.fadeRGB("FaceLeds", "blue", 0)
+
         # Movement
         move_joint(joint, joint_position_actuator.maximum,
                    speed, motion)
@@ -289,6 +294,8 @@ def test_touchdetection_perf_001(dcm, mem, motion, session, motion_wake_up,
         move_joint(joint, joint_position_actuator.maximum,
                    float(parameters["Speed"][0]), motion)
         time.sleep(2)
+
+        alleds.fadeRGB("FaceLeds", "blue", 0)
 
         # Movement
         move_joint(joint, joint_position_actuator.minimum,
@@ -308,8 +315,14 @@ def test_touchdetection_perf_001(dcm, mem, motion, session, motion_wake_up,
         print "\nTouch didn't detecte"
         flag = False
 
+    alleds.fadeRGB("FaceLeds", "red", 0)
+
     # Put again stiffness in all robot's joint
     stiffness_part(motion, ["Body"], 1.0)
+
+    # Go to reference position
+    set_position(dcm, mem, motion, "perf_001.cfg",
+                 "ReferencePosition")
 
     # plot.stop()
     log.stop()
