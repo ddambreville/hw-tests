@@ -88,7 +88,7 @@ class Plot(threading.Thread):
         self._end_plot = True
 
 
-def test_damage(dcm, mem, wake_up_pos_brakes_closed, unstiff_parts):
+def test_damage(dcm, mem, kill_motion):
     """
     Test robot docking/undocking to check damages
     """
