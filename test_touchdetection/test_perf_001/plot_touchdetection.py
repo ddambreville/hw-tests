@@ -52,29 +52,6 @@ class Plot(threading.Thread):
         plot_server = easy_plot_connection.Server(local_plot=True)
         plot_server.curves_erase()
 
-        log_file = open(self._name + ".csv", 'w')
-        line_to_write = ",".join([
-            "Time",
-            "Event",
-            "EventType",
-            "Hardness",
-            "PositionActuator",
-            "PositionSensor",
-            "ErrorPosition",
-            "MaxLimitErrorPosition",
-            "MinLimitErrorPosition",
-            "SpeedActuator",
-            "SpeedSensor",
-            "ErrorSpeed",
-            "MaxLimitErrorSpeed",
-            "MinLimitErrorSpeed",
-            "Temperature",
-            "TemperatureMin",
-            "TemperatureMax"
-        ]) + "\n"
-        log_file.write(line_to_write)
-        log_file.flush()
-
         time_init = time.time()
         while not self._end:
             elapsed_time = time.time() - time_init
@@ -153,36 +130,8 @@ class Plot(threading.Thread):
             plot_server.add_point(
                 "Hardness",
                 elapsed_time,
-                self._joint_hardness
+                self._joint_hardness.value
             )
-
-            event = str(self._mem.getData("TouchChanged"))
-            # Remove , to avoid conflict in csv file
-            event = event.replace(',', '')
-
-            line_to_write = ",".join([
-                str(elapsed_time),
-                str(self._event.flag_event),
-                event,
-                str(self._joint_hardness),
-                str(self._joint_position_actuator.value),
-                str(self._joint_position_sensor.value),
-                str(self._joint_position_actuator.value -
-                    self._joint_position_sensor.value),
-                str(self._limit_position),
-                str(-self._limit_position),
-                str(self._joint_speed_actuator.value),
-                str(self._joint_speed_sensor.value),
-                str(self._joint_speed_actuator.value -
-                    self._joint_speed_sensor.value),
-                str(self._limit_speed),
-                str(-self._limit_speed),
-                str(self._joint_temperature.value),
-                str(self._temp_max_to_start),
-                str(self._temp_max)
-            ]) + "\n"
-            log_file.write(line_to_write)
-            log_file.flush()
 
             time.sleep(0.1)
 

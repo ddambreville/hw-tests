@@ -5,6 +5,7 @@ import threading
 import time
 import uuid
 import plot_touchdetection
+import log_touchdetection
 
 
 class EventModule(object):
@@ -231,9 +232,28 @@ def test_touchdetection_perf_001(dcm, mem, motion, session, motion_wake_up,
     set_position(dcm, mem, motion, "perf_001.cfg",
                  "ReferencePosition")
 
-    # Send datas
-    plot = plot_touchdetection.Plot(
+    # Plot datas
+    # plot = plot_touchdetection.Plot(
+    #     joint,
+    #     mem,
+    #     touchdetection,
+    #     joint_position_actuator,
+    #     joint_position_sensor,
+    #     joint_speed_actuator,
+    #     joint_speed_sensor,
+    #     joint_temperature,
+    #     joint_hardness,
+    #     float(parameters["LimitErrorPosition"][0]),
+    #     float(parameters["LimitErrorSpeed"][0]),
+    #     int(parameters["TemperatureMaxToStart"][0]),
+    #     int(parameters["TemperatureMax"][0])
+    # )
+    # plot.start()
+
+    # Log datas
+    log = log_touchdetection.Log(
         joint,
+        speed,
         mem,
         touchdetection,
         joint_position_actuator,
@@ -247,7 +267,7 @@ def test_touchdetection_perf_001(dcm, mem, motion, session, motion_wake_up,
         int(parameters["TemperatureMaxToStart"][0]),
         int(parameters["TemperatureMax"][0])
     )
-    plot.start()
+    log.start()
 
     # Verify joint temperature to start test
     verify_joint_temperature(
@@ -291,8 +311,8 @@ def test_touchdetection_perf_001(dcm, mem, motion, session, motion_wake_up,
     # Put again stiffness in all robot's joint
     stiffness_part(motion, ["Body"], 1.0)
 
-    # Stop send datas
-    plot.stop()
+    # plot.stop()
+    log.stop()
     time.sleep(0.25)
 
     assert flag
