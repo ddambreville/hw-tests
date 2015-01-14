@@ -205,9 +205,9 @@ class TestTemperatureProtection:
                         "allowed current")
 
                 # hardware protection
-                if joint_temperature >= joint_temperature_max + 3:
+                if joint_temperature >= joint_temperature_max + 1:
                     flag_loop = False
-                    log.warning("temperature too high (max+3 degrees)")
+                    log.warning("temperature too high (max+1 degree)")
 
                 # if joint temperature higher than a limit value,
                 # joint current must be null after 100ms.
