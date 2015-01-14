@@ -1,6 +1,7 @@
 import pytest
 import subdevice
 import qha_tools
+import easy_plot_connection
 
 
 @pytest.fixture(params=qha_tools.use_section("multifuse_scenario4.cfg", "Test"))
@@ -47,3 +48,15 @@ def joint_limit_extension():
         "Parameters",
         "jointLimitExtension"
     ))
+
+
+@pytest.fixture(scope="module")
+def plot_server():
+    return easy_plot_connection.Server(local_plot=True)
+
+
+@pytest.fixture(scope="module")
+def wheel_objects(dcm, mem):
+    wheels = subdevice.Wheels(dcm, mem)
+    wheels_list = [wheels.wheelb, wheels.wheelfr, wheels.wheelfl]
+    return wheels_list
