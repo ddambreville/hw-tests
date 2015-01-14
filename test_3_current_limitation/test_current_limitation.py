@@ -26,6 +26,11 @@ class TestCurrentLimitation:
         flag_joint = True  # giving test result
         flag_current_limit_low_exceeded = False
 
+        # checking that ALMemory key MinMaxChange Allowed = 1
+        if int(mem.getData("RobotConfig/Head/MinMaxChangeAllowed")) != 1:
+            flag_loop = False
+            log.error("MinMaxChangeAllowed ALMemory key missing")
+
         # test parameters
         test_params = parameters
         joint_position_actuator = joint.position.actuator
@@ -49,7 +54,8 @@ class TestCurrentLimitation:
         joint_initial_minimum = joint_position_actuator.minimum
 
         # put joint to its initial maximum in 3 seconds
-        if joint_position_actuator.short_name in ("HipPitch", "RShoulderRoll"):
+        if joint_position_actuator.short_name in\
+         ("HipPitch", "RShoulderRoll", "RElbowRoll"):
             joint_position_actuator.qvalue = (joint_initial_minimum, 3000)
         else:
             joint_position_actuator.qvalue = (joint_initial_maximum, 3000)
@@ -81,7 +87,8 @@ class TestCurrentLimitation:
         joint_position_actuator.minimum = [
             [[joint_new_minimum, dcm.getTime(0)]], "Merge"]
 
-        if joint_position_actuator.short_name in ("HipPitch", "RShoulderRoll"):
+        if joint_position_actuator.short_name in\
+         ("HipPitch", "RShoulderRoll", "RElbowRoll"):
             joint_position_actuator.qvalue = (joint_new_minimum, 1000)
         else:
             joint_position_actuator.qvalue = (joint_new_maximum, 1000)
