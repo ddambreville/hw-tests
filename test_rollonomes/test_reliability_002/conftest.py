@@ -18,22 +18,8 @@ def albehaviormanager(robot_ip, port):
     return ALProxy("ALBehaviorManager", robot_ip, port)
 
 
-@pytest.fixture(scope="session")
-def motion_wake_up(request, motion):
-    """
-    Robot wakeUp.
-    """
-    motion.wakeUp()
-
-    def fin():
-        """Method executed after the end of the test."""
-        motion.rest()
-
-    request.addfinalizer(fin)
-
-
 @pytest.fixture(params=qha_tools.use_section(
-                "rollonomes_reliability_002.cfg", "BehaviorsName"))
+                "reliability_002.cfg", "BehaviorsName"))
 def behaviors(request):
     """
     Behaviors and dances.

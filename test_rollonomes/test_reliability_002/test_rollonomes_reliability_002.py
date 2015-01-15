@@ -2,17 +2,19 @@ import pytest
 import time
 import threading
 import uuid
+import subdevice
 
 
-class Plot(threading.Thread):
+class Log(threading.Thread):
 
     """
     Class to log during test
     """
 
-    def __init__(self, mem, event, dance_name):
+    def __init__(self, dcm, mem, event, dance_name):
         """
-        @mem                    : proxy to Motion (object)
+        @dcm                    : proxy to DCM (object)
+        @mem                    : proxy to ALMemory (object)
         @event                  : event (object)
         @dance_name             : name of the dance (string)
         """
@@ -21,6 +23,19 @@ class Plot(threading.Thread):
         self._mem = mem
         self._event = event
         self._dance_name = dance_name
+
+        self._wheelb_speed_act = subdevice.WheelSpeedActuator(
+            dcm, mem, "WheelB")
+        self._wheelfr_speed_act = subdevice.WheelSpeedActuator(
+            dcm, mem, "WheelFR")
+        self._wheelfl_speed_act = subdevice.WheelSpeedActuator(
+            dcm, mem, "WheelFL")
+        self._wheelb_speed_sen = subdevice.WheelSpeedSensor(
+            dcm, mem, "WheelB")
+        self._wheelfr_speed_sen = subdevice.WheelSpeedSensor(
+            dcm, mem, "WheelFR")
+        self._wheelfl_speed_sen = subdevice.WheelSpeedSensor(
+            dcm, mem, "WheelFL")
 
         self._end = False
 
@@ -31,6 +46,12 @@ class Plot(threading.Thread):
         line_to_write = ",".join([
             "Time",
             "Event",
+            "WheelBSpeedAct",
+            "WheelFRSpeedAct",
+            "WheelFLSpeedAct",
+            "WheelBSpeedSen",
+            "WheelFRSpeedSen",
+            "WheelFLSpeedSen"
         ]) + "\n"
         log_file.write(line_to_write)
         log_file.flush()
@@ -40,7 +61,13 @@ class Plot(threading.Thread):
             elapsed_time = time.time() - time_init
             line_to_write = ",".join([
                 str(elapsed_time),
-                str(self._event.flag_event)
+                str(self._event.flag_event),
+                str(self._wheelb_speed_act.value),
+                str(self._wheelfr_speed_act.value),
+                str(self._wheelfl_speed_act.value),
+                str(self._wheelb_speed_sen.value),
+                str(self._wheelfr_speed_sen.value),
+                str(self._wheelfl_speed_sen.value)
             ]) + "\n"
             log_file.write(line_to_write)
             log_file.flush()
@@ -126,7 +153,7 @@ def run_behavior(albehaviormanager, behavior_name, plot):
         assert False
 
 
-def test_robollomes_with_dances(mem, session, albehaviormanager,
+def test_robollomes_with_dances(dcm, mem, session, albehaviormanager,
                                 motion_wake_up, behaviors):
     """
     Test rollonomes with dances or behaviors : no fall down.
@@ -148,10 +175,12 @@ def test_robollomes_with_dances(mem, session, albehaviormanager,
     robot_is_falling.subscribe(module_name, expected)
 
     behavior = behaviors["Name"]
-    plot = Plot(mem, robot_is_falling, behavior)
-    plot.start()
-    run_behavior(albehaviormanager, behavior, plot)
-    plot.stop()
+    log = Log(dcm, mem, robot_is_falling, behavior)
+    log.start()
+    run_behavior(albehaviormanager, behavior, log)
+    log.stop()
+
+    session.unregisterService(module_id)
 
     if robot_is_falling.flag:
         assert False
