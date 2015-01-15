@@ -59,35 +59,42 @@ class EventModule(object):
     flag = property(_get_flag)
 
 
-def test_pod_with_dances(dcm, mem, motion, session, parameters):
+def test_pod_pushrecovery(dcm, mem, alleds, session, motion_wake_up,
+                          parameters):
     """
     Test pod during wakeUp : no base mouvement.
     Assert True is no fall down detected.
 
     @dcm            : proxt to DCM (object)
     @mem            : proxy to ALMemory (object)
-    @motion         : proxy to ALMotion (object)
+    @alleds         : proxy to ALLeds (object)
     @session        : Session in qi (object)
+    @motion_wake_up : robot does his wakeUp
     @parameters     : dictionnary {"parameter":value} from config file
                       (dictionnary)
     """
 
     # Subcribe to module
-    expected = {"ALMotion/RobotIsFalling": 1}
+    expected = {"ALMotion/Safety/PushRecovery": 1}
     module_name = "EventChecker_{}_".format(uuid.uuid4())
-    robot_is_falling = EventModule(mem, "ALMotion/RobotIsFalling")
-    module_id = session.registerService(module_name, robot_is_falling)
-    robot_is_falling.subscribe(module_name, expected)
+    push_recovery = EventModule(mem, "ALMotion/Safety/PushRecovery")
+    module_id = session.registerService(module_name, push_recovery)
+    push_recovery.subscribe(module_name, expected)
 
-    log = log_pod.Log(dcm, mem, robot_is_falling, parameters["FileName"][0])
+    log = log_pod.Log(dcm, mem, push_recovery, parameters["PRFileName"][0])
     log.start()
 
-    motion.wakeUp()
+    alleds.fadeRGB("FaceLeds", "blue", 0)
+
+    time.sleep(int(parameters["TimeWait"][0]))
 
     log.stop()
 
-    motion.rest()
+    alleds.fadeRGB("FaceLeds", "white", 0)
+
     session.unregisterService(module_id)
 
-    if robot_is_falling.flag:
+    if push_recovery.flag:
+        assert True
+    else:
         assert False

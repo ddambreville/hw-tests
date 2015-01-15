@@ -4,7 +4,6 @@ from naoqi import ALProxy
 from qi import Session
 
 
-
 @pytest.fixture(scope="session")
 def albehaviormanager(robot_ip, port):
     """ Fixture which returns a proxy to ALBehaviorManager module. """
@@ -12,7 +11,7 @@ def albehaviormanager(robot_ip, port):
 
 
 @pytest.fixture(params=qha_tools.use_section(
-                "rollonomes_reliability_002.cfg", "BehaviorsName"))
+                "pod_perf_009.cfg", "Behaviors"))
 def behaviors(request):
     """
     Behaviors and dances.
@@ -21,3 +20,17 @@ def behaviors(request):
         "Name": str(request.param)
     }
     return dico_behaviors
+
+
+@pytest.fixture(scope="session")
+def parameters():
+    """
+    Return parameters (config file).
+    """
+    return qha_tools.read_section("pod_perf_009.cfg", "TestParameters")
+
+
+@pytest.fixture(scope="session")
+def alleds(robot_ip, port):
+    """ Fixture which returns a proxy to ALLeds module."""
+    return ALProxy("ALLeds", robot_ip, port)

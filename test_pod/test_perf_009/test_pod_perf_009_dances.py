@@ -40,8 +40,11 @@ class EventModule(object):
         """
         event_detected = str(self._mem.getData(self._event_name))
         print("Event detected : " + event_detected)
-        self._flag_event = 1
-        self._flag = True
+        if "True" in event_detected:
+            self._flag_event = 1
+            self._flag = True
+        else:
+            self._flag_event = 0
 
     def _get_flag_event(self):
         """
@@ -59,17 +62,35 @@ class EventModule(object):
     flag = property(_get_flag)
 
 
-def test_pod_with_dances(dcm, mem, motion, session, parameters):
+def run_behavior(albehaviormanager, behavior_name):
     """
-    Test pod during wakeUp : no base mouvement.
+    Funtion to run behavior.
+    No return.
+
+    @albehaviormanager  : prxy to ALBehaviorManager (obkect)
+    @behavior_name      : name of the behavior ro run (string)
+    """
+    # Verify behavior existing
+    if albehaviormanager.isBehaviorPresent(behavior_name):
+        albehaviormanager.runBehavior(behavior_name)
+    else:
+        print("\n\nBehavior " + behavior_name + "is not present")
+        print("Add the behavior and throw again")
+        assert False
+
+
+def test_robollomes_with_dances(dcm, mem, session, albehaviormanager,
+                                motion_wake_up, behaviors):
+    """
+    Test rollonomes with dances or behaviors : no fall down.
+    Launch requested dances (cf associated config file).
     Assert True is no fall down detected.
 
-    @dcm            : proxt to DCM (object)
     @mem            : proxy to ALMemory (object)
-    @motion         : proxy to ALMotion (object)
     @session        : Session in qi (object)
-    @parameters     : dictionnary {"parameter":value} from config file
-                      (dictionnary)
+    @albehaviormanager  : proxy to ALBehaviorManager (object)
+    @motion_wake_up : robot does is wakeUp
+    @behaviors          : dictionnary {"name":value} (dictionnary)
     """
 
     # Subcribe to module
@@ -79,14 +100,15 @@ def test_pod_with_dances(dcm, mem, motion, session, parameters):
     module_id = session.registerService(module_name, robot_is_falling)
     robot_is_falling.subscribe(module_name, expected)
 
-    log = log_pod.Log(dcm, mem, robot_is_falling, parameters["FileName"][0])
-    log.start()
+    behavior = behaviors["Name"]
+    list_behaviors = qha_tools.use_section("pod_perf_009.cfg", behavior)
 
-    motion.wakeUp()
+    for k in list_behaviors:
+        log = log_pod.Log(dcm, mem, robot_is_falling, k + ".csv")
+        log.start()
+        run_behavior(albehaviormanager, k)
+        log.stop()
 
-    log.stop()
-
-    motion.rest()
     session.unregisterService(module_id)
 
     if robot_is_falling.flag:
