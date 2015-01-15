@@ -57,8 +57,8 @@ class EventModule(object):
     flag = property(_get_flag)
 
 
-def test_sensors_env_004(robot_ip, dcm, mem, motion, session,
-                         motion_wake_up, parameters):
+def test_sensors_env_005(robot_ip, dcm, mem, motion, session,
+                         motion_wake_up, parameters, speed_value):
     """
     Docstring
     """
@@ -69,6 +69,8 @@ def test_sensors_env_004(robot_ip, dcm, mem, motion, session,
     movefailed.subscribe(module_name, expected)
 
     flag_test = False
+
+    speed = speed_value["Speed"]
 
     # Sensors
     sensors_list = qha_tools.read_section("sensors.cfg", "Sensors")
@@ -93,7 +95,7 @@ def test_sensors_env_004(robot_ip, dcm, mem, motion, session,
     log_file.flush()
 
     # Movement
-    motion.move(0, 0, float(parameters["speed"][0]))
+    motion.move(0, 0, speed)
 
     time.sleep(1)
 
