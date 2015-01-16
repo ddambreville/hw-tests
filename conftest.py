@@ -229,18 +229,18 @@ def result_base_folder(system, mem):
     hour = qha_tools.int_to_two_digit_string(local_time[3])
     minu = qha_tools.int_to_two_digit_string(local_time[4])
     sec = qha_tools.int_to_two_digit_string(local_time[5])
+    system_version = system.systemVersion()
+    head_id = mem.getData("RobotConfig/Head/HeadId")
+    head_type = mem.getData("RobotConfig/Head/Type")
 
-    result_folder_name = "{HeadType}_{HeadID}_{SystemVersion}_{Year}_{Month}_{Day}_{Hour}:{Min}:{Sec}".format(
-        HeadType=mem.getData("RobotConfig/Head/Type"),
-        HeadID=mem.getData("RobotConfig/Head/HeadId"),
-        SystemVersion=system.systemVersion(),
-        Year=year,
-        Month=month,
-        Day=day,
-        Hour=hour,
-        Min=minu,
-        Sec=sec
-    )
+    result_folder_name = "/".join([
+        system_version,
+        "_".join([head_type, head_id]),
+        "_".join([
+            "_".join([year, month, day]),
+            ":".join([hour, minu, sec])
+            ])
+        ])
 
     return "Results" + "/" + result_folder_name
 
