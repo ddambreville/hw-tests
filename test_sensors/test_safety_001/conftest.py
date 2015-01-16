@@ -1,7 +1,6 @@
 import pytest
 import subdevice
 import qha_tools
-from naoqi import ALProxy
 
 
 @pytest.fixture(scope="session")
@@ -44,9 +43,3 @@ def behaviors(request):
         "Name": str(request.param)
     }
     return dico_behaviors
-
-
-@pytest.fixture(scope="session")
-def albehaviormanager(robot_ip, port):
-    """ Fixture which returns a proxy to ALBehaviorManager module. """
-    return ALProxy("ALBehaviorManager", robot_ip, port)

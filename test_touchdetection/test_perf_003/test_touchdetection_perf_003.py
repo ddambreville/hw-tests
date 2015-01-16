@@ -80,8 +80,8 @@ def run_behavior(albehaviormanager, behavior_name, log):
 
 
 def test_touchdetection_with_dances(dcm, mem, motion, session, packagemanager,
-                                    albehaviormanager, motion_wake_up,
-                                    parameters, behaviors):
+                                    albehaviormanager, stop_bootconfig,
+                                    motion_wake_up, parameters, behaviors):
     """
     Test rollonomes with dances or behaviors : no fall down.
     Launch requested dances (cf associated config file).

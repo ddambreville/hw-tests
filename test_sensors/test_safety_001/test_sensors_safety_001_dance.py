@@ -72,7 +72,8 @@ def run_behavior(albehaviormanager, behavior_name):
         assert False
 
 
-def test_robollomes_with_dances(robot_ip, mem, session, albehaviormanager,
+def test_robollomes_with_dances(robot_ip, mem, session, packagemanager,
+                                albehaviormanager, stop_bootconfig,
                                 motion_wake_up, behaviors):
     """
     Launch requested dances (cf associated config file).
@@ -93,6 +94,7 @@ def test_robollomes_with_dances(robot_ip, mem, session, albehaviormanager,
     obstacledetected.subscribe(module_name, expected)
 
     behavior = behaviors["Name"]
+    packagemanager.install("/home/nao/behaviors_pkg/" + behavior + ".pkg")
 
     log = multi_logger.Logger(
         robot_ip,
@@ -104,6 +106,8 @@ def test_robollomes_with_dances(robot_ip, mem, session, albehaviormanager,
     run_behavior(albehaviormanager, behavior)
 
     log.stop()
+
+    packagemanager.removePkg(behavior)
 
     session.unregisterService(module_id)
 

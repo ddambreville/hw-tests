@@ -1,13 +1,5 @@
 import pytest
 import qha_tools
-from naoqi import ALProxy
-from qi import Session
-
-
-@pytest.fixture(scope="session")
-def albehaviormanager(robot_ip, port):
-    """ Fixture which returns a proxy to ALBehaviorManager module. """
-    return ALProxy("ALBehaviorManager", robot_ip, port)
 
 
 @pytest.fixture(scope="session")

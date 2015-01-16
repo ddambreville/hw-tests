@@ -154,7 +154,8 @@ def run_behavior(albehaviormanager, behavior_name, plot):
 
 
 def test_robollomes_with_dances(dcm, mem, session, packagemanager,
-                                albehaviormanager, motion_wake_up, behaviors):
+                                albehaviormanager, stop_bootconfig,
+                                motion_wake_up, behaviors):
     """
     Test rollonomes with dances or behaviors : no fall down.
     Launch requested dances (cf associated config file).

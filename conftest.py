@@ -473,3 +473,15 @@ def motion_wake_up(request, motion):
 def packagemanager(robot_ip, port):
     """ Fixture which returns a proxy to PackageManager module."""
     return ALProxy("PackageManager", robot_ip, port)
+
+
+@pytest.fixture(scope="session")
+def albehaviormanager(robot_ip, port):
+    """ Fixture which returns a proxy to ALBehaviorManager module. """
+    return ALProxy("ALBehaviorManager", robot_ip, port)
+
+
+@pytest.fixture(scope="session")
+def stop_bootconfig(request, albehaviormanager):
+    """ Fixture which stop boot-config behavior. """
+    albehaviormanager.stopBehavior("boot-config")
