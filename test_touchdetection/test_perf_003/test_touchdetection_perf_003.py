@@ -79,7 +79,7 @@ def run_behavior(albehaviormanager, behavior_name, log):
         assert False
 
 
-def test_touchdetection_with_dances(dcm, mem, motion, session,
+def test_touchdetection_with_dances(dcm, mem, motion, session, packagemanager,
                                     albehaviormanager, motion_wake_up,
                                     parameters, behaviors):
     """
@@ -102,6 +102,7 @@ def test_touchdetection_with_dances(dcm, mem, motion, session,
     touchdetection.subscribe(module_name, expected)
 
     behavior = behaviors["Name"]
+    packagemanager.install("/home/nao/behaviors_pkg/" + behavior + ".pkg")
 
     log = log_touchdetection.Log(
         dcm,
@@ -118,6 +119,7 @@ def test_touchdetection_with_dances(dcm, mem, motion, session,
     session.unregisterService(module_id)
 
     log.stop()
+    packagemanager.removePkg(behavior)
 
     motion._setStiffnesses("Body", 1.0)
 
