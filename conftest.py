@@ -175,6 +175,7 @@ def stiffness_off():
     return qha_tools.read_section(PATH + "/global_test_configuration/"
                                   "juliette_configuration.cfg", "stiffnessOff")
 
+
 @pytest.fixture(scope="session")
 def stiff_robot(request, dcm, mem, rest_pos):
     """
@@ -445,6 +446,7 @@ def boards(dcm, mem, joint_list):
             boards.append(joint_board)
     return boards
 
+
 @pytest.fixture(scope="session")
 def session(robot_ip, port):
     """ Connect a session to a NAOqi """
@@ -465,3 +467,9 @@ def motion_wake_up(request, motion):
         motion.rest()
 
     request.addfinalizer(fin)
+
+
+@pytest.fixture(scope="session")
+def packagemanager(robot_ip, port):
+    """ Fixture which returns a proxy to PackageManager module."""
+    return ALProxy("PackageManager", robot_ip, port)
