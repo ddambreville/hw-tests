@@ -291,3 +291,140 @@ class TestTemperatureProtection:
             [[joint_initial_minimum, dcm.getTime(0)]], "Merge"]
 
         assert flag_joint
+
+    def test_wheel_temperature_protection(self, dcm, parameters, wheel,
+                                          result_base_folder):
+        # logger initialization
+        log = logging.getLogger('MOTOR_LIMITATION_PERF_HW_002_Wheels')
+
+        # flags initialization
+        flag_wheel = True
+        flag_loop = True
+        flag_max_current_exceeded = False
+        flag_max_temperature_exceeded = False
+        flag_info = False
+        flag_info2 = False
+        flag_info3 = False
+        flag_info4 = False
+
+        wheel.stiffness.qvalue = (1.0, 5000)
+        wheel.speed.actuator.qvalue = (wheel.speed.actuator.maximum, 10000)
+
+        test_params = parameters
+        timer = qha_tools.Timer(dcm, test_params["test_time"])
+        slav = qha_tools.SlidingAverage(test_params["sa_nb_points"])
+        logger = qha_tools.Logger()
+
+        log.info("")
+        log.info("*************************************")
+        log.info("Testing : " + str(wheel.short_name))
+        log.info("*************************************")
+        log.info("")
+
+        wheel_temperature_max = wheel.temperature.maximum
+        wheel_temperature_min = wheel.temperature.minimum
+        wheel_temperature_mid = \
+        (wheel_temperature_max + wheel_temperature_min) * 0.5
+        wheel_current_max = wheel.current.maximum
+        current_limit_high = wheel_current_max * \
+        (1.0 + test_params["limit_factor_sup"])
+        current_limit_low = wheel_current_max * \
+        (1.0 - test_params["limit_factor_inf"])
+
+        while timer.is_time_not_out and flag_loop is True:
+            try:
+                wheel_temperature = wheel.temperature.value
+                wheel_current = wheel.current.value
+                slav.point_add(wheel_current)
+                wheel_current_sa = slav.calc()
+                wheel_speed_command = wheel.speed.actuator.value
+                wheel_speed_sensor = wheel.speed.sensor.value
+                wheel_stiffness = wheel.stiffness.value
+                dcm_time = timer.dcm_time() / 1000.
+
+                logger.log(
+                    ("Time", dcm_time),
+                    ("Stiffness", wheel_stiffness),
+                    ("Current", wheel_current),
+                    ("CurrentSA", wheel_current_sa),
+                    ("MaxAllowedCurrent", wheel_current_max),
+                    ("CurrentLimitHigh", current_limit_high),
+                    ("CurrentLimitLow", current_limit_low),
+                    ("Temperature", wheel_temperature),
+                    ("TemperatureMin", wheel_temperature_min),
+                    ("TemperatureMax", wheel_temperature_max),
+                    ("SpeedActuator", wheel_speed_command),
+                    ("SpeedSensor", wheel_speed_sensor),
+                    )
+
+                # out of test loop if temperature is higher than MAX + 1 degree
+                if wheel_temperature >= wheel_temperature_max + 5:
+                    flag_loop = False
+
+                # if joint temperature higher than a limit value,
+                # joint current must be null after 100ms.
+                if flag_max_temperature_exceeded is False and \
+                wheel_temperature >= wheel_temperature_max:
+                    flag_max_temperature_exceeded = True
+                    timer_max = qha_tools.Timer(dcm, 1000)
+                    log.info("max temperature exceeded a first time")
+
+                if flag_max_temperature_exceeded and \
+                wheel_temperature <= wheel_temperature_mid:
+                    flag_loop = False
+                    log.info("Motor windings are cold enough")
+
+                # setting flag to True if 90 percent of max current is exceeded
+                if wheel_current_sa > 0.9 * wheel_current_max and not \
+                flag_max_current_exceeded and dcm_time > 0.4:
+                    flag_max_current_exceeded = True
+                    log.info("90 percent of max allowed currend reached")
+
+                # averaged current has not to exceed limit high
+                if wheel_current_sa > current_limit_high and not flag_info:
+                    flag_wheel = False
+                    flag_info = True
+                    log.warning("current high limit exceeded")
+
+                # once max current is exceeded, current hasn't to be lower than
+                # limit low
+                if flag_max_current_exceeded and \
+                wheel_current_sa < current_limit_low and not \
+                flag_max_temperature_exceeded and not flag_info2:
+                    flag_wheel = False
+                    flag_info2 = True
+                    log.info("current has been lower than low limit")
+
+                if flag_max_temperature_exceeded and\
+                timer_max.is_time_out() and wheel_current != 0 and not\
+                flag_info3:
+                    flag_wheel = False
+                    flag_info3 = True
+                    log.critical("max temperature exceeded and current "+\
+                            "is not null")
+
+                if flag_max_temperature_exceeded and wheel_current == 0.0 and\
+                not flag_info4:
+                    flag_info4 = True
+                    log.info("current null reached")
+
+            except KeyboardInterrupt:
+                flag_loop = False
+                log.info("KeyboardInterrupt from user")
+                wheel.speed.actuator.qvalue = (0.0, 1000)
+                wheel.stiffness.qqvalue = 0.0
+
+        # stop and unstiff wheel
+        wheel.speed.actuator.qvalue = (0.0, 1000)
+        wheel.stiffness.qqvalue = 0.0
+
+        # writing logger results into a csv file
+        result_file_path = "/".join(
+            [
+                result_base_folder,
+                wheel.temperature.subdevice_type,
+                wheel.short_name + "_" + str(flag_wheel)
+            ]) + ".csv"
+        logger.log_file_write(result_file_path)
+
+        assert flag_wheel

@@ -11,6 +11,12 @@ def joint(request, dcm, mem):
     """
     return subdevice.Joint(dcm, mem, request.param)
 
+@pytest.fixture(params=qha_tools.use_section("temperature_protection.cfg", "JulietteWheels"))
+def wheel(request, dcm, mem):
+    """
+    Create the appropriate objects for each wheel.
+    """
+    return subdevice.Wheel(dcm, mem, request.param)
 
 @pytest.fixture(scope="module")
 def parameters():
