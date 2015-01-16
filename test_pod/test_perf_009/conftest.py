@@ -34,3 +34,9 @@ def parameters():
 def alleds(robot_ip, port):
     """ Fixture which returns a proxy to ALLeds module."""
     return ALProxy("ALLeds", robot_ip, port)
+
+
+@pytest.fixture(scope="session")
+def packagemanager(robot_ip, port):
+    """ Fixture which returns a proxy to PackageManager module."""
+    return ALProxy("PackageManager", robot_ip, port)

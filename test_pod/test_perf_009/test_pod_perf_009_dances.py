@@ -62,7 +62,7 @@ class EventModule(object):
     flag = property(_get_flag)
 
 
-def run_behavior(albehaviormanager, behavior_name):
+def run_behavior(albehaviormanager, behavior_name, log):
     """
     Funtion to run behavior.
     No return.
@@ -74,13 +74,14 @@ def run_behavior(albehaviormanager, behavior_name):
     if albehaviormanager.isBehaviorPresent(behavior_name):
         albehaviormanager.runBehavior(behavior_name)
     else:
+        log.stop()
         print("\n\nBehavior " + behavior_name + "is not present")
         print("Add the behavior and throw again")
         assert False
 
 
-def test_robollomes_with_dances(dcm, mem, session, albehaviormanager,
-                                motion_wake_up, behaviors):
+def test_robollomes_with_dances(dcm, mem, session, packagemanager,
+                                albehaviormanager, motion_wake_up, behaviors):
     """
     Test rollonomes with dances or behaviors : no fall down.
     Launch requested dances (cf associated config file).
@@ -104,10 +105,12 @@ def test_robollomes_with_dances(dcm, mem, session, albehaviormanager,
     list_behaviors = qha_tools.use_section("pod_perf_009.cfg", behavior)
 
     for k in list_behaviors:
+        packagemanager.install("/home/nao/behaviors_pkg/" + k + ".pkg")
         log = log_pod.Log(dcm, mem, robot_is_falling, k + ".csv")
         log.start()
-        run_behavior(albehaviormanager, k)
+        run_behavior(albehaviormanager, k, log)
         log.stop()
+        packagemanager.removePkg(k)
 
     session.unregisterService(module_id)
 
