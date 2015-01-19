@@ -14,6 +14,7 @@ Make a noaqi restart before the test to reset the odometry.
 import threading
 from termcolor import colored
 import time
+import sys
 
 
 def robot_motion(motion, pos_0, config_test):
@@ -24,7 +25,9 @@ def robot_motion(motion, pos_0, config_test):
     distance = float(config_test.get('Test_Config', 'Distance_travel'))
     sonar = config_test.get('Test_Config', 'Sonar')
     while abs(motion.getRobotPosition(True)[0] - pos_0) < distance:
-        print abs(motion.getRobotPosition(True)[0] - pos_0)
+        sys.stdout.write("Odometry distance : " + str(abs(
+            motion.getRobotPosition(True)[0] - pos_0)) + chr(13))
+        sys.stdout.flush()
         if sonar == "Front":
             motion.move(-0.1, 0, 0)
         elif sonar == "Back":
@@ -44,6 +47,8 @@ def record_sonar_data(
     sonar = config_test.get('Test_Config', 'Sonar')
     logger = get_sonar_objects["logger"]
     debut = float(config_test.get('Test_Config', 'Distance_begin'))
+    tolerance = float(
+        config_test.get('Test_Config', "Tolerance"))
     dist = abs(motion.getRobotPosition(True)[0] - pos_0)
     if sonar == "Front":
         offset = float(config_test.get('Test_Config', 'Offset_Front'))
@@ -56,6 +61,7 @@ def record_sonar_data(
             motion.getRobotPosition(True)[0] - pos_0) + offset))
         logger.log((sonar + "_Sonar", get_sonar_objects[
             sonar + "_Sonar"].value))
+        logger.log(("Tolerance", tolerance))
         time.sleep(0.04)
     for i in range(0, len(logger.log_dic["robot_pos"])):
         logger.log(("Erreur_" + sonar + "_Sonar", (abs(
@@ -68,6 +74,7 @@ def print_error(logger, name, error_v, i):
     """
     Print error message
     """
+    print ""
     print name + " : " + colored("Fail", "red")
     print "Position : " + str(logger.log_dic["robot_pos"][i])
     print "Erreur : " + str(error_v) + "%"
@@ -78,12 +85,13 @@ def check_error(logger, config_test):
     Function which checks the distance error
     at the end of the test
     """
+    print "\n"
     result = []
     sonar = config_test.get('Test_Config', 'Sonar')
     tolerance = float(
         config_test.get('Test_Config', "Tolerance"))
     for i in range(0, len(logger.log_dic["robot_pos"]) - 1):
-        error = logger.log_dic[sonar + "_Sonar"][i]
+        error = logger.log_dic["Erreur_" + sonar + "_Sonar"][i]
         if error > tolerance:
             result.append('Fail')
             print_error(logger, sonar + "_Sonar", error, i)
