@@ -8,11 +8,11 @@ import ConfigParser
 import pytest
 from subdevice import ChargingStationSensor, Bumper, BatteryCurrentSensor, \
     JointPositionActuator, JointPositionSensor, \
-    WheelSpeedActuator, WheelSpeedSensor, Bumper
+    WheelSpeedActuator, WheelSpeedSensor, Bumper, Laser, Sonar
 import qha_tools
 import threading
 import time
-from math import pi, cos, sin
+from math import pi
 import os
 from termcolor import colored
 
@@ -30,6 +30,7 @@ def returnlist(char):
         elif numb == len(char) - 1:
             liste.append(float(char[i: numb + 1]))
             i = numb + 1
+    return liste
 
 
 def all_coord():
@@ -49,7 +50,7 @@ def all_coord():
         for angle in liste_angles:
             for distance in liste_distances:
                 coords.append(
-                    [distance * cos(angle), distance * sin(angle), cpt])
+                    [float(distance), float(angle), cpt])
         cpt = cpt + 1
     return coords
 
@@ -90,7 +91,7 @@ def csv_file():
     output = os.path.abspath("log_test.csv")
     log_file = open(output, 'w')
     log_file.write(
-        "Angle,robot_on_charging_station,BackBumper,battery_current, \
+        "Distance,Angle,robot_on_charging_station,BackBumper,battery_current, \
         leaveStation_OK, leaveStation_NOK, lookForStation_OK, \
         lookForStation_NOK, moveInFrontOfStation_OK, moveInFrontOfStation_NOK, \
         dockOnStation_OK, dockOnStation_NOK\n"
@@ -155,7 +156,7 @@ def log_joints(request, result_base_folder, dcm, mem, motion):
         while not thread_flag.is_set():
             joints_value = bag.value
             for each in joints_value.keys():
-                if "Wheel" in each or "Bumper" in each or
+                if "Wheel" in each or "Bumper" in each or \
                         "charging" in each or "battery" in each:
                     logger.log((each, joints_value[each]))
                 else:
@@ -164,7 +165,7 @@ def log_joints(request, result_base_folder, dcm, mem, motion):
             logger.log(("Time", time.time() - t_0))
         time.sleep(0.01)
 
-    log_thread=threading.Thread(target=log, args=(logger, bag))
+    log_thread = threading.Thread(target=log, args=(logger, bag))
     log_thread.start()
 
     def fin():
@@ -172,10 +173,69 @@ def log_joints(request, result_base_folder, dcm, mem, motion):
         Docstring
         """
         thread_flag.set()
-        result_file_path="/".join(
+        result_file_path = "/".join(
             [
                 result_base_folder,
                 "Joint_Log"
             ]) + ".csv"
         logger.log_file_write(result_file_path)
     request.addfinalizer(fin)
+
+
+@pytest.fixture(scope="session")
+def sensor_logger(request, result_base_folder, dcm, mem):
+    """
+    Return a dictionary with several objects for
+    each X coordinate of all lasers segments
+    """
+    thread_flag = threading.Event()
+    h_sides = ["Front", "Left", "Right"]
+    v_sides = ["Left", "Right"]
+    s_sides = ["Front", "Back"]
+    bag = qha_tools.Bag(mem)
+    dico = {}
+    for each in h_sides:
+        for i in range(1, 10):
+            bag.add_object("Horizontal_X_seg" + str(i) + "_" + each, Laser(
+                dcm, mem, each + "/Horizontal/Seg0" + str(i) + "/X/Sensor"))
+        for i in range(10, 16):
+            bag.add_object("Horizontal_X_seg" + str(i) + "_" + each, Laser(
+                dcm, mem, each + "/Horizontal/Seg" + str(i) + "/X/Sensor"))
+    for each in v_sides:
+        bag.add_object("Vertical_X_seg01_" + each, Laser(
+            dcm, mem, "Front/Vertical/" + each + "/Seg01/X/Sensor"))
+    for each in s_sides:
+        bag.add_object("Sonar_" + each, Sonar(
+            dcm, mem, each))
+    for i in range(1, 4):
+        bag.add_object("Shovel_X_seg" + str(i), Laser(
+            dcm, mem, "Front/Shovel/Seg0" + str(i) + "/X/Sensor"))
+    logger = qha_tools.Logger()
+
+    def log(logger, bag):
+        """
+        Docstring
+        """
+        t_0 = time.time()
+        while not thread_flag.is_set():
+            sensor_value = bag.value
+            for each in sensor_value.keys():
+                logger.log((each, sensor_value[each]))
+
+            logger.log(("Time", time.time() - t_0))
+        time.sleep(0.01)
+    log_thread = threading.Thread(target=log, args=(logger, bag))
+    log_thread.start()
+
+    def fin():
+        """Method executed after a joint test."""
+        thread_flag.set()
+        result_file_path1 = "/".join(
+            [
+                result_base_folder,
+                "Front_sensors_distances"
+            ]) + ".csv"
+        logger.log_file_write(result_file_path1)
+
+    request.addfinalizer(fin)
+    return dico
