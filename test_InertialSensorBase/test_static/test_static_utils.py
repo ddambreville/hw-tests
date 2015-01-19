@@ -7,7 +7,8 @@ Created on September 29, 2014
 import time
 from termcolor import colored
 
-GRAVITY = 9.81
+GRAVITY = -9.81
+
 
 def wait(config_test):
     """
@@ -15,6 +16,7 @@ def wait(config_test):
     """
     time_test = float(config_test.get('Test_Config', 'Test_time'))
     time.sleep(time_test)
+
 
 def print_error(sensor, value, result):
     """
@@ -25,13 +27,14 @@ def print_error(sensor, value, result):
     print sensor + " value = " + str(value)
     return result
 
+
 def error(logger, sensor, tolerance, result):
     """
     Docstring
     """
     for index, each in enumerate(logger.log_dic[sensor]):
         if sensor == "AccZ":
-            if abs((each - GRAVITY)/GRAVITY) > tolerance:
+            if abs((each - GRAVITY) / GRAVITY) * 100 > tolerance:
                 result = print_error(sensor, each, result)
                 break
             elif index == len(logger.log_dic[sensor]) - 1:
@@ -44,11 +47,13 @@ def error(logger, sensor, tolerance, result):
                 print sensor + " : " + colored("Pass", "green")
     return result
 
+
 def check_error(logger, config_test):
     """
     check error function
     """
-    tolerance_acc_xy = float(config_test.get('Test_Config', 'Tolerance_Acc_XY'))
+    tolerance_acc_xy = float(
+        config_test.get('Test_Config', 'Tolerance_Acc_XY'))
     tolerance_acc_z = float(config_test.get('Test_Config', 'Tolerance_Acc_Z'))
     tolerance_angle_xy = float(config_test.get(
         'Test_Config', 'Tolerance_Angle_XY'))
@@ -64,11 +69,19 @@ def check_error(logger, config_test):
     result = error(logger, "GyrZ", tolerance_gyr_all, result)
     return result
 
+
 def record_inertialbase_data(
-        get_all_inertialbase_objects, thread):
+        get_all_inertialbase_objects, thread, config_test):
     """
     Function which logs the inertial base datas
     """
+    tolerance_acc_xy = float(
+        config_test.get('Test_Config', 'Tolerance_Acc_XY'))
+    tolerance_acc_z = float(config_test.get('Test_Config', 'Tolerance_Acc_Z'))
+    tolerance_angle_xy = float(config_test.get(
+        'Test_Config', 'Tolerance_Angle_XY'))
+    tolerance_gyr_all = float(config_test.get(
+        'Test_Config', 'Tolerance_Gyr_All'))
     logger = get_all_inertialbase_objects["logger"]
     coord = ["X", "Y", "Z"]
     t_0 = time.time()
@@ -80,6 +93,26 @@ def record_inertialbase_data(
                 "Angle" + each].value))
             logger.log(("Gyr" + each, get_all_inertialbase_objects[
                 "Gyr" + each].value))
+        logger.log(("Tolerance_Acc_X_sup", tolerance_acc_xy))
+        logger.log(("Tolerance_Acc_X_inf", - tolerance_acc_xy))
+        logger.log(("Tolerance_Acc_Y_sup", tolerance_acc_xy))
+        logger.log(("Tolerance_Acc_Y_inf", - tolerance_acc_xy))
+        logger.log(
+            ("Tolerance_Acc_Z_sup", -9.81 * (
+                1 - (float(tolerance_acc_z) / 100))))
+        logger.log(
+            ("Tolerance_Acc_Z_inf", -9.81 * (
+                1 + (float(tolerance_acc_z) / 100))))
+        logger.log(("Tolerance_Angle_X_sup", tolerance_angle_xy))
+        logger.log(("Tolerance_Angle_X_inf", - tolerance_angle_xy))
+        logger.log(("Tolerance_Angle_Y_sup", tolerance_angle_xy))
+        logger.log(("Tolerance_Angle_Y_inf", - tolerance_angle_xy))
+        logger.log(("Tolerance_Gyr_X_sup", tolerance_gyr_all))
+        logger.log(("Tolerance_Gyr_X_inf", - tolerance_gyr_all))
+        logger.log(("Tolerance_Gyr_Y_sup", tolerance_gyr_all))
+        logger.log(("Tolerance_Gyr_Y_inf", - tolerance_gyr_all))
+        logger.log(("Tolerance_Gyr_Z_sup", tolerance_gyr_all))
+        logger.log(("Tolerance_Gyr_Z_inf", - tolerance_gyr_all))
         logger.log(("Time", time.time() - t_0))
         time.sleep(0.005)
     return logger
