@@ -14,9 +14,9 @@ Make a noaqi restart before the test to reset the odometry.
 import threading
 from termcolor import colored
 import time
-import CameraViewer
-import os
-import laser_utils
+#import CameraViewer
+
+import sys
 
 
 def robot_motion(motion, pos_0, config_test):
@@ -26,7 +26,9 @@ def robot_motion(motion, pos_0, config_test):
     """
     distance = float(config_test.get('Test_Config', 'Distance_travel'))
     while abs(motion.getRobotPosition(True)[0] - pos_0) < distance:
-        print abs(motion.getRobotPosition(True)[0] - pos_0)
+        sys.stdout.write("Odometry distance : " + str(abs(
+            motion.getRobotPosition(True)[0] - pos_0)) + chr(13))
+        sys.stdout.flush()
         motion.move(-0.1, 0, 0)
     motion.stopMove()
 
@@ -95,25 +97,24 @@ def check_error(logger, config_test):
 
 
 def test_verticaux_x(
-     dcm, mem, motion, wakeup, get_vertical_x_segments,
+    dcm, mem, motion, wakeup, get_vertical_x_segments,
         config_test, remove_safety, remove_diagnosis, result_base_folder):
     """
     Test main function which tests the X distance
     of the horizontal lasers
     """
-    time.sleep(10)
     #path = os.path.abspath("./") + "/" + result_base_folder
     pos_0 = motion.getRobotPosition(True)[0]
     #cam = CameraViewer.camera_connect()
     motion_thread = threading.Thread(target=robot_motion, args=(
         motion, pos_0, config_test))
-    #image_thread = threading.Thread(target=laser_utils.save_laser_image, args=(
-        #cam, path, motion_thread))
+    # image_thread = threading.Thread(target=laser_utils.save_laser_image, args=(
+    # cam, path, motion_thread))
     motion_thread.start()
-    #image_thread.start()
+    # image_thread.start()
     logger = record_vertical_data(
         get_vertical_x_segments, motion, pos_0, motion_thread,
         config_test)
     result = check_error(logger, config_test)
-    #CameraViewer.camera_disconnect(cam)
+    # CameraViewer.camera_disconnect(cam)
     assert 'Fail' not in result

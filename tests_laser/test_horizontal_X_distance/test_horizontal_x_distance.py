@@ -16,6 +16,7 @@ Make a noaqi restart before the test to reset the odometry.
 from qha_tools import switch, case
 import threading
 from termcolor import colored
+import sys
 
 
 def robot_motion(motion, pos_0, coord, side, config_test):
@@ -25,7 +26,9 @@ def robot_motion(motion, pos_0, coord, side, config_test):
     """
     distance = float(config_test.get('Test_Config', 'Distance_travel'))
     while abs(motion.getRobotPosition(True)[coord] - pos_0) < distance:
-        print abs(motion.getRobotPosition(True)[coord] - pos_0)
+        sys.stdout.write("Odometry distance : " + str(abs(
+            motion.getRobotPosition(True)[0] - pos_0)) + chr(13))
+        sys.stdout.flush()
         while switch(side):
             if case("Front"):
                 motion.move(-0.1, 0, 0)
