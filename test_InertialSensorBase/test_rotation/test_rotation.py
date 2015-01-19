@@ -23,8 +23,6 @@ def test_rotation_distance(
         motion, config_test))
     motion_thread.start()
     logger = record_inertialbase_data(
-        get_all_inertialbase_objects, motion_thread)
+        get_all_inertialbase_objects, motion_thread, config_test)
     result = check_error(logger, config_test)
     assert "Fail" not in result
-
-

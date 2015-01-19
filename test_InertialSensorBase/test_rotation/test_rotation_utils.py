@@ -7,6 +7,7 @@ Created on October 02, 2014
 
 import time
 
+
 def robot_motion(motion, config_test):
     """
     Thread which make the robot move
@@ -19,10 +20,11 @@ def robot_motion(motion, config_test):
 
 
 def record_inertialbase_data(
-        get_all_inertialbase_objects, thread):
+        get_all_inertialbase_objects, thread, config_test):
     """
     Function which logs the datas
     """
+    angle_tolerance = float(config_test.get('Test_Config', 'Angle_tolerance'))
     logger = get_all_inertialbase_objects["logger"]
     t_0 = time.time()
     while thread.isAlive():
@@ -30,8 +32,11 @@ def record_inertialbase_data(
             "AngleZ"].value))
         logger.log(("GyrZ", get_all_inertialbase_objects[
             "GyrZ"].value))
+        logger.log(("Tolerance_Angle_sup", angle_tolerance))
+        logger.log(("Tolerance_Angle_inf", - angle_tolerance))
         logger.log(("Time", time.time() - t_0))
     return logger
+
 
 def check_error(logger, config_test):
     """
@@ -46,5 +51,3 @@ def check_error(logger, config_test):
             print "Angle Z = " + str(each)
             break
     return result
-
-
