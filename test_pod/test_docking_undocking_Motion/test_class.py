@@ -6,6 +6,7 @@ Created on October 17, 2014
 
 
 import time
+from math import pi, cos, sin
 # from math import atan, degrees
 
 
@@ -42,11 +43,8 @@ class TestPodMotion(object):
         Log data function
         """
         print "log data"
-        # if coord[1] == 0:
-        #     log_file.write(str(0) + ",")
-        # else:
-        #     log_file.write(str(degrees(atan(coord[0] / coord[1]))) + ",")
         log_file.write(str(coord[0]) + ",")
+        log_file.write(str(coord[1]) + ",")
         log_file.write(str(get_pod_objects[
             "robot_on_charging_station"].value) + ",")
         log_file.write(str(get_pod_objects[
@@ -77,7 +75,7 @@ class TestPodMotion(object):
         my_dict["leaveStation"].append(result)
         if result == False:
             self.leave_station_result[1] += 1
-            self.set_state("leave_motion")
+            self.set_state("leaveStation")
         else:
             self.set_state("move")
             self.leave_station_result[0] += 1
@@ -96,7 +94,11 @@ class TestPodMotion(object):
         Robot moves away from the POD
         """
         print "move"
-        motion.moveTo(coord[0], coord[1], 0, 3)
+        distance = coord[0]
+        angle = coord[1]
+        x_coord = distance * sin((angle * pi) / 180) - 0.35
+        y_coord = - distance * cos((angle * pi) / 180)
+        motion.moveTo(x_coord, y_coord, 0, 3)
         time.sleep(0.5)
         self.set_state("lookForStation")
 

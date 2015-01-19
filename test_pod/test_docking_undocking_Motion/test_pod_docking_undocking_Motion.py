@@ -18,10 +18,12 @@ from termcolor import colored
 
 def test_pod_docking_undocking_Motion(dcm, mem, motion, alrecharge, coord,
                                       wakeup_no_rotation, get_pod_objects,
-                                      csv_file, get_dict, remove_diagnosis):
+                                      csv_file, get_dict,
+                                      sensor_logger, remove_diagnosis):
     """
     Test docking-undocking using Motion
     """
+    print " distance = " + str(coord[0]) + " angle = " + str(coord[1])
     print coord[2]
     test_motion = TestPodMotion()
     test_motion.set_state("leaveStation")
