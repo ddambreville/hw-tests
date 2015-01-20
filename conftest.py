@@ -169,6 +169,10 @@ def zero_pos():
     return qha_tools.read_section(PATH + "/global_test_configuration/"
                                   "juliette_positions.cfg", "zero")
 
+@pytest.fixture(scope="session")
+def stiffness_on():
+    return qha_tools.read_section(PATH + "/global_test_configuration/"
+                                  "juliette_configuration.cfg", "stiffnessOn")
 
 @pytest.fixture(scope="session")
 def stiffness_off():
