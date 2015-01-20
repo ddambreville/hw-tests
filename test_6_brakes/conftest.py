@@ -3,6 +3,8 @@ import qha_tools
 import subdevice
 import logging
 import math
+import numpy
+import os.path
 
 CONFIG_FILE = "brakes_tests.cfg"
 
@@ -16,6 +18,48 @@ def hc_joint(request):
 def hc_direction(request):
     """Returns a parametrized direction."""
     return request.param
+
+@pytest.fixture(scope="module")
+def dico_results(request):
+    """"""
+    dico_result = {
+        "HipPitch":{"Positive":[], "Negative":[]},
+        "KneePitch":{"Positive":[], "Negative":[]}
+    }
+
+    return dico_result
+
+@pytest.fixture(scope="module")
+def print_results(request, dico_results):
+    joint_list = qha_tools.use_section(CONFIG_FILE, "Joint")
+    direction_list = qha_tools.use_section(CONFIG_FILE, "Direction")
+    def fin():
+        """Results printed at the end of test session."""
+        logging.info("")
+        logging.info("---------------------------------------")
+        logging.info("              TEST REPORT              ")
+        logging.info("---------------------------------------")
+        logging.info("")
+        for joint in joint_list:
+            for direction in direction_list:
+                result_list = dico_results[joint][direction]
+                min_value = numpy.amin(numpy.absolute(result_list))
+                average_value = numpy.average(result_list)
+                std_value = numpy.std(result_list)
+                logging.info("*****************************")
+                logging.info("")
+                logging.info(" ".join(["Results for",
+                                       joint.upper(),
+                                       direction.upper()
+                                      ]))
+                logging.info("Array     : " + str(result_list))
+                logging.info("Min value : " + str(min_value))
+                logging.info("Average   : " + str(average_value))
+                logging.info("Std       : " + str(std_value))
+                logging.info("")
+        logging.info("----------------------------------------")
+
+    request.addfinalizer(fin)
 
 # Initial angles
 @pytest.fixture(scope="module")
@@ -129,3 +173,27 @@ def cycle_number():
                                       "NbCycles")
 
     return int(number)
+
+@pytest.fixture(scope="module", autouse=True)
+def initialize_logger(result_base_folder):
+    logger = logging.getLogger()
+    logger.setLevel(logging.DEBUG)
+
+    # create console handler and set level to info
+    handler = logging.StreamHandler()
+    handler.setLevel(logging.INFO)
+    formatter = logging.Formatter("%(levelname)s - %(message)s")
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+
+    # create error file handler and set level to error
+    if not os.path.exists(result_base_folder):
+        os.makedirs(result_base_folder)
+    handler = logging.FileHandler("/".join([
+        result_base_folder,
+        "holding_cone_logs.txt"
+        ]))
+    handler.setLevel(logging.INFO)
+    formatter = logging.Formatter("%(levelname)s - %(message)s")
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
