@@ -3,12 +3,13 @@ import math
 import time
 import brakes_utils
 import logging
+import numpy
 
 
-def test_holding_cone(kill_motion, dcm, mem, stiff_robot, wake_up_pos, rest_pos,
+def test_holding_cone(kill_motion, dcm, mem, stiffness_on, wake_up_pos, rest_pos,
     hc_joint, hc_direction, initial_angle, step, allowed_slip_number,
     allowed_slip_angle, wait_time, holding_cone, hippitch, kneepitch,
-    dico_results, print_results, initialize_logger):
+    dico_results, print_results, initialize_logger, wait_between_two_tests):
 
     # Test informations
     logging.info("")
@@ -17,6 +18,8 @@ def test_holding_cone(kill_motion, dcm, mem, stiff_robot, wake_up_pos, rest_pos,
     logging.info("*********************************")
     logging.info("")
 
+    # stiff robot and put it to wakeUp position
+    subdevice.multiple_set(dcm, mem, stiffness_on, wait=True)
     subdevice.multiple_set(dcm, mem, wake_up_pos, wait=True)
 
     hip_mechstop_deg = abs(math.degrees(hippitch.position.actuator.maximum))
@@ -24,12 +27,18 @@ def test_holding_cone(kill_motion, dcm, mem, stiff_robot, wake_up_pos, rest_pos,
 
     initial_command = float(initial_angle[hc_joint][hc_direction])
 
+    hippitch_max_temperature = hippitch.temperature.maximum - 10.0
+    kneepitch_max_temperature = kneepitch.temperature.maximum - 10.0
+
     flag_close_to_mechstop = False
     flag_close_one_brake = False
     flag_anormal_state = False
+    flag_hot_joint = False
     cpt_slip = 0
 
-    while cpt_slip < allowed_slip_number and flag_close_to_mechstop is False:
+    while cpt_slip < allowed_slip_number and \
+    flag_close_to_mechstop is False and \
+    flag_hot_joint is False:
         try:
             logging.info(" ".join([hc_joint,
                                    hc_direction,
@@ -86,19 +95,24 @@ def test_holding_cone(kill_motion, dcm, mem, stiff_robot, wake_up_pos, rest_pos,
 
             logging.debug(" state : " + str(state))
 
-            #brakes_utils.print_joint_temperatures(hippitch, kneepitch)
+            brakes_utils.print_joint_temperatures(hippitch, kneepitch)
 
             if hc_joint == "HipPitch" and state == (True, False):
                 flag_anormal_state = True
+                logging.debug("Set flag anormal state to True")
             elif hc_joint == "KneePitch" and state == (False, True):
                 flag_anormal_state = True
+                logging.debug("Set flag anormal state to True")
             else:
                 flag_anormal_state = False
 
             if flag_anormal_state and not flag_close_one_brake:
                 flag_close_one_brake = True
+                logging.debug("Set flag close one brake to True")
                 logging.warning("**!! Incoherent state, Other joint slip !!**")
                 logging.info("From now, other joint will stay stiffed")
+                flag_anormal_state = False
+                logging.debug("Set flag anormal state to False")
 
             if state == (True, True):
                 logging.info("SUCCESS")
@@ -119,7 +133,13 @@ def test_holding_cone(kill_motion, dcm, mem, stiff_robot, wake_up_pos, rest_pos,
                     cpt_slip += 1
                     logging.debug("Incrementing slip counter")
                     list_results = dico_results[hc_joint][hc_direction]
-                    list_results.append(real_angle_degrees)
+                    if hc_joint == "HipPitch":
+                        joint_temperature = hippitch.temperature.value
+                    else:
+                        joint_temperature = kneepitch.temperature.value
+                    tuple_result = \
+                    (round(real_angle_degrees, 2), joint_temperature)
+                    list_results.append(tuple_result)
 
             # making sure mechanical stop is not going to be reached
             if hc_joint == "HipPitch" and\
@@ -133,14 +153,32 @@ def test_holding_cone(kill_motion, dcm, mem, stiff_robot, wake_up_pos, rest_pos,
                 flag_close_to_mechstop = True
                 logging.info("Too close to mechanical stop")
 
+            # making sure that joints are not too hot
+            if hippitch.temperature.value > hippitch_max_temperature:
+                flag_hot_joint = True
+                logging.warning("HipPitch Temperature too high to continue")
+
+            if kneepitch.temperature.value > kneepitch_max_temperature:
+                flag_hot_joint = True
+                logging.warning("KneePitch Temperature too high to continue")
+
         except KeyboardInterrupt:
             (hippitch.hardness.qqvalue, kneepitch.hardness.qqvalue) = \
             (1.0, 1.0)
             logging.warning("!!! Test stopped by user !!! (KeyboardInterrupt")
             subdevice.multiple_set(dcm, mem, rest_pos, wait=True)
             break
+
     logging.debug(str(dico_results))
-    assert abs(real_angle_degrees) >= abs(holding_cone[hc_joint][hc_direction])
+    # assertion
+    try:
+        result_list_brut = dico_results[hc_joint][hc_direction]
+        result_list = [list(x) for x in zip(*result_list_brut)]
+        angle_list = result_list[0]
+        min_value = numpy.amin(numpy.absolute(angle_list))
+        assert min_value >= abs(holding_cone[hc_joint][hc_direction])
+    except:
+        assert None
 
 
 def test_cycling(motion, cycle_number):

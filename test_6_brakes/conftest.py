@@ -5,6 +5,7 @@ import logging
 import math
 import numpy
 import os.path
+import time
 
 CONFIG_FILE = "brakes_tests.cfg"
 
@@ -42,20 +43,26 @@ def print_results(request, dico_results):
         logging.info("")
         for joint in joint_list:
             for direction in direction_list:
-                result_list = dico_results[joint][direction]
-                min_value = numpy.amin(numpy.absolute(result_list))
-                average_value = numpy.average(result_list)
-                std_value = numpy.std(result_list)
+                result_list_brut = dico_results[joint][direction]
+                result_list = [list(x) for x in zip(*result_list_brut)]
+                angle_list = result_list[0]
+                temperature_list = result_list[1]
+
+                min_value = numpy.amin(numpy.absolute(angle_list))
+                average_value = numpy.average(angle_list)
+                std_value = numpy.std(angle_list)
+
                 logging.info("*****************************")
                 logging.info("")
                 logging.info(" ".join(["Results for",
                                        joint.upper(),
                                        direction.upper()
                                       ]))
-                logging.info("Array     : " + str(result_list))
-                logging.info("Min value : " + str(min_value))
-                logging.info("Average   : " + str(average_value))
-                logging.info("Std       : " + str(std_value))
+                logging.info("Angles array      : " + str(angle_list))
+                logging.info("Temperature array : " + str(temperature_list))
+                logging.info("Min value         : " + str(min_value))
+                logging.info("Average           : " + str(average_value))
+                logging.info("Std               : " + str(std_value))
                 logging.info("")
         logging.info("----------------------------------------")
 
@@ -197,3 +204,19 @@ def initialize_logger(result_base_folder):
     formatter = logging.Formatter("%(levelname)s - %(message)s")
     handler.setFormatter(formatter)
     logger.addHandler(handler)
+
+@pytest.fixture(scope="function")
+def wait_between_two_tests(request, dcm, mem, rest_pos, stiffness_on,
+                           stiffness_off):
+    """Wait between two tests."""
+    time_to_wait = qha_tools.read_parameter(CONFIG_FILE,
+                                            "GeneralParameters",
+                                            "TimeBetweenTwoTests")
+    def fin():
+        """Wait between two tests."""
+        subdevice.multiple_set(dcm, mem, stiffness_on, wait=True)
+        subdevice.multiple_set(dcm, mem, rest_pos, wait=True)
+        subdevice.multiple_set(dcm, mem, stiffness_off, wait=True)
+        logging.info("Waiting " + str(time_to_wait) + " s")
+        time.sleep(float(time_to_wait))
+    request.addfinalizer(fin)
