@@ -11,13 +11,13 @@ from naoqi import ALProxy
 
 
 SHOULDER_LEDS = [
-"ChestBoard/Led/Red/Actuator/Value",
-"ChestBoard/Led/Green/Actuator/Value",
-"ChestBoard/Led/Blue/Actuator/Value"
+    "ChestBoard/Led/Red/Actuator/Value",
+    "ChestBoard/Led/Green/Actuator/Value",
+    "ChestBoard/Led/Blue/Actuator/Value"
 ]
 
 
-def stiff_wheels(list_wheel_stiffness): 
+def stiff_wheels(list_wheel_stiffness):
     """
     Stiff the 3 wheels
     """
@@ -25,7 +25,7 @@ def stiff_wheels(list_wheel_stiffness):
         stiffness.qvalue = (1.0, 0)
 
 
-def unstiff_wheels(list_wheel_stiffness): 
+def unstiff_wheels(list_wheel_stiffness):
     """
     Unstiff the 3 wheels
     """
@@ -41,12 +41,13 @@ def stop_robot(list_wheel_speed):
         speed.qvalue = (0.0, 0)
 
 
-def check_wheel_temperatures(dcm, leds, list_wheel_temperature, list_wheel_speed, list_wheel_stiffness):
+def check_wheel_temperatures(dcm, leds, list_wheel_temperature,
+                             list_wheel_speed, list_wheel_stiffness):
     """
     Pauses the robot if the wheels are too hot
     """
-    
-    parameters_cables = tools.read_section("config.cfg", 
+
+    parameters_cables = tools.read_section("config.cfg",
                                            "CablesRoutingParameters")
     Temp_max = int(parameters_cables["Temp_max"][0])
     Temp_min = int(parameters_cables["Temp_min"][0])
@@ -56,14 +57,14 @@ def check_wheel_temperatures(dcm, leds, list_wheel_temperature, list_wheel_speed
        list_wheel_temperature[2].value >= Temp_max:
 
         print("\nWheels too hot --> Waiting")
-        leds.fadeListRGB("shoulder_group", [0x00FF00FF,], [0.,])
+        leds.fadeListRGB("shoulder_group", [0x00FF00FF, ], [0., ])
         stop_robot(list_wheel_speed)
         unstiff_wheels(list_wheel_stiffness)
 
-        # Wait 
+        # Wait
         while list_wheel_temperature[0].value >= Temp_min or \
-              list_wheel_temperature[1].value >= Temp_min or \
-              list_wheel_temperature[2].value >= Temp_min:
+                list_wheel_temperature[1].value >= Temp_min or \
+                list_wheel_temperature[2].value >= Temp_min:
             tools.wait(dcm, 20000)
 
         leds.reset("shoulder_group")
@@ -73,7 +74,8 @@ def check_wheel_temperatures(dcm, leds, list_wheel_temperature, list_wheel_speed
 def move_robot(dcm, mem, wait_time, list_wheels_to_use):
     """
     Makes the robot move.
-    - The robot uses for each sequence two wheels and lets the third one unstiffed.
+    - The robot uses for each sequence two wheels and lets
+    the third one unstiffed.
     - The speed is the same for the 3 wheels.
     - It returns the wheels used for each sequence.
     """
@@ -87,7 +89,7 @@ def move_robot(dcm, mem, wait_time, list_wheels_to_use):
         dcm, mem, "WheelFR")
     wheel_fl_speed_actuator = subdevice.WheelSpeedActuator(
         dcm, mem, "WheelFL")
-    wheel_b_speed_actuator  = subdevice.WheelSpeedActuator(
+    wheel_b_speed_actuator = subdevice.WheelSpeedActuator(
         dcm, mem, "WheelB")
 
     # Same speed for the 3 wheels
@@ -113,7 +115,7 @@ def move_robot(dcm, mem, wait_time, list_wheels_to_use):
     if list_wheels_to_use[1] == 1 and list_wheels_to_use[2] == 1:
 
         wheel_fl_speed_actuator.mqvalue = [(-speed, wait_time)]
-        wheel_b_speed_actuator.mqvalue  = [(speed, wait_time)]
+        wheel_b_speed_actuator.mqvalue = [(speed, wait_time)]
 
         list_stiffed_wheels.append('fl')
         list_stiffed_wheels.append('b')
@@ -123,7 +125,7 @@ def move_robot(dcm, mem, wait_time, list_wheels_to_use):
     #-------------------------- CASE 3 -------------------------#
     if list_wheels_to_use[2] == 1 and list_wheels_to_use[0] == 1:
 
-        wheel_b_speed_actuator.mqvalue  = [(-speed, wait_time)]
+        wheel_b_speed_actuator.mqvalue = [(-speed, wait_time)]
         wheel_fr_speed_actuator.mqvalue = [(speed, wait_time)]
 
         list_stiffed_wheels.append('b')
@@ -132,10 +134,10 @@ def move_robot(dcm, mem, wait_time, list_wheels_to_use):
         return list_stiffed_wheels
 
 
-def test_move_random(motion, dcm, mem, leds, expressiveness, wait_time, wait_time_bumpers, 
-                     min_fraction, max_fraction, max_random, 
-                     stop_robot, wakeup_no_rotation, 
-                     stiff_robot_wheels, unstiff_joints, 
+def test_move_random(motion, dcm, mem, leds, expressiveness, wait_time,
+                     wait_time_bumpers, min_fraction, max_fraction, max_random,
+                     stop_robot, wakeup_no_rotation,
+                     stiff_robot_wheels, unstiff_joints,
                      log_wheels_speed, log_bumper_pressions):
 
     #---------------------------------------------------------#
@@ -195,18 +197,20 @@ def test_move_random(motion, dcm, mem, leds, expressiveness, wait_time, wait_tim
     #----------------------------------------------------------#
 
     # Cables crossing detection
-    parameters_cables = tools.read_section("config.cfg", "CablesRoutingParameters")
+    parameters_cables = tools.read_section(
+        "config.cfg", "CablesRoutingParameters")
 
-    # Bumpers activation detection 
-    parameters_bumpers = tools.read_section("config.cfg", "BumpersActivationsParameters")
+    # Bumpers activation detection
+    parameters_bumpers = tools.read_section(
+        "config.cfg", "BumpersActivationsParameters")
 
-    # Get the desired type of test 
+    # Get the desired type of test
     flag_test = tools.read_section("config.cfg", "TestChoice")
 
     # Launch bumper counter (thread)
     if int(flag_test["test_bumpers"][0]) == 1:
         bumper_detection = mobile_base_utils.BumpersCounting(dcm, mem, leds,
-        wait_time_bumpers)
+                                                             wait_time_bumpers)
         bumper_detection.start()
 
     # Launch cable counter (thread)
@@ -217,22 +221,21 @@ def test_move_random(motion, dcm, mem, leds, expressiveness, wait_time, wait_tim
     #---------------------------------------------------------#
     #--------------------- Initialization --------------------#
     #---------------------------------------------------------#
-    #motion.wakeUp()
     flag_bumpers = False
-    flag_cables  = False
+    flag_cables = False
     list_wheels_to_use = [1, 1, 0]
     #tools.wait(dcm, 30000)
     used_wheels = move_robot(dcm, mem, wait_time, list_wheels_to_use)
     tools.wait(dcm, 2000)
-    
+
     acc_z = subdevice.InertialSensorBase(dcm, mem, "AccelerometerZ")
-    
+
     #---------------------------------------------------------#
     #----------------------- Main Loop -----------------------#
     #---------------------------------------------------------#
     while flag_bumpers == False and flag_cables == False:
 
-        try: 
+        try:
             #-------------------- Wall event -------------------#
             if (math.fabs(list_wheel_speed_sensor[0].value) < 0.10) and \
                (math.fabs(list_wheel_speed_sensor[1].value) < 0.10) and \
@@ -246,7 +249,9 @@ def test_move_random(motion, dcm, mem, leds, expressiveness, wait_time, wait_tim
                 # stop_robot(list_wheel_speed_actuator)
 
                 # check temperatures
-                check_wheel_temperatures(dcm, leds, list_wheel_temperature, list_wheel_speed_actuator, list_wheel_stiffness_actuator)
+                check_wheel_temperatures(
+                    dcm, leds, list_wheel_temperature,
+                    list_wheel_speed_actuator, list_wheel_stiffness_actuator)
 
                 alea = int(random.uniform(0, 10))
 
@@ -254,7 +259,7 @@ def test_move_random(motion, dcm, mem, leds, expressiveness, wait_time, wait_tim
 
                     wheel_stiffed_1 = list_wheel_stiffness_actuator[0]
                     wheel_stiffed_2 = list_wheel_stiffness_actuator[1]
-                    
+
                     list_wheel_stiffness_actuator[2].qvalue = (1.0, 0)
 
                     if alea <= 5:
@@ -264,12 +269,11 @@ def test_move_random(motion, dcm, mem, leds, expressiveness, wait_time, wait_tim
                         wheel_stiffed_2.qvalue = (0.0, 0)
                         list_wheels_to_use = [1, 0, 1]
 
-
                 if used_wheels[0] == 'fl' and used_wheels[1] == 'b':
 
                     wheel_stiffed_1 = list_wheel_stiffness_actuator[1]
                     wheel_stiffed_2 = list_wheel_stiffness_actuator[2]
-                    
+
                     list_wheel_stiffness_actuator[0].qvalue = (1.0, 0)
 
                     if alea <= 5:
@@ -279,12 +283,11 @@ def test_move_random(motion, dcm, mem, leds, expressiveness, wait_time, wait_tim
                         wheel_stiffed_2.qvalue = (0.0, 0)
                         list_wheels_to_use = [1, 1, 0]
 
-
                 if used_wheels[0] == 'b' and used_wheels[1] == 'fr':
 
                     wheel_stiffed_1 = list_wheel_stiffness_actuator[2]
                     wheel_stiffed_2 = list_wheel_stiffness_actuator[0]
-                    
+
                     list_wheel_stiffness_actuator[1].qvalue = (1.0, 0)
 
                     if alea <= 5:
@@ -294,7 +297,8 @@ def test_move_random(motion, dcm, mem, leds, expressiveness, wait_time, wait_tim
                         wheel_stiffed_2.qvalue = (0.0, 0)
                         list_wheels_to_use = [0, 1, 1]
 
-                used_wheels = move_robot(dcm, mem, wait_time, list_wheels_to_use)
+                used_wheels = move_robot(
+                    dcm, mem, wait_time, list_wheels_to_use)
 
                 tools.wait(dcm, 2000)
 
@@ -310,8 +314,6 @@ def test_move_random(motion, dcm, mem, leds, expressiveness, wait_time, wait_tim
                     int(parameters_cables["Nb_cables_crossing"][0]):
                 cable_detection.stop()
                 flag_cables = True
-            #print acc_z.value    
-            #try:
             #-------- Robot has fallen ----------#
             if (math.fabs(acc_z.value)) < 2.0:
 
@@ -320,16 +322,14 @@ def test_move_random(motion, dcm, mem, leds, expressiveness, wait_time, wait_tim
 
                 if int(flag_test["test_cables_crossing"][0]) == 1:
                     cable_detection.stop()
- 
+
                 break
-            #except:
-            #    pass
 
         # Exit test if user interrupt
         except KeyboardInterrupt:
-                print "\n******* User interrupt - ending test *******"
-                if int(flag_test["test_bumpers"][0]) == 1:
-                    bumper_detection.stop()
-                if int(flag_test["test_cables_crossing"][0]) == 1:
-                    cable_detection.stop()
-                break
+            print "\n******* User interrupt - ending test *******"
+            if int(flag_test["test_bumpers"][0]) == 1:
+                bumper_detection.stop()
+            if int(flag_test["test_cables_crossing"][0]) == 1:
+                cable_detection.stop()
+            break

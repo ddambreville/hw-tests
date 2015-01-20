@@ -36,7 +36,7 @@ def move_robot(motion):
     parameters_direction = tools.read_section("config.cfg", "DirectionParameters")
     distance = int(parameters_direction["direction"][0])
     parameters_speed = tools.read_section("config.cfg", "Speed")
-    min = int(parameters_speed["min_speed"][0])   
+    min = int(parameters_speed["min_speed"][0])
     nom = int(parameters_speed["nom_speed"][0])
     max = int(parameters_speed["max_speed"][0])
 
@@ -65,10 +65,10 @@ def move_robot(motion):
     motion.rest()
 
 
-def test_move_random(motion, dcm, mem, leds, expressiveness, wait_time, wait_time_bumpers, 
-                 min_fraction, max_fraction, max_random, 
-                 stop_robot, wake_up_pos, 
-                 stiff_robot_wheels, unstiff_joints, 
+def test_move_random(motion, dcm, mem, leds, expressiveness, wait_time, wait_time_bumpers,
+                 min_fraction, max_fraction, max_random,
+                 stop_robot, wake_up_pos,
+                 stiff_robot_wheels, unstiff_joints,
                  log_wheels_speed):
 
     motion.setExternalCollisionProtectionEnabled('All', False)
