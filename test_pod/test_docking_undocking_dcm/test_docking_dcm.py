@@ -8,6 +8,7 @@ Created on January 14, 2015
 
 from test_class import TestPodDCM
 import sys
+import time
 
 
 def test_pod_dcm(dcm, mem, kill_motion, log_wheel):
@@ -28,7 +29,7 @@ def test_pod_dcm(dcm, mem, kill_motion, log_wheel):
                 cpt = cpt + 1
                 test_dcm.check_connection(cpt)
             else:
-                pass
+                time.sleep(0.5)
         except KeyboardInterrupt:
             break
     print "\n"
