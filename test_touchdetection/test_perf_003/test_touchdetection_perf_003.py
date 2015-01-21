@@ -81,7 +81,7 @@ def run_behavior(albehaviormanager, behavior_name, log):
 
 def test_touchdetection_with_dances(dcm, mem, motion, session, packagemanager,
                                     albehaviormanager, stop_bootconfig,
-                                    motion_wake_up, parameters, behaviors):
+                                    motion_wake_up, parameters, behavior):
     """
     Test rollonomes with dances or behaviors : no fall down.
     Launch requested dances (cf associated config file).
@@ -101,7 +101,6 @@ def test_touchdetection_with_dances(dcm, mem, motion, session, packagemanager,
     module_id = session.registerService(module_name, touchdetection)
     touchdetection.subscribe(module_name, expected)
 
-    behavior = behaviors["Name"]
     packagemanager.install("/home/nao/behaviors_pkg/" + behavior + ".pkg")
 
     log = log_touchdetection.Log(

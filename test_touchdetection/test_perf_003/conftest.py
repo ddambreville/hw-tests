@@ -12,11 +12,8 @@ def parameters():
 
 @pytest.fixture(params=qha_tools.use_section(
                 "perf_003.cfg", "BehaviorsName"))
-def behaviors(request):
+def behavior(request):
     """
     Behaviors and dances.
     """
-    dico_behaviors = {
-        "Name": str(request.param)
-    }
-    return dico_behaviors
+    return str(request.param)

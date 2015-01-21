@@ -17,10 +17,7 @@ def speed_value(request):
     """
     Speed
     """
-    dico_speed = {
-        "Speed": float(request.param)
-    }
-    return dico_speed
+    return float(request.param)
 
 
 @pytest.fixture(scope="session")

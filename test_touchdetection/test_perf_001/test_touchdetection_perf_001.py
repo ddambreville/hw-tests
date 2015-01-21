@@ -191,7 +191,7 @@ def movement(joint_name, joint_min, joint_max, joint_temp, speed,
 
 def test_touchdetection_perf_001(dcm, mem, motion, alleds, session,
                                  motion_wake_up, remove_sensors, parameters,
-                                 speed_value, test_objects_dico, directions):
+                                 speed, test_objects_dico, direction):
     """
     Test touch detection perf 001 : remove joint stiffness if touch detected.
     Move joints at different speeds (cf associated config file).
@@ -202,7 +202,7 @@ def test_touchdetection_perf_001(dcm, mem, motion, alleds, session,
     @motion         : proxy to ALMotion (object)
     @alleds         : proxy to ALLeds (object)
     @session        : Session in qi (object)
-    @motion_wake_up : robot does is wakeUp
+    @motion_wake_up : robot does its wakeUp
     @remove_sensors : remove Laser, Sonar & Asus sensors
     @parameters     : dictionnary {"parameter":value} from config file
                       (dictionnary)
@@ -224,8 +224,6 @@ def test_touchdetection_perf_001(dcm, mem, motion, alleds, session,
     joint_speed_sensor = test_objects_dico["jointSpeedSensor"]
     joint_temperature = test_objects_dico["jointTemperature"]
     joint_hardness = test_objects_dico["jointHardness"]
-    speed = speed_value["Speed"]
-    direction = directions["Direction"]
 
     print("Joint : " + joint + " - Direction : " + direction)
 
@@ -236,22 +234,22 @@ def test_touchdetection_perf_001(dcm, mem, motion, alleds, session,
                  "ReferencePosition")
 
     # Plot datas
-    # plot = plot_touchdetection.Plot(
-    #     joint,
-    #     mem,
-    #     touchdetection,
-    #     joint_position_actuator,
-    #     joint_position_sensor,
-    #     joint_speed_actuator,
-    #     joint_speed_sensor,
-    #     joint_temperature,
-    #     joint_hardness,
-    #     float(parameters["LimitErrorPosition"][0]),
-    #     float(parameters["LimitErrorSpeed"][0]),
-    #     int(parameters["TemperatureMaxToStart"][0]),
-    #     int(parameters["TemperatureMax"][0])
-    # )
-    # plot.start()
+    plot = plot_touchdetection.Plot(
+        joint,
+        mem,
+        touchdetection,
+        joint_position_actuator,
+        joint_position_sensor,
+        joint_speed_actuator,
+        joint_speed_sensor,
+        joint_temperature,
+        joint_hardness,
+        float(parameters["LimitErrorPosition"][0]),
+        float(parameters["LimitErrorSpeed"][0]),
+        int(parameters["TemperatureMaxToStart"][0]),
+        int(parameters["TemperatureMax"][0])
+    )
+    plot.start()
 
     # Log datas
     log = log_touchdetection.Log(
@@ -324,7 +322,7 @@ def test_touchdetection_perf_001(dcm, mem, motion, alleds, session,
     set_position(dcm, mem, motion, "perf_001.cfg",
                  "ReferencePosition")
 
-    # plot.stop()
+    plot.stop()
     log.stop()
     time.sleep(0.25)
 

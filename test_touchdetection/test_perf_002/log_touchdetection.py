@@ -46,7 +46,7 @@ class MotionSensorValue(object):
     value = property(_get_value)
 
 
-def JointDico(dcm, mem, joint):
+def joint_dict(dcm, mem, joint):
     """
     Return dictionnary of object (position, speed, hardness, temperature)
     for specified joint.
@@ -106,14 +106,14 @@ class Log(threading.Thread):
         self._file_name = file_name
 
         self._dico = {
-            "RShoulderPitch": JointDico(dcm, mem, "RShoulderPitch"),
-            "LShoulderPitch": JointDico(dcm, mem, "LShoulderPitch"),
-            "RShoulderRoll": JointDico(dcm, mem, "RShoulderRoll"),
-            "LShoulderRoll": JointDico(dcm, mem, "LShoulderRoll"),
-            "RElbowRoll": JointDico(dcm, mem, "RElbowRoll"),
-            "LElbowRoll": JointDico(dcm, mem, "LElbowRoll"),
-            "RElbowYaw": JointDico(dcm, mem, "RElbowYaw"),
-            "LElbowYaw": JointDico(dcm, mem, "LElbowYaw")
+            "RShoulderPitch": joint_dict(dcm, mem, "RShoulderPitch"),
+            "LShoulderPitch": joint_dict(dcm, mem, "LShoulderPitch"),
+            "RShoulderRoll": joint_dict(dcm, mem, "RShoulderRoll"),
+            "LShoulderRoll": joint_dict(dcm, mem, "LShoulderRoll"),
+            "RElbowRoll": joint_dict(dcm, mem, "RElbowRoll"),
+            "LElbowRoll": joint_dict(dcm, mem, "LElbowRoll"),
+            "RElbowYaw": joint_dict(dcm, mem, "RElbowYaw"),
+            "LElbowYaw": joint_dict(dcm, mem, "LElbowYaw")
         }
 
         self._end = False

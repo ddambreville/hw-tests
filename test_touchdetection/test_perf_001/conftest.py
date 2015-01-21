@@ -57,14 +57,11 @@ def test_objects_dico(request, dcm, mem):
 
 
 @pytest.fixture(params=qha_tools.use_section("perf_001.cfg", "Direction"))
-def directions(request):
+def direction(request):
     """
     Direction
     """
-    dico_direction = {
-        "Direction": str(request.param)
-    }
-    return dico_direction
+    return str(request.param)
 
 
 @pytest.fixture(scope="session")
@@ -73,14 +70,11 @@ def parameters():
 
 
 @pytest.fixture(params=qha_tools.use_section("perf_001.cfg", "Speed"))
-def speed_value(request):
+def speed(request):
     """
     Speed
     """
-    dico_speed = {
-        "Speed": float(request.param)
-    }
-    return dico_speed
+    return float(request.param)
 
 
 @pytest.fixture(scope="session")

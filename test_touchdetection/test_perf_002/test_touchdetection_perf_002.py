@@ -160,7 +160,7 @@ class BaseRotation(threading.Thread):
 
 def test_touchdetection_perf_002(dcm, mem, motion, session, motion_wake_up,
                                  remove_sensors, move_arms_enabled, parameters,
-                                 speed_value):
+                                 speed):
     """
     Test touch detection perf 003 : remove joint stiffness if arm is blocked.
     Rotate at different speed (cf associated config file).
@@ -199,7 +199,6 @@ def test_touchdetection_perf_002(dcm, mem, motion, session, motion_wake_up,
         dcm, mem, "RShoulderRoll")
     lshoulderroll_hardness = subdevice.JointHardnessActuator(
         dcm, mem, "LShoulderRoll")
-    speed = speed_value["Speed"]
 
     # Initial position
     move_joint("RShoulderRoll", rshoulderroll_position_actuator.minimum,
@@ -207,17 +206,17 @@ def test_touchdetection_perf_002(dcm, mem, motion, session, motion_wake_up,
     move_joint("LShoulderRoll", lshoulderroll_position_actuator.maximum,
                float(parameters["Speed"][0]), motion)
 
-    # plot = plot_touchdetection.Plot(
-    #     dcm,
-    #     mem,
-    #     touchdetection,
-    #     float(parameters["LimitErrorPosition"][0]),
-    #     float(parameters["LimitErrorSpeed"][0]),
-    #     int(parameters["TemperatureMax"][0]),
-    #     int(parameters["TemperatureMaxToStart"][0]),
-    #     parameters["FileName"][0]
-    # )
-    # plot.start()
+    plot = plot_touchdetection.Plot(
+        dcm,
+        mem,
+        touchdetection,
+        float(parameters["LimitErrorPosition"][0]),
+        float(parameters["LimitErrorSpeed"][0]),
+        int(parameters["TemperatureMax"][0]),
+        int(parameters["TemperatureMaxToStart"][0]),
+        parameters["FileName"][0]
+    )
+    plot.start()
 
     log = log_touchdetection.Log(
         dcm,
@@ -254,7 +253,7 @@ def test_touchdetection_perf_002(dcm, mem, motion, session, motion_wake_up,
     time.sleep(1)
     print "End"
 
-    # plot.stop()
+    plot.stop()
     log.stop()
     print "Finish"
 
