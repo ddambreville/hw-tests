@@ -7,8 +7,6 @@ import sys
 import sha
 
 message = """
-doublesdetector.py 1.0p
-
 This script will search for files that are identical
 (whatever their name/date/time).
 
@@ -20,20 +18,10 @@ This script will search for files that are identical
 Examples : python %s c:\windows
            python %s c:\;d:\;e:\ > doubles.txt
            python %s c:\program files > doubles.txt
-
-This script is public domain. Feel free to reuse and tweak it.
 """ % ((sys.argv[0], ) * 4)
 
 
 def fileSHA(filepath):
-    """ Compute SHA (Secure Hash Algorythm) of a file.
-        Input : filepath : full path and name of file
-                            (eg. 'c:\windows\emm386.exe')
-        Output : string : contains the hexadecimal representation
-                          of the SHA of the file.
-                          returns '0' if file could not be read
-                          (file not found, no read rights...)
-    """
     try:
         file = open(filepath, 'rb')
         digest = sha.new()
