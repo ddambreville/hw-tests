@@ -82,7 +82,7 @@ def run_behavior(albehaviormanager, behavior_name, log):
 
 def test_robollomes_with_dances(dcm, mem, session, packagemanager,
                                 albehaviormanager, stop_bootconfig,
-                                motion_wake_up, behaviors):
+                                motion_wake_up, behavior):
     """
     Test rollonomes with dances or behaviors : no fall down.
     Launch requested dances (cf associated config file).
@@ -102,7 +102,6 @@ def test_robollomes_with_dances(dcm, mem, session, packagemanager,
     module_id = session.registerService(module_name, robot_is_falling)
     robot_is_falling.subscribe(module_name, expected)
 
-    behavior = behaviors["Name"]
     list_behaviors = qha_tools.use_section("pod_perf_009.cfg", behavior)
 
     for k in list_behaviors:
