@@ -11,7 +11,7 @@ from naoqi import ALProxy
 
 def question_continue(message):
     """
-    Question
+    Ask user to write "y" or "yes" if he wants to continue and "n" otherwise
     """
     if message == 'start':
         status = raw_input('start test ? (y/n)')
@@ -40,10 +40,10 @@ def move_robot(motion):
 
     question_continue('start')
     for test in range(0, nb_test):
-        motion.moveTo(0, 0, math.pi * 10)
+        motion.moveTo(0, 0, math.pi * (nb_tour * 2))
         question_continue('reverse')
 
-        motion.moveTo(0, 0, -math.pi * 10)
+        motion.moveTo(0, 0, -math.pi * (nb_tour * 2))
         test += 1
         question_continue('restart')
     motion.rest()

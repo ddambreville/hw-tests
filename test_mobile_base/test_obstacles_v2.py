@@ -11,7 +11,7 @@ from naoqi import ALProxy
 
 def question_continue(message):
     """
-    Question
+    Ask user to write "y" or "yes" if he wants to continue and "n" otherwise
     """
     if message == 'start':
         status = raw_input('start test ? (y/n)')
@@ -33,39 +33,45 @@ def stop_robot(list_wheel_speed):
 
 
 def move_robot(motion):
-
+    """
+    Move robot on abstacles:- rubber band
+                            - string
+                            - clips
+                            - news paper
+                            - dust
+    """
     parameters_direction = tools.read_section("config.cfg", "Obstacle")
-    distance = float(parameters_direction["direction"][0])
+    distance = float(parameters_direction["distance"][0])
     nb_passage = int(parameters_direction["nb_passage"][0])
-    dir_X = int(parameters_direction["dir_X"][0])
-    dir_Y = int(parameters_direction["dir_Y"][0])
-    dir_diagL = int(parameters_direction["dir_diagL"][0])
-    dir_diagR = int(parameters_direction["dir_diagR"][0])
+    dir_x = int(parameters_direction["dir_X"][0])
+    dir_y = int(parameters_direction["dir_Y"][0])
+    dir_diag_l = int(parameters_direction["dir_diagL"][0])
+    dir_diag_r = int(parameters_direction["dir_diagR"][0])
     rotate = int(parameters_direction["rotate"][0])
 
     question_continue('start')
     if rotate == 1:
         print 'rotate'
         motion.moveTo(0, 0, math.pi * 2)
-    if dir_X == 1:
+    if dir_x == 1:
         question_continue('forward')
         motion.moveTo(distance, 0, 0)
         question_continue('behind')
         motion.moveTo(-distance, 0, 0)
 
-    if dir_Y == 1:
+    if dir_y == 1:
         question_continue('left')
         motion.moveTo(0, distance, 0)
         question_continue('rigth')
         motion.moveTo(0, -distance, 0)
 
-    if dir_diagL == 1:
+    if dir_diag_l == 1:
         question_continue('diagonale front left')
         motion.moveTo(distance, distance, 0)
         question_continue('diagonale back left')
         motion.moveTo(-distance, -distance, 0)
 
-    if dir_diagR == 1:
+    if dir_diag_r == 1:
         question_continue('diagonale front right')
         motion.moveTo(distance, -distance, 0)
         question_continue('diagonale back right')

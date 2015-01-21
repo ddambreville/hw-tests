@@ -11,7 +11,7 @@ from naoqi import ALProxy
 
 def question_continue(message):
     """
-    Question
+    Ask user to write "y" or "yes" if he wants to continue and "n" otherwise
     """
     if message == 'start':
         status = raw_input('start test ? (y/n)')
@@ -40,15 +40,15 @@ def move_robot(motion):
     diag_2 = 0
     parameters_direction = tools.read_section("config.cfg",
                                               "DirectionParameters")
-    distance = int(parameters_direction["direction"][0])
+    distance = int(parameters_direction["distance"][0])
     nb_passage = int(parameters_direction["nb_passage"][0])
-    dir_X = int(parameters_direction["dir_X"][0])
-    dir_Y = int(parameters_direction["dir_Y"][0])
-    dir_diagL = int(parameters_direction["dir_diagL"][0])
-    dir_diagR = int(parameters_direction["dir_diagR"][0])
+    dir_x = int(parameters_direction["dir_X"][0])
+    dir_y = int(parameters_direction["dir_Y"][0])
+    dir_diag_l = int(parameters_direction["dir_diagL"][0])
+    dir_diag_r = int(parameters_direction["dir_diagR"][0])
 
     question_continue('start')
-    if dir_X == 1:
+    if dir_x == 1:
         print 'move to X'
         for move_x in range(nb_passage):
             question_continue('forward')
@@ -60,7 +60,7 @@ def move_robot(motion):
                 question_continue('')
                 pass
 
-    if dir_Y == 1:
+    if dir_y == 1:
         question_continue('to Y')
         print 'move to Y'
         for move_y in range(nb_passage):
@@ -73,7 +73,7 @@ def move_robot(motion):
                 move_y = 0
                 pass
 
-    if dir_diagL == 1:
+    if dir_diag_l == 1:
         question_continue('to diagonale')
         print 'move to first diagonale'
         for diag_1 in range(nb_passage):
@@ -86,7 +86,7 @@ def move_robot(motion):
                 diag_1 = 0
                 pass
 
-    if dir_diagR == 1:
+    if dir_diag_r == 1:
         question_continue('to diagonale')
         print 'move to second diagonale'
         for diag_2 in range(nb_passage):
