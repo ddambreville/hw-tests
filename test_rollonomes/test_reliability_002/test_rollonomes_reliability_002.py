@@ -155,7 +155,7 @@ def run_behavior(albehaviormanager, behavior_name, plot):
 
 def test_robollomes_with_dances(dcm, mem, session, packagemanager,
                                 albehaviormanager, stop_bootconfig,
-                                motion_wake_up, behaviors):
+                                motion_wake_up, behavior):
     """
     Test rollonomes with dances or behaviors : no fall down.
     Launch requested dances (cf associated config file).
@@ -175,7 +175,6 @@ def test_robollomes_with_dances(dcm, mem, session, packagemanager,
     module_id = session.registerService(module_name, robot_is_falling)
     robot_is_falling.subscribe(module_name, expected)
 
-    behavior = behaviors["Name"]
     packagemanager.install("/home/nao/behaviors_pkg/" + behavior + ".pkg")
     log = Log(dcm, mem, robot_is_falling, behavior)
     log.start()

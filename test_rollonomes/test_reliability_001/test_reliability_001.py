@@ -136,7 +136,7 @@ class EventModule(object):
 
 
 def test_robollomes_water(dcm, mem, motion, session, motion_wake_up,
-                          speed_value):
+                          speed):
     """
     Test rollonomes with dances or behaviors : no fall down.
     Launch requested dances (cf associated config file).
@@ -157,8 +157,6 @@ def test_robollomes_water(dcm, mem, motion, session, motion_wake_up,
     robot_is_falling = EventModule(mem, "ALMotion/RobotIsFalling")
     module_id = session.registerService(module_name, robot_is_falling)
     robot_is_falling.subscribe(module_name, expected)
-
-    speed = speed_value["Speed"]
 
     log = Log(dcm, mem, robot_is_falling, str(speed) + ".csv")
     log.start()
