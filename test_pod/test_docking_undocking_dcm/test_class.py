@@ -9,6 +9,8 @@ Created on January 14, 2015
 import qha_tools
 import subdevice
 import time
+import threading
+import sys
 
 
 class TestPodDCM(object):
@@ -33,11 +35,17 @@ class TestPodDCM(object):
             self.dcm, self.mem, "WheelFR")
         self.wheelfl_temperature_sensor = subdevice.WheelTemperatureSensor(
             self.dcm, self.mem, "WheelFL")
+        self.wheelb_temperature_sensor = subdevice.WheelTemperatureSensor(
+            self.dcm, self.mem, "WheelB")
         self.back_bumper_sensor = subdevice.Bumper(dcm, mem, "Back")
         self.battery_current = subdevice.BatteryCurrentSensor(
             self.dcm, self.mem)
         self.nb_cycles = self.parameters["nb_cycles"][0]
         self.log_file = open(self.parameters["cycling_cvs_name"][0], 'w')
+        self.check_temperature_thread = threading.Thread(
+            target=self._check_temperature_thread, args=())
+        self.check_temperature = None
+        self.wheel_hot = None
 
     def initialisation(self):
         '''
@@ -48,11 +56,35 @@ class TestPodDCM(object):
             print "Put the robot on the pod\n"
             # assert False
         self.log_file.write(
-            "Cycle,Connection, BatteryCurrent\n")
+            "Cycle,Connection,BatteryCurrent\n")
+        self.check_temperature = True
+        self.wheel_hot = False
+        self.check_temperature_thread.start()
+
+    def _check_temperature_thread(self):
+        '''
+        Check wheel temperature thread
+        '''
+        while self.check_temperature == True:
+            wheels_temp = [self.wheelfr_temperature_sensor.value,
+                           self.wheelfl_temperature_sensor.value,
+                           self.wheelb_temperature_sensor.value]
+            if max(wheels_temp) > float(self.parameters[
+                    "wheels_temperature_limit"][0]):
+                self.wheel_hot = True
+                time.sleep(1)
+            if self.wheel_hot == True:
+                sys.stdout.write(
+                    "Wheel temperature is too hot : " + str(max(wheels_temp)) +
+                    "°C . Wait..." + chr(13))
+                sys.stdout.flush()
+            if max(wheels_temp) < float(self.parameters[
+                    "wheels_temperature_cooling"][0]):
+                self.wheel_hot = False
 
     def move_robot_x(self, side):
         '''
-        Docstring
+        Move robot along X axis
         '''
         if side == 'Back':
             self.wheel_motion.move_x(
@@ -64,14 +96,14 @@ class TestPodDCM(object):
 
     def remove_stiffness(self):
         '''
-        Docstring
+        Remove wheels stiffness
         '''
         self.wheel_motion.stiff_wheels(
             ["WheelFR", "WheelFL", "WheelB"], 0.0)
 
     def check_connection(self, cycle):
         '''
-        Docstring
+        Check POD connection
         '''
         time.sleep(float(self.parameters["time_wait_on_the_pod"][0]))
         line_to_write = ",".join([
@@ -85,6 +117,7 @@ class TestPodDCM(object):
 
     def end(self):
         '''
-        Docstring
+        End State
         '''
+        self.check_temperature = False
         self.remove_stiffness()
