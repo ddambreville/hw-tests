@@ -74,7 +74,7 @@ def run_behavior(albehaviormanager, behavior_name):
 
 def test_robollomes_with_dances(robot_ip, mem, session, packagemanager,
                                 albehaviormanager, stop_bootconfig,
-                                motion_wake_up, behaviors):
+                                motion_wake_up, behavior):
     """
     Launch requested dances (cf associated config file).
     Assert True is no fall down detected.
@@ -93,7 +93,6 @@ def test_robollomes_with_dances(robot_ip, mem, session, packagemanager,
     module_id = session.registerService(module_name, obstacledetected)
     obstacledetected.subscribe(module_name, expected)
 
-    behavior = behaviors["Name"]
     packagemanager.install("/home/nao/behaviors_pkg/" + behavior + ".pkg")
 
     log = multi_logger.Logger(

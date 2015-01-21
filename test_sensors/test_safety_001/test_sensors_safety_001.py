@@ -65,7 +65,7 @@ def move(motion, speed, direction):
 
 
 def test_sensors_safety_001(robot_ip, dcm, mem, motion, session,
-                            motion_wake_up, directions, speed_value):
+                            motion_wake_up, direction, speed):
     """
     Docstring
     """
@@ -82,14 +82,11 @@ def test_sensors_safety_001(robot_ip, dcm, mem, motion, session,
 
     flag_test = True
 
-    speed = speed_value["Speed"]
-    direction = directions["Direction"]
-
     log = multi_logger.Logger(
         robot_ip,
         "multi_logger.cfg",
         0.1,
-        "Direction" + str(direction) + " - " + str(speed) + ".csv")
+        "Direction" + direction + " - " + str(speed) + ".csv")
     log.log()
 
     # Movement

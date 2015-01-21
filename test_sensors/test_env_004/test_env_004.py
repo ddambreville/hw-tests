@@ -65,8 +65,8 @@ def move(motion, speed, direction):
 
 
 def test_sensors_env_004(robot_ip, dcm, mem, motion, session,
-                         motion_wake_up, parameters, directions,
-                         speed_value):
+                         motion_wake_up, parameters, direction,
+                         speed):
     """
     Docstring
     """
@@ -77,9 +77,6 @@ def test_sensors_env_004(robot_ip, dcm, mem, motion, session,
     movefailed.subscribe(module_name, expected)
 
     flag_test = False
-
-    speed = speed_value["Speed"]
-    direction = directions["Direction"]
 
     # Sensors
     sensors_list = qha_tools.read_section("sensors.cfg", "Sensors")

@@ -12,34 +12,25 @@ def parameters():
 
 
 @pytest.fixture(params=qha_tools.use_section("safety_001.cfg", "Speed"))
-def speed_value(request):
+def speed(request):
     """
     Speed
     """
-    dico_speed = {
-        "Speed": float(request.param)
-    }
-    return dico_speed
+    return float(request.param)
 
 
 @pytest.fixture(params=qha_tools.use_section("safety_001.cfg", "Directions"))
-def directions(request):
+def direction(request):
     """
     Directions
     """
-    dico_direction = {
-        "Direction": str(request.param)
-    }
-    return dico_direction
+    return str(request.param)
 
 
 @pytest.fixture(params=qha_tools.use_section(
                 "safety_001.cfg", "Dance"))
-def behaviors(request):
+def behavior(request):
     """
     Behaviors and dances.
     """
-    dico_behaviors = {
-        "Name": str(request.param)
-    }
-    return dico_behaviors
+    return str(request.param)
