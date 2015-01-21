@@ -12,19 +12,9 @@ def parameters():
     return qha_tools.read_section("reliability_003.cfg", "TestParameters")
 
 
-@pytest.fixture(scope="session")
-def remove_sensors(alnavigation):
+@pytest.fixture(params=qha_tools.use_section("reliability_003.cfg", "Directions"))
+def direction(request):
     """
-    Fixture which remove base sensors.
+    Direction
     """
-    alnavigation._removeSensor("Laser")
-    alnavigation._removeSensor("Sonar")
-    alnavigation._removeSensor("Asus")
-
-
-@pytest.fixture(scope="session")
-def alnavigation(robot_ip, port):
-    """
-    Fixture which returns a proxy to ALNavigation module.
-    """
-    return ALProxy("ALNavigation", robot_ip, port)
+    return request.param
