@@ -7,6 +7,7 @@ Created on January 14, 2015
 '''
 
 from test_class import TestPodDCM
+import sys
 
 
 def test_pod_dcm(dcm, mem, kill_motion, log_wheel):
@@ -17,7 +18,8 @@ def test_pod_dcm(dcm, mem, kill_motion, log_wheel):
     test_dcm.initialisation()
     cpt = 0
     while cpt < int(test_dcm.nb_cycles):
-        print "cycle : " + str(cpt + 1)
+        sys.stdout.write("cycle : " + str(cpt + 1) + chr(13))
+        sys.stdout.flush()
         try:
             test_dcm.move_robot_x("Front")
             test_dcm.move_robot_x("Back")
@@ -26,4 +28,5 @@ def test_pod_dcm(dcm, mem, kill_motion, log_wheel):
             test_dcm.check_connection(cpt)
         except KeyboardInterrupt:
             break
+    print "\n"
     test_dcm.end()

@@ -1,7 +1,13 @@
-import pytest
+# -*- coding: utf-8 -*-
+
+'''
+Created on January 14, 2015
+
+@author: amartin
+'''
+
 import qha_tools
 import subdevice
-import threading
 import time
 
 
@@ -28,6 +34,8 @@ class TestPodDCM(object):
         self.wheelfl_temperature_sensor = subdevice.WheelTemperatureSensor(
             self.dcm, self.mem, "WheelFL")
         self.back_bumper_sensor = subdevice.Bumper(dcm, mem, "Back")
+        self.battery_current = subdevice.BatteryCurrentSensor(
+            self.dcm, self.mem)
         self.nb_cycles = self.parameters["nb_cycles"][0]
         self.log_file = open(self.parameters["cycling_cvs_name"][0], 'w')
 
@@ -40,7 +48,7 @@ class TestPodDCM(object):
             print "Put the robot on the pod\n"
             # assert False
         self.log_file.write(
-            "Cycle,Connection\n")
+            "Cycle,Connection, BatteryCurrent\n")
 
     def move_robot_x(self, side):
         '''
@@ -68,7 +76,8 @@ class TestPodDCM(object):
         time.sleep(float(self.parameters["time_wait_on_the_pod"][0]))
         line_to_write = ",".join([
             str(cycle),
-            str(int(self.robot_on_charging_station.value))
+            str(int(self.robot_on_charging_station.value)),
+            str(float(self.battery_current.value))
         ])
         line_to_write += "\n"
         self.log_file.write(line_to_write)
