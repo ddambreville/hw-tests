@@ -104,7 +104,7 @@ class TestMultifuse:
         # max stiffness is set on all joints except for LegFuse
         if fuse_temperature.part == "LegFuse":
             # stiff joints
-            qha_tools.stiff_joints_proportion(dcm, mem, joint_list, 0.3)
+            qha_tools.stiff_joints_proportion(dcm, mem, joint_list, 1.0)
             # stiff wheels
 
             for wheel in wheel_objects:
@@ -287,7 +287,7 @@ class TestMultifuse:
 
                 # Indicating fuse first max temperature overshoot
                 if fuse_temperature_value >= fuse_temperature_max and not\
-                 flag_first_overshoot:
+                flag_first_overshoot:
                     flag_first_overshoot = True
                     log.info("First temperature overshoot")
                     timer_overshoot = qha_tools.Timer(dcm, 200)
@@ -295,16 +295,18 @@ class TestMultifuse:
                 # Indicating that protection worked
                 # Set stiffness actuator to 0 to let fuse cool down
                 if flag_first_overshoot and timer_overshoot.is_time_out()\
-                 and not flag_protection_on and\
-                  (stiffness_decrease_immediate == 0 or\
-                   stiffness_decrease == 0):
+                and not flag_protection_on and\
+                (stiffness_decrease_immediate == 0 or\
+                stiffness_decrease == 0):
                     log.info("Flag protection ON")
                     flag_protection_on = True
                     log.info("Concerned joints pluggin activated")
                     qha_tools.unstiff_joints(dcm, mem, joint_list)
 
                 # Checking REQ_FUSE_PERF_004
-                if flag_first_overshoot and timer_overshoot.is_time_out():
+                if flag_first_overshoot and\
+                timer_overshoot.is_time_out() and not\
+                flag_protection_on:
                     if fuse_temperature.part == "LegFuse":
                         if stiffness_decrease_immediate != 0:
                             fuse_state = False
