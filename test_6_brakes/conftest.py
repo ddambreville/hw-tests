@@ -31,15 +31,15 @@ def dico_results(request):
     return dico_result
 
 @pytest.fixture(scope="module")
-def print_results(request, dico_results):
+def print_results(request, dico_results, holding_cone):
     joint_list = qha_tools.use_section(CONFIG_FILE, "Joint")
     direction_list = qha_tools.use_section(CONFIG_FILE, "Direction")
     def fin():
         """Results printed at the end of test session."""
         logging.info("")
-        logging.info("---------------------------------------")
+        logging.info("-"*40)
         logging.info("              TEST REPORT              ")
-        logging.info("---------------------------------------")
+        logging.info("-"*40)
         logging.info("")
         for joint in joint_list:
             for direction in direction_list:
@@ -52,19 +52,25 @@ def print_results(request, dico_results):
                 average_value = numpy.average(angle_list)
                 std_value = numpy.std(angle_list)
 
-                logging.info("*****************************")
+                if min_value < abs(float(holding_cone[joint][direction])):
+                    test_result = "FAILED"
+                else:
+                    test_result = "PASSED"
+
+                logging.info("*"*40)
                 logging.info("")
                 logging.info(" ".join(["Results for",
                                        joint.upper(),
                                        direction.upper()
                                       ]))
+                logging.info("Test result       : " + test_result)
                 logging.info("Angles array      : " + str(angle_list))
                 logging.info("Temperature array : " + str(temperature_list))
                 logging.info("Min value         : " + str(min_value))
                 logging.info("Average           : " + str(average_value))
                 logging.info("Std               : " + str(std_value))
                 logging.info("")
-        logging.info("----------------------------------------")
+        logging.info("-"*40)
 
     request.addfinalizer(fin)
 
